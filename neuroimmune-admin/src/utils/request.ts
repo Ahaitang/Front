@@ -27,11 +27,11 @@ instance.interceptors.request.use(
     if (userStr) {
       try {
         const user = JSON.parse(userStr)
-        if (user.id) {
-          config.headers['X-User-Id'] = user.id
+        if (user.id && Number.isFinite(user.id)) {
+          config.headers['X-User-Id'] = String(user.id)
         }
       } catch (e) {
-        // ignore
+        console.warn('解析用户信息失败:', e)
       }
     }
 
