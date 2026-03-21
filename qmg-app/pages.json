@@ -1,0 +1,54 @@
+{
+	"pages": [
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/doctor/index",
+			"style": {
+				"navigationBarTitleText": "医生工作台"
+			}
+		},
+		{
+			"path": "pages/doctor/patient-list",
+			"style": {
+				"navigationBarTitleText": "患者列表"
+			}
+		},
+		{
+			"path": "pages/doctor/questionnaire-record",
+			"style": {
+				"navigationBarTitleText": "问卷记录"
+			}
+		},
+		{
+			"path": "pages/doctor/trends",
+			"style": {
+				"navigationBarTitleText": "历史趋势"
+			}
+		},
+		{
+			"path": "pages/doctor/assessment",
+			"style": {
+				"navigationBarTitleText": "QMG测评"
+			}
+		},
+		{
+			"path": "pages/doctor/result",
+			"style": {
+				"navigationBarTitleText": "测评结果"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "QMG评分系统",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {}
+}

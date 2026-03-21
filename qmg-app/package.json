@@ -1,0 +1,22 @@
+{
+  "name": "qmg-app",
+  "version": "1.0.0",
+  "description": "QMG评分小程序 - 重症肌无力定量评分系统",
+  "main": "main.js",
+  "scripts": {
+    "dev": "uni",
+    "build": "uni build"
+  },
+  "dependencies": {
+    "pinia": "^2.1.7",
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/uni-app": "^3.0.0",
+    "@dcloudio/vite-plugin-uni": "^3.0.0",
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0"
+  }
+}
+

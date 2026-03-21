@@ -1,0 +1,23 @@
+// 全局图标：使用 uni-icons 字体，页面中可用 <text class="app-icon uniui-xxx"></text>
+@import '@/uni_modules/uni-icons/components/uni-icons/uniicons.css';
+
+@font-face {
+	font-family: uniicons;
+	font-weight: normal;
+	font-style: normal;
+	src: url('@/uni_modules/uni-icons/components/uni-icons/uniicons.ttf') format('truetype');
+}
+
+.app-icon {
+	font-family: uniicons !important;
+	font-size: 36rpx;
+	line-height: 1;
+	display: inline-block;
+	vertical-align: middle;
+}
+.app-icon.sm { font-size: 28rpx; }
+.app-icon.lg { font-size: 44rpx; }
+.app-icon.xl { font-size: 56rpx; }
+.app-icon.primary { color: #0D9488; }
+.app-icon.muted { color: #9CA3AF; }
+.app-icon.white { color: #fff; }
