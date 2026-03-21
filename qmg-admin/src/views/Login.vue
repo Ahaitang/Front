@@ -104,7 +104,7 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 50%, #1565c0 100%);
+  background: linear-gradient(135deg, #0D9488 0%, #14B8A6 50%, #5EEAD4 100%);
   position: relative;
   overflow: hidden;
 }
@@ -116,7 +116,7 @@ const handleLogin = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
   pointer-events: none;
@@ -125,9 +125,9 @@ const handleLogin = async () => {
 .login-box {
   width: 420px;
   padding: 50px 40px;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #F0FDFA 100%);
   border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(30, 136, 229, 0.25);
+  box-shadow: 0 12px 40px rgba(13, 148, 136, 0.25);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   position: relative;
@@ -141,7 +141,7 @@ const handleLogin = async () => {
 
 .login-header h2 {
   margin: 0 0 10px 0;
-  color: #1976d2;
+  color: #0F766E;
   font-size: 26px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -149,7 +149,7 @@ const handleLogin = async () => {
 
 .login-header p {
   margin: 0;
-  color: #90caf9;
+  color: #5EEAD4;
   font-size: 14px;
   font-weight: 500;
 }
@@ -160,33 +160,33 @@ const handleLogin = async () => {
 
 .login-form :deep(.el-input__wrapper) {
   background-color: #ffffff;
-  border: 1px solid #e3f2fd;
+  border: 1px solid #CCFBF1;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(30, 136, 229, 0.06);
+  box-shadow: 0 2px 4px rgba(13, 148, 136, 0.06);
   transition: all 0.3s ease;
 }
 
 .login-form :deep(.el-input__wrapper:hover) {
-  border-color: #90caf9;
-  box-shadow: 0 4px 8px rgba(30, 136, 229, 0.12);
+  border-color: #5EEAD4;
+  box-shadow: 0 4px 8px rgba(13, 148, 136, 0.12);
 }
 
 .login-form :deep(.el-input__wrapper.is-focus) {
-  border-color: #2196f3;
-  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  border-color: #0D9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .login-form :deep(.el-button--primary) {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
   border: none;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
   transition: all 0.3s ease;
 }
 
 .login-form :deep(.el-button--primary:hover) {
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+  background: linear-gradient(135deg, #0F766E 0%, #115E59 100%);
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.4);
   transform: translateY(-1px);
 }
 </style>
