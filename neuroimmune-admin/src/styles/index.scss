@@ -25,10 +25,10 @@ $error-color: #DC2626;
 // Element Plus 主题覆盖
 :root {
   --el-color-primary: #{$primary-color};
-  --el-color-primary-light-3: #{lighten($primary-color, 10%)};
-  --el-color-primary-light-5: #{lighten($primary-color, 20%)};
-  --el-color-primary-light-7: #{lighten($primary-color, 30%)};
-  --el-color-primary-light-9: #{lighten($primary-color, 40%)};
+  --el-color-primary-light-3: #14B8A6;
+  --el-color-primary-light-5: #5EEAD4;
+  --el-color-primary-light-7: #99F6E4;
+  --el-color-primary-light-9: #CCFBF1;
 }
 
 // 通用类
