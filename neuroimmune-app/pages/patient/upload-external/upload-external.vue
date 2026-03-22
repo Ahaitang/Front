@@ -4,64 +4,281 @@
 			<view class="tips">
 				<text>上传您在其他医院的就诊资料（检查报告、病历等），便于主治医生全面了解您的病情。</text>
 			</view>
-			<view class="upload-area" @click="chooseImage">
-				<text class="upload-icon">+</text>
-				<text class="upload-text">点击上传图片/文件</text>
-			</view>
-			<view class="file-list" v-if="files.length">
-				<view class="file-item" v-for="(f, i) in files" :key="i">
-					<text class="file-name">{{ f.name || '已上传' }}</text>
-					<text class="file-del" @click="delFile(i)">删除</text>
+
+			<!-- 图片上传区域 -->
+			<view class="section">
+				<text class="section-title">上传图片</text>
+				<view class="upload-area" @click="chooseImage">
+					<text class="upload-icon">+</text>
+					<text class="upload-text">点击上传图片</text>
+				</view>
+				<view class="image-list" v-if="images.length">
+					<view class="image-item" v-for="(img, i) in images" :key="i">
+						<image class="preview-img" :src="img" mode="aspectFill" />
+						<view class="del-btn" @click="delImage(i)">×</view>
+					</view>
 				</view>
 			</view>
-			<view class="form-item">
-				<text class="label">备注（选填）</text>
-				<textarea class="textarea" v-model="remark" placeholder="如：2024年某院检查报告" />
+
+			<!-- 文字内容 -->
+			<view class="section">
+				<view class="section-header">
+					<text class="section-title">资料内容</text>
+					<text class="section-tip" v-if="images.length" @click="parseImages">解析图片</text>
+				</view>
+				<textarea
+					class="textarea"
+					v-model="content"
+					placeholder="请输入或粘贴就诊资料内容，也可上传图片后点击"解析图片"自动识别"
+					:maxlength="2000"
+				/>
+				<text class="char-count">{{ content.length }}/2000</text>
 			</view>
-			<button class="btn primary" @click="submit">提交</button>
+
+			<!-- 备注 -->
+			<view class="section">
+				<text class="section-title">备注（选填）</text>
+				<input class="input" v-model="remark" placeholder="如：2024年某院检查报告" />
+			</view>
+
+			<button class="btn primary" :loading="loading" @click="submit">提交</button>
 		</view>
 	</view>
 </template>
 
 <script>
-	export default {
-		data() {
-			return { files: [], remark: '' };
+import { createMedicalRecord } from '@/api/medicalRecord.js'
+import { parseMedicalRecord } from '@/api/ocr.js'
+
+export default {
+	data() {
+		return {
+			images: [],
+			content: '',
+			remark: '',
+			loading: false
+		}
+	},
+	methods: {
+		chooseImage() {
+			uni.chooseImage({
+				count: 9 - this.images.length,
+				success: (res) => {
+					this.images = [...this.images, ...res.tempFilePaths]
+					// 上传图片后自动解析
+					this.parseImages()
+				}
+			})
 		},
-		methods: {
-			chooseImage() {
-				uni.chooseImage({
-					count: 9 - this.files.length,
-					success: (res) => {
-						res.tempFilePaths.forEach((path) => {
-							this.files.push({ path, name: '图片' });
-						});
+		delImage(i) {
+			this.images.splice(i, 1)
+		},
+		async parseImages() {
+			if (!this.images.length) {
+				uni.showToast({ title: '请先上传图片', icon: 'none' })
+				return
+			}
+
+			uni.showLoading({ title: '解析中...' })
+			try {
+				const res = await parseMedicalRecord(this.images)
+				if (res && res.content) {
+					// 追加到现有内容后
+					if (this.content) {
+						this.content += '\n\n' + res.content
+					} else {
+						this.content = res.content
 					}
-				});
-			},
-			delFile(i) {
-				this.files.splice(i, 1);
-			},
-			submit() {
-				uni.showToast({ title: '提交成功', icon: 'success' });
-				setTimeout(() => uni.navigateBack(), 800);
+					uni.showToast({ title: '解析成功', icon: 'success' })
+				}
+			} catch (e) {
+				console.error('解析失败:', e)
+				uni.showToast({ title: '解析失败，请手动输入', icon: 'none' })
+			} finally {
+				uni.hideLoading()
+			}
+		},
+		async submit() {
+			if (!this.content.trim() && !this.images.length) {
+				uni.showToast({ title: '请上传图片或输入内容', icon: 'none' })
+				return
+			}
+
+			this.loading = true
+			try {
+				const userInfo = uni.getStorageSync('userInfo') || {}
+				const data = {
+					patientId: userInfo.id,
+					patientName: userInfo.name,
+					type: '外院病历',
+					content: this.content,
+					attachments: this.images.join(','),
+					notes: this.remark
+				}
+
+				await createMedicalRecord(data)
+				uni.showToast({ title: '提交成功', icon: 'success' })
+				setTimeout(() => uni.navigateBack(), 800)
+			} catch (e) {
+				console.error('提交失败:', e)
+				uni.showToast({ title: '提交失败', icon: 'none' })
+			} finally {
+				this.loading = false
 			}
 		}
-	};
+	}
+}
 </script>
 
 <style lang="scss" scoped>
-	.container { min-height: 100vh; background: #F5F5F5; padding: 24rpx; }
-	.card { background: #fff; border-radius: 16rpx; padding: 28rpx; }
-	.tips { font-size: 28rpx; color: #666; margin-bottom: 32rpx; line-height: 1.5; }
-	.upload-area { border: 2rpx dashed #ddd; border-radius: 12rpx; padding: 60rpx; text-align: center; margin-bottom: 24rpx; }
-	.upload-icon { font-size: 64rpx; color: #999; display: block; }
-	.upload-text { font-size: 28rpx; color: #999; margin-top: 16rpx; display: block; }
-	.file-item { display: flex; justify-content: space-between; padding: 20rpx 0; border-bottom: 1rpx solid #f0f0f0; }
-	.file-del { font-size: 28rpx; color: #FA5151; }
-	.form-item { margin: 24rpx 0; }
-	.label { font-size: 28rpx; color: #333; display: block; margin-bottom: 12rpx; }
-	.textarea { font-size: 30rpx; min-height: 160rpx; background: #f5f5f5; border-radius: 12rpx; padding: 20rpx; }
-	.btn { margin-top: 32rpx; height: 88rpx; line-height: 88rpx; border-radius: 12rpx; font-size: 32rpx; }
-	.btn.primary { background: #007AFF; color: #fff; }
+@import '@/static/app-theme.scss';
+
+.container {
+	min-height: 100vh;
+	background: $app-bg;
+	padding: 24rpx;
+}
+
+.card {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	padding: 28rpx;
+	box-shadow: $app-shadow;
+}
+
+.tips {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	margin-bottom: 32rpx;
+	line-height: 1.5;
+}
+
+.section {
+	margin-bottom: 32rpx;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16rpx;
+}
+
+.section-title {
+	font-size: 28rpx;
+	color: $app-text;
+	font-weight: 500;
+	margin-bottom: 16rpx;
+	display: block;
+}
+
+.section-header .section-title {
+	margin-bottom: 0;
+}
+
+.section-tip {
+	font-size: 26rpx;
+	color: $app-primary;
+}
+
+.upload-area {
+	border: 2rpx dashed $app-border;
+	border-radius: $app-radius;
+	padding: 48rpx;
+	text-align: center;
+	margin-bottom: 24rpx;
+}
+
+.upload-icon {
+	font-size: 64rpx;
+	color: $app-text-muted;
+	display: block;
+}
+
+.upload-text {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	margin-top: 12rpx;
+	display: block;
+}
+
+.image-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16rpx;
+}
+
+.image-item {
+	position: relative;
+	width: 160rpx;
+	height: 160rpx;
+}
+
+.preview-img {
+	width: 100%;
+	height: 100%;
+	border-radius: 12rpx;
+}
+
+.del-btn {
+	position: absolute;
+	top: -12rpx;
+	right: -12rpx;
+	width: 40rpx;
+	height: 40rpx;
+	background: #EF4444;
+	color: #fff;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28rpx;
+	line-height: 1;
+}
+
+.textarea {
+	width: 100%;
+	min-height: 240rpx;
+	padding: 20rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
+	font-size: 28rpx;
+	color: $app-text;
+	background: $app-bg;
+	box-sizing: border-box;
+}
+
+.char-count {
+	display: block;
+	text-align: right;
+	font-size: 24rpx;
+	color: $app-text-muted;
+	margin-top: 8rpx;
+}
+
+.input {
+	width: 100%;
+	height: 88rpx;
+	padding: 0 24rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
+	font-size: 28rpx;
+	color: $app-text;
+	background: $app-bg;
+	box-sizing: border-box;
+}
+
+.btn {
+	margin-top: 32rpx;
+	height: 88rpx;
+	line-height: 88rpx;
+	border-radius: $app-radius;
+	font-size: 32rpx;
+	font-weight: 500;
+}
+
+.btn.primary {
+	background: $app-primary;
+	color: #fff;
+}
 </style>

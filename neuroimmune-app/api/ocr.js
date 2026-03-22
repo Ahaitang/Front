@@ -103,9 +103,19 @@ export const recognizeByUrl = (url) => {
   return post('/ocr/url', { url })
 }
 
+/**
+ * 解析外院医疗资料
+ * @param {Array} images - 图片URL数组
+ * @returns {Promise} 解析后的文字内容
+ */
+export const parseMedicalRecord = (images) => {
+  return post('/ocr/parse-medical', { images })
+}
+
 export default {
   recognizeGeneral,
   recognizeMedicalReport,
   recognizeIdCard,
-  recognizeByUrl
+  recognizeByUrl,
+  parseMedicalRecord
 }
