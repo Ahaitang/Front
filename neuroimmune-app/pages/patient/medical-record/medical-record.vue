@@ -1,5 +1,23 @@
 <template>
 	<view class="container">
+		<!-- 时间筛选器 -->
+		<view class="filter-bar card">
+			<view class="filter-row">
+				<text class="filter-label">时间范围</text>
+				<picker mode="date" :value="startDate" @change="onStartDateChange">
+					<view class="picker-btn">{{ startDate || '开始日期' }}</view>
+				</picker>
+				<text class="filter-sep">至</text>
+				<picker mode="date" :value="endDate" @change="onEndDateChange">
+					<view class="picker-btn">{{ endDate || '结束日期' }}</view>
+				</picker>
+			</view>
+			<view class="filter-actions">
+				<text class="filter-btn" @click="resetFilter">重置</text>
+				<text class="filter-btn primary" @click="applyFilter">查询</text>
+			</view>
+		</view>
+
 		<view class="section card">
 			<view class="section-title">基本信息</view>
 			<view class="info-row"><text class="label">姓名</text><text class="value">{{ patient.name || '未填写' }}</text></view>
@@ -77,6 +95,8 @@ import { getMedicationList } from '@/api/medication.js'
 export default {
 	data() {
 		return {
+			startDate: '',
+			endDate: '',
 			patient: {
 				name: '',
 				gender: '',
@@ -103,6 +123,20 @@ export default {
 		this.loadData();
 	},
 	methods: {
+		onStartDateChange(e) {
+			this.startDate = e.detail.value
+		},
+		onEndDateChange(e) {
+			this.endDate = e.detail.value
+		},
+		resetFilter() {
+			this.startDate = ''
+			this.endDate = ''
+			this.loadData()
+		},
+		applyFilter() {
+			this.loadData()
+		},
 		async loadData() {
 			const u = uni.getStorageSync('userInfo') || {};
 			// 尝试获取患者信息
@@ -129,7 +163,10 @@ export default {
 
 			// 尝试获取病历信息
 			try {
-				const recordRes = await getMedicalRecordList({ pageNum: 1, pageSize: 10 });
+				const params = { pageNum: 1, pageSize: 10 }
+				if (this.startDate) params.startDate = this.startDate
+				if (this.endDate) params.endDate = this.endDate
+				const recordRes = await getMedicalRecordList(params);
 				if (recordRes && recordRes.list && recordRes.list.length > 0) {
 					const r = recordRes.list[0];
 					this.record = {
@@ -154,7 +191,10 @@ export default {
 
 			// 尝试获取用药记录
 			try {
-				const medRes = await getMedicationList({ pageNum: 1, pageSize: 10 });
+				const medParams = { pageNum: 1, pageSize: 10 }
+				if (this.startDate) medParams.startDate = this.startDate
+				if (this.endDate) medParams.endDate = this.endDate
+				const medRes = await getMedicationList(medParams);
 				if (medRes && medRes.list) {
 					this.medications = medRes.list.map(m => ({
 						medicineName: m.medicationName,
@@ -173,7 +213,10 @@ export default {
 
 			// 获取外院病历
 			try {
-				const extRes = await getMedicalRecordList({ pageNum: 1, pageSize: 20, type: '外院病历' });
+				const extParams = { pageNum: 1, pageSize: 20, type: '外院病历' }
+				if (this.startDate) extParams.startDate = this.startDate
+				if (this.endDate) extParams.endDate = this.endDate
+				const extRes = await getMedicalRecordList(extParams);
 				if (extRes && extRes.list) {
 					this.externalRecords = extRes.list.map(r => ({
 						id: r.id,
@@ -211,34 +254,46 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.container { min-height: 100vh; background: #F5F5F5; padding: 24rpx 24rpx 60rpx; }
-.card { background: #fff; border-radius: 16rpx; padding: 28rpx; margin-bottom: 24rpx; }
+@import '@/static/app-theme.scss';
+
+.container { min-height: 100vh; background: $app-bg; padding: 24rpx 24rpx 60rpx; }
+.card { background: $app-card-bg; border-radius: $app-radius; padding: 28rpx; margin-bottom: 24rpx; box-shadow: $app-shadow; }
+
+.filter-bar { padding: 20rpx 28rpx; }
+.filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16rpx; }
+.filter-label { font-size: 28rpx; color: $app-text; }
+.filter-sep { font-size: 28rpx; color: $app-text-muted; margin: 0 8rpx; }
+.picker-btn { font-size: 26rpx; color: $app-text; background: $app-bg; padding: 12rpx 20rpx; border-radius: 8rpx; min-width: 140rpx; text-align: center; }
+.filter-actions { display: flex; justify-content: flex-end; gap: 24rpx; margin-top: 20rpx; }
+.filter-btn { font-size: 28rpx; color: $app-text-muted; }
+.filter-btn.primary { color: $app-primary; font-weight: 500; }
+
 .section-title { font-size: 32rpx; font-weight: bold; color: #333; margin-bottom: 20rpx; }
-.info-row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #f5f5f5; }
-.info-row .label { font-size: 28rpx; color: #666; width: 180rpx; }
-.info-row .value { font-size: 28rpx; color: #333; flex: 1; text-align: right; }
-.info-block { padding: 16rpx 0; border-bottom: 1rpx solid #f5f5f5; }
-.info-block .label { font-size: 28rpx; color: #666; display: block; }
-.info-block .value.block { font-size: 28rpx; color: #333; margin-top: 8rpx; line-height: 1.5; }
-.empty-tip { font-size: 28rpx; color: #999; }
-.exam-item { background: #f8f8f8; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
+.info-row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid $app-border; }
+.info-row .label { font-size: 28rpx; color: $app-text-muted; width: 180rpx; }
+.info-row .value { font-size: 28rpx; color: $app-text; flex: 1; text-align: right; }
+.info-block { padding: 16rpx 0; border-bottom: 1rpx solid $app-border; }
+.info-block .label { font-size: 28rpx; color: $app-text-muted; display: block; }
+.info-block .value.block { font-size: 28rpx; color: $app-text; margin-top: 8rpx; line-height: 1.5; }
+.empty-tip { font-size: 28rpx; color: $app-text-muted; }
+.exam-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
 .exam-head { display: flex; justify-content: space-between; margin-bottom: 12rpx; }
-.exam-title { font-size: 30rpx; font-weight: bold; color: #333; }
-.exam-date { font-size: 24rpx; color: #999; }
-.exam-desc { font-size: 26rpx; color: #666; }
-.med-item { background: #f8f8f8; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
+.exam-title { font-size: 30rpx; font-weight: bold; color: $app-text; }
+.exam-date { font-size: 24rpx; color: $app-text-muted; }
+.exam-desc { font-size: 26rpx; color: $app-text-secondary; }
+.med-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
 .med-head { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
-.med-name { font-size: 30rpx; font-weight: bold; color: #333; }
-.med-date { font-size: 24rpx; color: #999; }
-.med-body { font-size: 26rpx; color: #666; }
+.med-name { font-size: 30rpx; font-weight: bold; color: $app-text; }
+.med-date { font-size: 24rpx; color: $app-text-muted; }
+.med-body { font-size: 26rpx; color: $app-text-secondary; }
 
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.add-btn { font-size: 26rpx; color: #0D9488; }
-.external-item { background: #f8f8f8; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
+.add-btn { font-size: 26rpx; color: $app-primary; }
+.external-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
 .external-head { display: flex; justify-content: space-between; margin-bottom: 12rpx; }
-.external-date { font-size: 26rpx; color: #999; }
-.external-hospital { font-size: 26rpx; color: #0D9488; }
-.external-content { font-size: 28rpx; color: #333; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.external-date { font-size: 26rpx; color: $app-text-muted; }
+.external-hospital { font-size: 26rpx; color: $app-primary; }
+.external-content { font-size: 28rpx; color: $app-text; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .external-images { display: flex; gap: 12rpx; margin-top: 12rpx; flex-wrap: wrap; }
 .thumb-img { width: 100rpx; height: 100rpx; border-radius: 8rpx; }
 </style>
