@@ -39,6 +39,12 @@
 				<text class="label"><text class="app-icon sm muted uniui-phone"></text> 紧急联系电话</text>
 				<input class="input" type="number" v-model="form.emergencyPhone" placeholder="选填" />
 			</view>
+			<view class="form-item">
+				<text class="label"><text class="app-icon sm muted uniui-medical"></text> 疾病分类</text>
+				<picker mode="selector" :range="diseaseOptions" range-key="label" @change="onDiseaseTypeChange">
+					<view class="picker">{{ form.diseaseTypeLabel || '请选择' }}</view>
+				</picker>
+			</view>
 			<button class="btn primary" @click="save">保存</button>
 		</view>
 		<view class="card link-block" @click="navTo('/pages/patient/patient-info/patient-info')">
@@ -52,6 +58,16 @@
 	export default {
 		data() {
 			return {
+				diseaseOptions: [
+					{ label: 'MS（多发性硬化）', value: 'MS' },
+					{ label: 'NMOSD（视神经脊髓炎）', value: 'NMOSD' },
+					{ label: 'MG（重症肌无力）', value: 'MG' },
+					{ label: 'MOGAD（MOG抗体病）', value: 'MOGAD' },
+					{ label: '自身免疫性脑炎', value: '自身免疫性脑炎' },
+					{ label: 'GBS（格林-巴利综合征）', value: 'GBS' },
+					{ label: 'CIDP（慢性炎性脱髓鞘性多发性神经病）', value: 'CIDP' },
+					{ label: '其它疾病', value: '其它疾病' }
+				],
 				form: {
 					avatar: '',
 					name: '张哲瀚',
@@ -61,7 +77,9 @@
 					phone: '',
 					idCard: '',
 					emergencyContact: '',
-					emergencyPhone: ''
+					emergencyPhone: '',
+					diseaseType: '',
+					diseaseTypeLabel: ''
 				}
 			};
 		},
@@ -76,10 +94,21 @@
 			this.form.avatar = u.avatar || '';
 			this.form.emergencyContact = u.emergencyContact || '';
 			this.form.emergencyPhone = u.emergencyPhone || '';
+			this.form.diseaseType = u.diseaseType || '';
+			// 设置疾病分类显示标签
+			if (this.form.diseaseType) {
+				const found = this.diseaseOptions.find(d => d.value === this.form.diseaseType);
+				if (found) this.form.diseaseTypeLabel = found.label;
+			}
 		},
 		methods: {
 			onGenderChange(e) {
 				this.form.gender = ['男', '女'][e.detail.value];
+			},
+			onDiseaseTypeChange(e) {
+				const selected = this.diseaseOptions[e.detail.value];
+				this.form.diseaseType = selected.value;
+				this.form.diseaseTypeLabel = selected.label;
 			},
 			chooseAvatar() {
 				uni.chooseImage({
@@ -100,7 +129,8 @@
 					idCard: this.form.idCard,
 					avatar: this.form.avatar,
 					emergencyContact: this.form.emergencyContact,
-					emergencyPhone: this.form.emergencyPhone
+					emergencyPhone: this.form.emergencyPhone,
+					diseaseType: this.form.diseaseType
 				});
 				uni.setStorageSync('userInfo', u);
 				uni.showToast({ title: '保存成功', icon: 'success' });
