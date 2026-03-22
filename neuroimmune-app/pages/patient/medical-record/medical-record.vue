@@ -73,19 +73,25 @@
 				<text class="add-btn" @click="navTo('/pages/patient/upload-external/upload-external')">+上传</text>
 			</view>
 			<text class="empty-tip" v-if="!externalRecords.length">暂无外院病历</text>
-			<view class="external-item" v-for="(item, i) in externalRecords" :key="i" @click="showExternalDetail(item)">
+			<view class="external-item" v-for="(item, i) in externalRecords" :key="i">
 				<view class="external-head">
 					<text class="external-date">{{ item.date }}</text>
+					<view class="external-actions">
+						<text class="action-btn edit" @click="editExternal(item)">编辑</text>
+						<text class="action-btn delete" @click="deleteExternal(item)">删除</text>
+					</view>
+				</view>
+				<view class="external-body" @click="showExternalDetail(item)">
 					<text class="external-hospital" v-if="item.hospital">{{ item.hospital }}</text>
-				</view>
-				<view class="external-info" v-if="item.department || item.doctorName">
-					<text class="info-tag" v-if="item.department">{{ item.department }}</text>
-					<text class="info-tag" v-if="item.doctorName">{{ item.doctorName }}医生</text>
-				</view>
-				<text class="external-diagnosis" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
-				<text class="external-content">{{ item.content || item.notes || '无内容' }}</text>
-				<view class="external-images" v-if="item.attachments">
-					<image v-for="(img, idx) in item.attachments.split(',')" :key="idx" :src="img" mode="aspectFill" class="thumb-img" @click.stop="previewImage(img, item.attachments)" />
+					<view class="external-info" v-if="item.department || item.doctorName">
+						<text class="info-tag" v-if="item.department">{{ item.department }}</text>
+						<text class="info-tag" v-if="item.doctorName">{{ item.doctorName }}医生</text>
+					</view>
+					<text class="external-diagnosis" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
+					<text class="external-content">{{ item.content || item.notes || '无内容' }}</text>
+					<view class="external-images" v-if="item.attachments">
+						<image v-for="(img, idx) in item.attachments.split(',')" :key="idx" :src="img" mode="aspectFill" class="thumb-img" @click.stop="previewImage(img, item.attachments)" />
+					</view>
 				</view>
 			</view>
 		</view>
@@ -94,7 +100,7 @@
 
 <script>
 import { getPatientById } from '@/api/patient.js'
-import { getMedicalRecordList } from '@/api/medicalRecord.js'
+import { getMedicalRecordList, deleteMedicalRecord } from '@/api/medicalRecord.js'
 import { getMedicationList } from '@/api/medication.js'
 
 export default {
@@ -270,6 +276,28 @@ export default {
 				current: current,
 				urls: urls
 			})
+		},
+		editExternal(item) {
+			uni.navigateTo({
+				url: '/pages/patient/upload-external/upload-external?id=' + item.id
+			})
+		},
+		deleteExternal(item) {
+			uni.showModal({
+				title: '确认删除',
+				content: '确定要删除这条外院病历吗？',
+				success: async (res) => {
+					if (res.confirm) {
+						try {
+							await deleteMedicalRecord(item.id)
+							uni.showToast({ title: '删除成功', icon: 'success' })
+							this.loadData()
+						} catch (e) {
+							uni.showToast({ title: '删除失败', icon: 'none' })
+						}
+					}
+				}
+			})
 		}
 	}
 };
@@ -312,9 +340,14 @@ export default {
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .add-btn { font-size: 26rpx; color: $app-primary; }
 .external-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.external-head { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
+.external-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
 .external-date { font-size: 26rpx; color: $app-text-muted; }
-.external-hospital { font-size: 26rpx; color: $app-primary; }
+.external-actions { display: flex; gap: 20rpx; }
+.action-btn { font-size: 24rpx; padding: 4rpx 16rpx; border-radius: 6rpx; }
+.action-btn.edit { color: $app-primary; background: rgba($app-primary, 0.1); }
+.action-btn.delete { color: #EF4444; background: rgba(#EF4444, 0.1); }
+.external-body { margin-top: 8rpx; }
+.external-hospital { font-size: 26rpx; color: $app-primary; display: block; margin-bottom: 8rpx; }
 .external-info { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
 .info-tag { font-size: 24rpx; color: $app-text-secondary; background: rgba($app-primary, 0.1); padding: 4rpx 12rpx; border-radius: 6rpx; }
 .external-diagnosis { font-size: 28rpx; color: $app-text; margin-bottom: 8rpx; font-weight: 500; }

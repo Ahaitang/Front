@@ -2,7 +2,7 @@
 	<view class="container">
 		<view class="card">
 			<view class="tips">
-				<text>上传您在其他医院的就诊资料（检查报告、病历等），便于主治医生全面了解您的病情。</text>
+				<text>{{ isEdit ? '修改外院病历信息' : '上传您在其他医院的就诊资料（检查报告、病历等），便于主治医生全面了解您的病情。' }}</text>
 			</view>
 
 			<!-- 就诊日期 -->
@@ -76,20 +76,23 @@
 				<input class="input" v-model="form.remark" placeholder="其他需要说明的信息" />
 			</view>
 
-			<button class="btn primary" :loading="loading" @click="submit">提交</button>
+			<button class="btn primary" :loading="loading" @click="submit">{{ isEdit ? '保存修改' : '提交' }}</button>
 		</view>
 	</view>
 </template>
 
 <script>
-import { createMedicalRecord } from '@/api/medicalRecord.js'
+import { createMedicalRecord, getMedicalRecordById, updateMedicalRecord } from '@/api/medicalRecord.js'
 import { parseMedicalRecord } from '@/api/ocr.js'
 import { uploadFile } from '@/api/request.js'
 
 export default {
 	data() {
 		return {
+			recordId: null,
+			isEdit: false,
 			images: [],
+			existingAttachments: [], // 已有的图片URL
 			form: {
 				date: '',
 				hospital: '',
@@ -102,10 +105,16 @@ export default {
 			loading: false
 		}
 	},
-	onLoad() {
-		// 默认今天
-		const today = new Date()
-		this.form.date = this.formatDate(today)
+	onLoad(options) {
+		if (options.id) {
+			this.recordId = options.id
+			this.isEdit = true
+			this.loadRecord()
+		} else {
+			// 默认今天
+			const today = new Date()
+			this.form.date = this.formatDate(today)
+		}
 	},
 	methods: {
 		formatDate(date) {
@@ -113,6 +122,30 @@ export default {
 			const m = String(date.getMonth() + 1).padStart(2, '0')
 			const d = String(date.getDate()).padStart(2, '0')
 			return `${y}-${m}-${d}`
+		},
+		async loadRecord() {
+			try {
+				uni.showLoading({ title: '加载中...' })
+				const res = await getMedicalRecordById(this.recordId)
+				if (res) {
+					this.form.date = res.date ? res.date.split('T')[0] : ''
+					this.form.hospital = res.hospital || ''
+					this.form.department = res.department || ''
+					this.form.doctorName = res.doctorName || ''
+					this.form.diagnosis = res.diagnosis || ''
+					this.form.content = res.content || ''
+					this.form.remark = res.notes || ''
+					// 已有图片
+					if (res.attachments) {
+						this.existingAttachments = res.attachments.split(',').filter(url => url)
+						this.images = [...this.existingAttachments]
+					}
+				}
+				uni.hideLoading()
+			} catch (e) {
+				uni.hideLoading()
+				uni.showToast({ title: '加载失败', icon: 'none' })
+			}
 		},
 		onDateChange(e) {
 			this.form.date = e.detail.value
@@ -155,6 +188,12 @@ export default {
 		async uploadImages() {
 			const urls = []
 			for (const path of this.images) {
+				// 如果是已有图片URL，直接使用
+				if (this.existingAttachments.includes(path)) {
+					urls.push(path)
+					continue
+				}
+				// 新图片上传
 				try {
 					const res = await uploadFile(path)
 					if (res && res.url) {
@@ -201,12 +240,17 @@ export default {
 					notes: this.form.remark
 				}
 
-				await createMedicalRecord(data)
-				uni.showToast({ title: '提交成功', icon: 'success' })
+				if (this.isEdit) {
+					await updateMedicalRecord(this.recordId, data)
+					uni.showToast({ title: '修改成功', icon: 'success' })
+				} else {
+					await createMedicalRecord(data)
+					uni.showToast({ title: '提交成功', icon: 'success' })
+				}
 				setTimeout(() => uni.navigateBack(), 800)
 			} catch (e) {
 				console.error('提交失败:', e)
-				uni.showToast({ title: '提交失败', icon: 'none' })
+				uni.showToast({ title: this.isEdit ? '修改失败' : '提交失败', icon: 'none' })
 			} finally {
 				this.loading = false
 			}
