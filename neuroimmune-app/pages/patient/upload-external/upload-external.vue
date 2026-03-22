@@ -29,7 +29,7 @@
 				<textarea
 					class="textarea"
 					v-model="content"
-					placeholder="请输入或粘贴就诊资料内容，也可上传图片后点击"解析图片"自动识别"
+					placeholder="请输入或粘贴就诊资料内容，也可上传图片后点击【解析图片】自动识别"
 					:maxlength="2000"
 				/>
 				<text class="char-count">{{ content.length }}/2000</text>
