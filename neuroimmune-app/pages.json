@@ -54,6 +54,10 @@
 					"style": { "navigationBarTitleText": "随访计划" }
 				},
 				{
+					"path": "add-follow/add-follow",
+					"style": { "navigationBarTitleText": "添加随访计划" }
+				},
+				{
 					"path": "medication-advice/medication-advice",
 					"style": { "navigationBarTitleText": "用药建议" }
 				},

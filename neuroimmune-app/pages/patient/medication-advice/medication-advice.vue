@@ -3,22 +3,22 @@
 		<!-- 日期选择器 -->
 		<view class="date-picker card">
 			<view class="date-nav">
-				<view class="nav-btn" @click="prevDay">
+				<view class="nav-btn" @click="prevWeek">
 					<text class="app-icon uniui-arrowleft"></text>
 				</view>
 				<view class="current-date" @click="openCalendar">
-					<text class="date-text">{{ currentDateDisplay }}</text>
-					<text class="week-text">{{ weekDayText }}</text>
+					<text class="date-text">{{ currentYear }}年{{ currentMonth }}月</text>
+					<text class="week-text">{{ weekRangeText }}</text>
 				</view>
-				<view class="nav-btn" @click="nextDay">
+				<view class="nav-btn" @click="nextWeek">
 					<text class="app-icon uniui-arrowright"></text>
 				</view>
 			</view>
 			<view class="date-tabs">
-				<view class="date-tab" v-for="(item, index) in dateTabs" :key="index"
-					:class="{ active: currentDate === item.date }" @click="selectDate(item.date)">
-					<text class="tab-week">{{ item.week }}</text>
-					<text class="tab-day">{{ item.day }}</text>
+				<view class="date-tab" v-for="(d, i) in weekDays" :key="i"
+					:class="{ active: d.date === selectedDate }" @click="selectDay(i)">
+					<text class="tab-week">{{ d.isToday ? '今' : weekLabels[i] }}</text>
+					<text class="tab-day" :class="{ today: d.isToday }">{{ d.day }}</text>
 				</view>
 			</view>
 		</view>
@@ -54,6 +54,9 @@
 				<view class="item-body" v-if="item.duration">
 					<text class="label">服用时间段：</text><text class="value highlight">{{ item.duration }}</text>
 				</view>
+				<view class="item-body" v-if="item.endDate">
+					<text class="label">有效期至：</text><text class="value highlight">{{ item.endDate }}</text>
+				</view>
 				<view class="item-body" v-if="item.notes">
 					<text class="label">备注：</text><text class="value">{{ item.notes }}</text>
 				</view>
@@ -74,92 +77,115 @@ import { getMedicationList } from '@/api/medication.js'
 export default {
 	data() {
 		return {
-			currentDate: '',
-			dateTabs: [],
+			selectedDate: '',
+			currentYear: new Date().getFullYear(),
+			currentMonth: new Date().getMonth() + 1,
+			weekDays: [],
+			weekLabels: ['一', '二', '三', '四', '五', '六', '日'],
+			baseOffset: 0,
 			list: [],
 			showAll: false
 		};
 	},
 	computed: {
-		currentDateDisplay() {
-			if (!this.currentDate) return '';
-			const d = new Date(this.currentDate);
-			return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-		},
-		weekDayText() {
-			const weeks = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-			if (!this.currentDate) return '';
-			return weeks[new Date(this.currentDate).getDay()];
+		weekRangeText() {
+			if (this.weekDays.length < 7) return '';
+			const first = this.weekDays[0];
+			const last = this.weekDays[6];
+			return `${first.date.substring(5)} - ${last.date.substring(5)}`;
 		},
 		filteredList() {
 			if (this.showAll) {
 				return this.list;
 			}
-			// 按日期过滤
+			// 按有效期过滤：当前日期在 [date, endDate] 范围内
 			return this.list.filter(item => {
 				if (!item.date) return false;
-				const itemDate = item.date.split('T')[0].split(' ')[0];
-				return itemDate === this.currentDate;
+
+				const startDate = item.date.split('T')[0].split(' ')[0];
+				const endDate = item.endDate ? item.endDate.split('T')[0].split(' ')[0] : null;
+
+				// 当前日期
+				const current = this.selectedDate;
+
+				// 检查是否在有效期内
+				if (current < startDate) return false;
+				if (endDate && current > endDate) return false;
+
+				return true;
 			});
 		}
 	},
 	onLoad() {
-		this.initDate();
-		this.generateDateTabs();
+		this.initWeekDays();
 	},
 	onShow() {
 		this.loadData();
 	},
 	methods: {
-		initDate() {
-			const today = new Date();
-			this.currentDate = this.formatDate(today);
-		},
-		generateDateTabs() {
-			const tabs = [];
-			const weeks = ['日', '一', '二', '三', '四', '五', '六'];
-			const today = new Date();
-
-			for (let i = -2; i <= 4; i++) {
-				const d = new Date(today);
-				d.setDate(d.getDate() + i);
-				const isToday = i === 0;
-				tabs.push({
-					date: this.formatDate(d),
-					week: isToday ? '今' : '周' + weeks[d.getDay()],
-					day: d.getDate()
-				});
-			}
-			this.dateTabs = tabs;
+		pad(n) {
+			return n < 10 ? '0' + n : '' + n;
 		},
 		formatDate(date) {
 			const y = date.getFullYear();
-			const m = String(date.getMonth() + 1).padStart(2, '0');
-			const d = String(date.getDate()).padStart(2, '0');
+			const m = this.pad(date.getMonth() + 1);
+			const d = this.pad(date.getDate());
 			return `${y}-${m}-${d}`;
 		},
-		selectDate(date) {
-			this.currentDate = date;
+		initWeekDays() {
+			const today = new Date();
+			const todayStr = this.formatDate(today);
+			const days = [];
+			const currentDay = today.getDay(); // 0-6, 0是周日
+			// 计算本周一的日期
+			const monday = new Date(today);
+			const diff = currentDay === 0 ? -6 : 1 - currentDay;
+			monday.setDate(today.getDate() + diff + this.baseOffset * 7);
+
+			for (let i = 0; i < 7; i++) {
+				const d = new Date(monday);
+				d.setDate(monday.getDate() + i);
+				const dateStr = this.formatDate(d);
+				days.push({
+					date: dateStr,
+					day: d.getDate(),
+					isToday: dateStr === todayStr,
+					fullDate: d
+				});
+			}
+			this.weekDays = days;
+
+			// 如果没有选中日期，默认选中今天
+			if (!this.selectedDate) {
+				this.selectedDate = todayStr;
+			}
+
+			// 更新当前年月
+			this.currentYear = monday.getFullYear();
+			this.currentMonth = monday.getMonth() + 1;
+		},
+		selectDay(index) {
+			this.selectedDate = this.weekDays[index].date;
 			if (this.showAll) {
 				this.showAll = false;
 			}
 		},
-		prevDay() {
-			const d = new Date(this.currentDate);
-			d.setDate(d.getDate() - 1);
-			this.currentDate = this.formatDate(d);
-			this.generateDateTabs();
-			if (this.showAll) {
-				this.showAll = false;
+		prevWeek() {
+			this.baseOffset--;
+			this.initWeekDays();
+			// 如果选中的日期不在当前周，选中周一
+			const inCurrentWeek = this.weekDays.some(d => d.date === this.selectedDate);
+			if (!inCurrentWeek) {
+				this.selectedDate = this.weekDays[0].date;
 			}
 		},
-		nextDay() {
-			const d = new Date(this.currentDate);
-			d.setDate(d.getDate() + 1);
-			this.currentDate = this.formatDate(d);
-			this.generateDateTabs();
-			if (this.showAll) {
-				this.showAll = false;
+		nextWeek() {
+			this.baseOffset++;
+			this.initWeekDays();
+			// 如果选中的日期不在当前周，选中周一
+			const inCurrentWeek = this.weekDays.some(d => d.date === this.selectedDate);
+			if (!inCurrentWeek) {
+				this.selectedDate = this.weekDays[0].date;
 			}
 		},
 		openCalendar() {
@@ -167,8 +193,13 @@ export default {
 		},
 		onCalendarConfirm(e) {
 			if (e.fulldate) {
-				this.currentDate = e.fulldate;
-				this.generateDateTabs();
+				this.selectedDate = e.fulldate;
+				// 计算周偏移量
+				const today = new Date();
+				const selected = new Date(e.fulldate);
+				const diffDays = Math.floor((selected - today) / (1000 * 60 * 60 * 24));
+				this.baseOffset = Math.floor(diffDays / 7);
+				this.initWeekDays();
 				if (this.showAll) {
 					this.showAll = false;
 				}
@@ -185,6 +216,7 @@ export default {
 						id: m.id,
 						medicationName: m.medicationName,
 						date: m.date,
+						endDate: m.endDate,
 						dosage: m.dosage,
 						unit: m.unit || '',
 						frequency: m.frequency,
@@ -205,9 +237,19 @@ export default {
 <style lang="scss" scoped>
 @import '@/static/app-theme.scss';
 
-.container { min-height: 100vh; background: $app-bg; padding-bottom: 60rpx; }
+.container {
+	min-height: 100vh;
+	background: $app-bg;
+	padding-bottom: 60rpx;
+}
 
-.card { background: $app-card-bg; border-radius: $app-radius; padding: 28rpx; margin: 24rpx; box-shadow: $app-shadow; }
+.card {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	padding: 28rpx;
+	margin: 24rpx;
+	box-shadow: $app-shadow;
+}
 
 /* 日期选择器 */
 .date-picker {
@@ -284,6 +326,10 @@ export default {
 	margin-top: 8rpx;
 }
 
+.tab-day.today {
+	color: $app-primary;
+}
+
 .date-tab.active .tab-week,
 .date-tab.active .tab-day {
 	color: $app-primary;
@@ -324,18 +370,71 @@ export default {
 }
 
 /* 用药项 */
+.empty .empty-tip {
+	display: block;
+	text-align: center;
+	padding: 40rpx 0;
+}
+
 .item {
 	margin-top: 0;
 }
 
-.empty-tip { font-size: 28rpx; color: $app-text-muted; display: block; text-align: center; padding: 40rpx 0; }
-.item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; padding-bottom: 16rpx; border-bottom: 1rpx solid #f0f0f0; }
-.name { font-size: 32rpx; font-weight: bold; color: $app-text; }
-.date { font-size: 24rpx; color: $app-text-muted; }
-.item-body { font-size: 28rpx; color: $app-text-secondary; margin-bottom: 12rpx; display: flex; }
-.item-body .label { color: $app-text-muted; min-width: 160rpx; }
-.item-body .value { color: $app-text; flex: 1; }
-.item-body .highlight { color: $app-primary; font-weight: 500; }
-.item-footer { margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #f0f0f0; }
-.doctor { font-size: 24rpx; color: $app-text-secondary; }
+.empty-tip {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
+
+.item-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20rpx;
+	padding-bottom: 16rpx;
+	border-bottom: 1rpx solid #f0f0f0;
+}
+
+.name {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: $app-text;
+}
+
+.date {
+	font-size: 24rpx;
+	color: $app-text-muted;
+}
+
+.item-body {
+	font-size: 28rpx;
+	color: $app-text-secondary;
+	margin-bottom: 12rpx;
+	display: flex;
+}
+
+.item-body .label {
+	color: $app-text-muted;
+	min-width: 160rpx;
+}
+
+.item-body .value {
+	color: $app-text;
+	flex: 1;
+}
+
+.item-body .highlight {
+	color: $app-primary;
+	font-weight: 500;
+}
+
+.item-footer {
+	margin-top: 16rpx;
+	padding-top: 16rpx;
+	border-top: 1rpx solid #f0f0f0;
+}
+
+.doctor {
+	font-size: 24rpx;
+	color: $app-text-secondary;
+}
 </style>
