@@ -47,6 +47,25 @@
 				<view class="med-body">剂量：{{ item.dosage }}{{ item.unit }} 频率：{{ item.frequency }} 途径：{{ item.route }}</view>
 			</view>
 		</view>
+
+		<!-- 外院病历 -->
+		<view class="section card">
+			<view class="section-header">
+				<text class="section-title">外院病历</text>
+				<text class="add-btn" @click="navTo('/pages/patient/upload-external/upload-external')">+上传</text>
+			</view>
+			<text class="empty-tip" v-if="!externalRecords.length">暂无外院病历</text>
+			<view class="external-item" v-for="(item, i) in externalRecords" :key="i" @click="showExternalDetail(item)">
+				<view class="external-head">
+					<text class="external-date">{{ item.date }}</text>
+					<text class="external-hospital" v-if="item.hospital">{{ item.hospital }}</text>
+				</view>
+				<text class="external-content">{{ item.content || item.notes || '无内容' }}</text>
+				<view class="external-images" v-if="item.attachments">
+					<image v-for="(img, idx) in item.attachments.split(',')" :key="idx" :src="img" mode="aspectFill" class="thumb-img" />
+				</view>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -76,7 +95,8 @@ export default {
 				allergyHistory: ''
 			},
 			examinations: [],
-			medications: []
+			medications: [],
+			externalRecords: []
 		};
 	},
 	onLoad() {
@@ -150,6 +170,23 @@ export default {
 					{ medicineName: '甲钴胺片', startDate: '2025-02-20', dosage: '0.5mg', unit: '/次', frequency: '一日三次', route: '口服' }
 				];
 			}
+
+			// 获取外院病历
+			try {
+				const extRes = await getMedicalRecordList({ pageNum: 1, pageSize: 20, type: '外院病历' });
+				if (extRes && extRes.list) {
+					this.externalRecords = extRes.list.map(r => ({
+						id: r.id,
+						date: r.date ? r.date.split('T')[0] : '',
+						hospital: r.hospital || '',
+						content: r.content || '',
+						notes: r.notes || '',
+						attachments: r.attachments || ''
+					}));
+				}
+			} catch (e) {
+				console.log('暂无外院病历');
+			}
 		},
 		formatIdCard(v) {
 			if (!v) return '';
@@ -161,6 +198,13 @@ export default {
 		},
 		navTo(url) {
 			uni.navigateTo({ url });
+		},
+		showExternalDetail(item) {
+			uni.showModal({
+				title: '外院病历详情',
+				content: item.content || item.notes || '暂无内容',
+				showCancel: false
+			});
 		}
 	}
 };
@@ -187,4 +231,14 @@ export default {
 .med-name { font-size: 30rpx; font-weight: bold; color: #333; }
 .med-date { font-size: 24rpx; color: #999; }
 .med-body { font-size: 26rpx; color: #666; }
+
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
+.add-btn { font-size: 26rpx; color: #0D9488; }
+.external-item { background: #f8f8f8; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
+.external-head { display: flex; justify-content: space-between; margin-bottom: 12rpx; }
+.external-date { font-size: 26rpx; color: #999; }
+.external-hospital { font-size: 26rpx; color: #0D9488; }
+.external-content { font-size: 28rpx; color: #333; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.external-images { display: flex; gap: 12rpx; margin-top: 12rpx; flex-wrap: wrap; }
+.thumb-img { width: 100rpx; height: 100rpx; border-radius: 8rpx; }
 </style>

@@ -78,10 +78,44 @@ export const del = (url, data) => {
   return request({ url, method: 'DELETE', data })
 }
 
+// 文件上传
+export const uploadFile = (filePath) => {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('token')
+    const role = uni.getStorageSync('role')
+    const userInfo = uni.getStorageSync('userInfo')
+
+    uni.uploadFile({
+      url: config.BASE_URL + '/file/upload',
+      filePath: filePath,
+      name: 'file',
+      header: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'X-User-Role': role || '',
+        'X-User-Id': userInfo ? userInfo.id : ''
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          const data = JSON.parse(res.data)
+          if (data.code === 200 || data.code === 0) {
+            resolve(data.data)
+          } else {
+            reject(new Error(data.message || '上传失败'))
+          }
+        } else {
+          reject(new Error('上传失败'))
+        }
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
 export default {
   request,
   get,
   post,
   put,
-  del
+  del,
+  uploadFile
 }

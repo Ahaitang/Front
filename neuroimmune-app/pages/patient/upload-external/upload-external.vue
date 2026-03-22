@@ -49,11 +49,13 @@
 <script>
 import { createMedicalRecord } from '@/api/medicalRecord.js'
 import { parseMedicalRecord } from '@/api/ocr.js'
+import { uploadFile } from '@/api/request.js'
 
 export default {
 	data() {
 		return {
 			images: [],
+			uploadedUrls: [], // 已上传的URL
 			content: '',
 			remark: '',
 			loading: false
@@ -98,6 +100,21 @@ export default {
 				uni.hideLoading()
 			}
 		},
+		async uploadImages() {
+			// 上传所有图片到服务器
+			const urls = []
+			for (const path of this.images) {
+				try {
+					const res = await uploadFile(path)
+					if (res && res.url) {
+						urls.push(res.url)
+					}
+				} catch (e) {
+					console.error('上传失败:', e)
+				}
+			}
+			return urls
+		},
 		async submit() {
 			if (!this.content.trim() && !this.images.length) {
 				uni.showToast({ title: '请上传图片或输入内容', icon: 'none' })
@@ -106,13 +123,21 @@ export default {
 
 			this.loading = true
 			try {
+				// 先上传图片
+				let attachments = []
+				if (this.images.length) {
+					uni.showLoading({ title: '上传图片中...' })
+					attachments = await this.uploadImages()
+					uni.hideLoading()
+				}
+
 				const userInfo = uni.getStorageSync('userInfo') || {}
 				const data = {
 					patientId: userInfo.id,
 					patientName: userInfo.name,
 					type: '外院病历',
 					content: this.content,
-					attachments: this.images.join(','),
+					attachments: attachments.join(','),
 					notes: this.remark
 				}
 
