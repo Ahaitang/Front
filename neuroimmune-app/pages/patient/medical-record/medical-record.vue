@@ -66,6 +66,28 @@
 			</view>
 		</view>
 
+		<!-- 本院病历 -->
+		<view class="section card">
+			<view class="section-header">
+				<text class="section-title">本院病历</text>
+			</view>
+			<text class="empty-tip" v-if="!hospitalRecords.length">暂无本院病历</text>
+			<view class="record-item" v-for="(item, i) in hospitalRecords" :key="i" @click="showRecordDetail(item)">
+				<view class="record-head">
+					<view class="record-left">
+						<text class="record-type">{{ item.type || '门诊病历' }}</text>
+						<text class="record-date">{{ item.date }}</text>
+					</view>
+				</view>
+				<view class="record-info" v-if="item.department || item.doctorName">
+					<text class="info-tag" v-if="item.department">{{ item.department }}</text>
+					<text class="info-tag" v-if="item.doctorName">{{ item.doctorName }}</text>
+				</view>
+				<text class="record-diagnosis" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
+				<text class="record-content">{{ item.content || '无内容' }}</text>
+			</view>
+		</view>
+
 		<!-- 外院病历 -->
 		<view class="section card">
 			<view class="section-header">
@@ -127,6 +149,7 @@ export default {
 			},
 			examinations: [],
 			medications: [],
+			hospitalRecords: [],
 			externalRecords: []
 		};
 	},
@@ -222,16 +245,19 @@ export default {
 				];
 			}
 
-			// 获取外院病历
+			// 获取外院病历和本院病历
 			try {
-				const extParams = { pageNum: 1, pageSize: 20, type: '外院病历' }
-				if (this.startDate) extParams.startDate = this.startDate
-				if (this.endDate) extParams.endDate = this.endDate
-				const extRes = await getMedicalRecordList(extParams);
-				if (extRes && extRes.list) {
-					this.externalRecords = extRes.list.map(r => ({
+				// 获取所有病历
+				const allParams = { pageNum: 1, pageSize: 50 }
+				if (this.startDate) allParams.startDate = this.startDate
+				if (this.endDate) allParams.endDate = this.endDate
+				const allRes = await getMedicalRecordList(allParams)
+
+				if (allRes && allRes.list) {
+					const allRecords = allRes.list.map(r => ({
 						id: r.id,
-						date: r.date ? r.date.split('T')[0] : '',
+						date: r.date ? (typeof r.date === 'string' ? r.date.split('T')[0] : r.date) : '',
+						type: r.type || '',
 						hospital: r.hospital || '',
 						department: r.department || '',
 						doctorName: r.doctorName || '',
@@ -239,10 +265,14 @@ export default {
 						content: r.content || '',
 						notes: r.notes || '',
 						attachments: r.attachments || ''
-					}));
+					}))
+
+					// 区分本院病历和外院病历
+					this.externalRecords = allRecords.filter(r => r.type === '外院病历')
+					this.hospitalRecords = allRecords.filter(r => r.type !== '外院病历')
 				}
 			} catch (e) {
-				console.log('暂无外院病历');
+				console.log('获取病历记录失败');
 			}
 		},
 		formatIdCard(v) {
@@ -298,6 +328,20 @@ export default {
 					}
 				}
 			})
+		},
+		showRecordDetail(item) {
+			let content = `就诊日期：${item.date || '未知'}\n`
+			content += `类型：${item.type || '门诊病历'}\n`
+			if (item.department) content += `科室：${item.department}\n`
+			if (item.doctorName) content += `医生：${item.doctorName}\n`
+			if (item.diagnosis) content += `诊断：${item.diagnosis}\n`
+			content += `\n${item.content || '暂无内容'}`
+
+			uni.showModal({
+				title: '本院病历详情',
+				content: content,
+				showCancel: false
+			});
 		}
 	}
 };
@@ -336,6 +380,16 @@ export default {
 .med-name { font-size: 30rpx; font-weight: bold; color: $app-text; }
 .med-date { font-size: 24rpx; color: $app-text-muted; }
 .med-body { font-size: 26rpx; color: $app-text-secondary; }
+
+/* 本院病历样式 */
+.record-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
+.record-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
+.record-left { display: flex; align-items: center; gap: 16rpx; }
+.record-type { font-size: 26rpx; color: #fff; background: $app-primary; padding: 4rpx 16rpx; border-radius: 6rpx; }
+.record-date { font-size: 26rpx; color: $app-text-muted; }
+.record-info { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
+.record-diagnosis { font-size: 28rpx; color: $app-text; margin-bottom: 8rpx; font-weight: 500; }
+.record-content { font-size: 28rpx; color: $app-text-secondary; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .add-btn { font-size: 26rpx; color: $app-primary; }
