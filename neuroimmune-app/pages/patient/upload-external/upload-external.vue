@@ -2,7 +2,18 @@
 	<view class="container">
 		<view class="card">
 			<view class="tips">
-				<text>{{ isEdit ? '修改外院病历信息' : '上传您在其他医院的就诊资料（检查报告、病历等），便于主治医生全面了解您的病情。' }}</text>
+				<text>{{ tipsText }}</text>
+			</view>
+
+			<!-- 病历类型 -->
+			<view class="section">
+				<text class="section-title">病历类型 <text class="required">*</text></text>
+				<picker :value="typeIndex" :range="typeOptions" range-key="label" @change="onTypeChange">
+					<view class="picker-input">
+						<text class="picker-value">{{ typeOptions[typeIndex].label }}</text>
+						<text class="app-icon uniui-arrowright"></text>
+					</view>
+				</picker>
 			</view>
 
 			<!-- 就诊日期 -->
@@ -17,7 +28,7 @@
 			</view>
 
 			<!-- 医院 -->
-			<view class="section">
+			<view class="section" v-if="isExternal">
 				<text class="section-title">就诊医院</text>
 				<input class="input" v-model="form.hospital" placeholder="请输入医院名称" />
 			</view>
@@ -92,7 +103,13 @@ export default {
 			recordId: null,
 			isEdit: false,
 			images: [],
-			existingAttachments: [], // 已有的图片URL
+			existingAttachments: [],
+			typeIndex: 0,
+			typeOptions: [
+				{ label: '外院病历', value: '外院病历' },
+				{ label: '门诊病历', value: '门诊病历' },
+				{ label: '住院病历', value: '住院病历' }
+			],
 			form: {
 				date: '',
 				hospital: '',
@@ -105,15 +122,30 @@ export default {
 			loading: false
 		}
 	},
+	computed: {
+		isExternal() {
+			return this.typeOptions[this.typeIndex].value === '外院病历'
+		},
+		tipsText() {
+			if (this.isEdit) {
+				return this.isExternal ? '修改外院病历信息' : '修改本院病历信息'
+			}
+			return '上传您的就诊资料，便于主治医生全面了解您的病情。'
+		}
+	},
 	onLoad(options) {
 		if (options.id) {
 			this.recordId = options.id
 			this.isEdit = true
 			this.loadRecord()
 		} else {
-			// 默认今天
 			const today = new Date()
 			this.form.date = this.formatDate(today)
+		}
+		// 如果传入了 type 参数，设置类型
+		if (options.type) {
+			const idx = this.typeOptions.findIndex(t => t.value === options.type)
+			if (idx >= 0) this.typeIndex = idx
 		}
 	},
 	methods: {
@@ -123,18 +155,24 @@ export default {
 			const d = String(date.getDate()).padStart(2, '0')
 			return `${y}-${m}-${d}`
 		},
+		onTypeChange(e) {
+			this.typeIndex = e.detail.value
+		},
 		async loadRecord() {
 			try {
 				uni.showLoading({ title: '加载中...' })
 				const res = await getMedicalRecordById(this.recordId)
 				if (res) {
-					this.form.date = res.date ? res.date.split('T')[0] : ''
+					this.form.date = res.date ? (typeof res.date === 'string' ? res.date.split('T')[0] : res.date) : ''
 					this.form.hospital = res.hospital || ''
 					this.form.department = res.department || ''
 					this.form.doctorName = res.doctorName || ''
 					this.form.diagnosis = res.diagnosis || ''
 					this.form.content = res.content || ''
 					this.form.remark = res.notes || ''
+					// 设置类型
+					const idx = this.typeOptions.findIndex(t => t.value === res.type)
+					if (idx >= 0) this.typeIndex = idx
 					// 已有图片
 					if (res.attachments) {
 						this.existingAttachments = res.attachments.split(',').filter(url => url)
@@ -188,12 +226,10 @@ export default {
 		async uploadImages() {
 			const urls = []
 			for (const path of this.images) {
-				// 如果是已有图片URL，直接使用
 				if (this.existingAttachments.includes(path)) {
 					urls.push(path)
 					continue
 				}
-				// 新图片上传
 				try {
 					const res = await uploadFile(path)
 					if (res && res.url) {
@@ -217,7 +253,6 @@ export default {
 
 			this.loading = true
 			try {
-				// 上传图片
 				let attachments = []
 				if (this.images.length) {
 					uni.showLoading({ title: '上传图片中...' })
@@ -229,7 +264,7 @@ export default {
 				const data = {
 					patientId: userInfo.id,
 					patientName: userInfo.name,
-					type: '外院病历',
+					type: this.typeOptions[this.typeIndex].value,
 					date: this.form.date,
 					hospital: this.form.hospital,
 					department: this.form.department,

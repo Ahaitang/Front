@@ -72,19 +72,25 @@
 				<text class="section-title">本院病历</text>
 			</view>
 			<text class="empty-tip" v-if="!hospitalRecords.length">暂无本院病历</text>
-			<view class="record-item" v-for="(item, i) in hospitalRecords" :key="i" @click="showRecordDetail(item)">
+			<view class="record-item" v-for="(item, i) in hospitalRecords" :key="i">
 				<view class="record-head">
 					<view class="record-left">
 						<text class="record-type">{{ item.type || '门诊病历' }}</text>
 						<text class="record-date">{{ item.date }}</text>
 					</view>
+					<view class="record-actions">
+						<text class="action-btn edit" @click="editHospitalRecord(item)">编辑</text>
+						<text class="action-btn delete" @click="deleteHospitalRecord(item)">删除</text>
+					</view>
 				</view>
-				<view class="record-info" v-if="item.department || item.doctorName">
-					<text class="info-tag" v-if="item.department">{{ item.department }}</text>
-					<text class="info-tag" v-if="item.doctorName">{{ item.doctorName }}</text>
+				<view class="record-body" @click="showRecordDetail(item)">
+					<view class="record-info" v-if="item.department || item.doctorName">
+						<text class="info-tag" v-if="item.department">{{ item.department }}</text>
+						<text class="info-tag" v-if="item.doctorName">{{ item.doctorName }}</text>
+					</view>
+					<text class="record-diagnosis" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
+					<text class="record-content">{{ item.content || '无内容' }}</text>
 				</view>
-				<text class="record-diagnosis" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
-				<text class="record-content">{{ item.content || '无内容' }}</text>
 			</view>
 		</view>
 
@@ -342,6 +348,28 @@ export default {
 				content: content,
 				showCancel: false
 			});
+		},
+		editHospitalRecord(item) {
+			uni.navigateTo({
+				url: '/pages/patient/upload-external/upload-external?id=' + item.id + '&type=' + (item.type || '门诊病历')
+			})
+		},
+		deleteHospitalRecord(item) {
+			uni.showModal({
+				title: '确认删除',
+				content: '确定要删除这条本院病历吗？',
+				success: async (res) => {
+					if (res.confirm) {
+						try {
+							await deleteMedicalRecord(item.id)
+							uni.showToast({ title: '删除成功', icon: 'success' })
+							this.loadData()
+						} catch (e) {
+							uni.showToast({ title: '删除失败', icon: 'none' })
+						}
+					}
+				}
+			})
 		}
 	}
 };
@@ -387,6 +415,8 @@ export default {
 .record-left { display: flex; align-items: center; gap: 16rpx; }
 .record-type { font-size: 26rpx; color: #fff; background: $app-primary; padding: 4rpx 16rpx; border-radius: 6rpx; }
 .record-date { font-size: 26rpx; color: $app-text-muted; }
+.record-actions { display: flex; gap: 20rpx; }
+.record-body { margin-top: 8rpx; }
 .record-info { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
 .record-diagnosis { font-size: 28rpx; color: $app-text; margin-bottom: 8rpx; font-weight: 500; }
 .record-content { font-size: 28rpx; color: $app-text-secondary; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
