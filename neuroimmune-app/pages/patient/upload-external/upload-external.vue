@@ -5,6 +5,41 @@
 				<text>上传您在其他医院的就诊资料（检查报告、病历等），便于主治医生全面了解您的病情。</text>
 			</view>
 
+			<!-- 就诊日期 -->
+			<view class="section">
+				<text class="section-title">就诊日期 <text class="required">*</text></text>
+				<picker mode="date" :value="form.date" @change="onDateChange">
+					<view class="picker-input">
+						<text class="picker-value">{{ form.date || '请选择日期' }}</text>
+						<text class="app-icon uniui-arrowright"></text>
+					</view>
+				</picker>
+			</view>
+
+			<!-- 医院 -->
+			<view class="section">
+				<text class="section-title">就诊医院</text>
+				<input class="input" v-model="form.hospital" placeholder="请输入医院名称" />
+			</view>
+
+			<!-- 科室 -->
+			<view class="section">
+				<text class="section-title">科室</text>
+				<input class="input" v-model="form.department" placeholder="请输入科室" />
+			</view>
+
+			<!-- 医生姓名 -->
+			<view class="section">
+				<text class="section-title">医生姓名</text>
+				<input class="input" v-model="form.doctorName" placeholder="请输入医生姓名" />
+			</view>
+
+			<!-- 诊断结果 -->
+			<view class="section">
+				<text class="section-title">诊断结果</text>
+				<textarea class="textarea" v-model="form.diagnosis" placeholder="请输入诊断结果" />
+			</view>
+
 			<!-- 图片上传区域 -->
 			<view class="section">
 				<text class="section-title">上传图片</text>
@@ -20,7 +55,7 @@
 				</view>
 			</view>
 
-			<!-- 文字内容 -->
+			<!-- 资料内容 -->
 			<view class="section">
 				<view class="section-header">
 					<text class="section-title">资料内容</text>
@@ -28,17 +63,17 @@
 				</view>
 				<textarea
 					class="textarea"
-					v-model="content"
+					v-model="form.content"
 					placeholder="请输入或粘贴就诊资料内容，也可上传图片后点击【解析图片】自动识别"
 					:maxlength="2000"
 				/>
-				<text class="char-count">{{ content.length }}/2000</text>
+				<text class="char-count">{{ form.content.length }}/2000</text>
 			</view>
 
 			<!-- 备注 -->
 			<view class="section">
 				<text class="section-title">备注（选填）</text>
-				<input class="input" v-model="remark" placeholder="如：2024年某院检查报告" />
+				<input class="input" v-model="form.remark" placeholder="其他需要说明的信息" />
 			</view>
 
 			<button class="btn primary" :loading="loading" @click="submit">提交</button>
@@ -55,20 +90,38 @@ export default {
 	data() {
 		return {
 			images: [],
-			uploadedUrls: [], // 已上传的URL
-			content: '',
-			remark: '',
+			form: {
+				date: '',
+				hospital: '',
+				department: '',
+				doctorName: '',
+				diagnosis: '',
+				content: '',
+				remark: ''
+			},
 			loading: false
 		}
 	},
+	onLoad() {
+		// 默认今天
+		const today = new Date()
+		this.form.date = this.formatDate(today)
+	},
 	methods: {
+		formatDate(date) {
+			const y = date.getFullYear()
+			const m = String(date.getMonth() + 1).padStart(2, '0')
+			const d = String(date.getDate()).padStart(2, '0')
+			return `${y}-${m}-${d}`
+		},
+		onDateChange(e) {
+			this.form.date = e.detail.value
+		},
 		chooseImage() {
 			uni.chooseImage({
 				count: 9 - this.images.length,
 				success: (res) => {
 					this.images = [...this.images, ...res.tempFilePaths]
-					// 上传图片后自动解析
-					this.parseImages()
 				}
 			})
 		},
@@ -85,11 +138,10 @@ export default {
 			try {
 				const res = await parseMedicalRecord(this.images)
 				if (res && res.content) {
-					// 追加到现有内容后
-					if (this.content) {
-						this.content += '\n\n' + res.content
+					if (this.form.content) {
+						this.form.content += '\n\n' + res.content
 					} else {
-						this.content = res.content
+						this.form.content = res.content
 					}
 					uni.showToast({ title: '解析成功', icon: 'success' })
 				}
@@ -101,7 +153,6 @@ export default {
 			}
 		},
 		async uploadImages() {
-			// 上传所有图片到服务器
 			const urls = []
 			for (const path of this.images) {
 				try {
@@ -116,14 +167,18 @@ export default {
 			return urls
 		},
 		async submit() {
-			if (!this.content.trim() && !this.images.length) {
-				uni.showToast({ title: '请上传图片或输入内容', icon: 'none' })
+			if (!this.form.date) {
+				uni.showToast({ title: '请选择就诊日期', icon: 'none' })
+				return
+			}
+			if (!this.form.content.trim() && !this.images.length && !this.form.diagnosis) {
+				uni.showToast({ title: '请填写诊断或上传资料', icon: 'none' })
 				return
 			}
 
 			this.loading = true
 			try {
-				// 先上传图片
+				// 上传图片
 				let attachments = []
 				if (this.images.length) {
 					uni.showLoading({ title: '上传图片中...' })
@@ -136,9 +191,14 @@ export default {
 					patientId: userInfo.id,
 					patientName: userInfo.name,
 					type: '外院病历',
-					content: this.content,
+					date: this.form.date,
+					hospital: this.form.hospital,
+					department: this.form.department,
+					doctorName: this.form.doctorName,
+					diagnosis: this.form.diagnosis,
+					content: this.form.content,
 					attachments: attachments.join(','),
-					notes: this.remark
+					notes: this.form.remark
 				}
 
 				await createMedicalRecord(data)
@@ -162,6 +222,7 @@ export default {
 	min-height: 100vh;
 	background: $app-bg;
 	padding: 24rpx;
+	padding-bottom: 60rpx;
 }
 
 .card {
@@ -179,7 +240,7 @@ export default {
 }
 
 .section {
-	margin-bottom: 32rpx;
+	margin-bottom: 28rpx;
 }
 
 .section-header {
@@ -193,7 +254,7 @@ export default {
 	font-size: 28rpx;
 	color: $app-text;
 	font-weight: 500;
-	margin-bottom: 16rpx;
+	margin-bottom: 12rpx;
 	display: block;
 }
 
@@ -206,12 +267,68 @@ export default {
 	color: $app-primary;
 }
 
+.required {
+	color: #EF4444;
+}
+
+.picker-input {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 88rpx;
+	padding: 0 24rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
+	background: $app-bg;
+}
+
+.picker-value {
+	font-size: 28rpx;
+	color: $app-text;
+}
+
+.picker-input .app-icon {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
+
+.input {
+	width: 100%;
+	height: 88rpx;
+	padding: 0 24rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
+	font-size: 28rpx;
+	color: $app-text;
+	background: $app-bg;
+	box-sizing: border-box;
+}
+
+.textarea {
+	width: 100%;
+	min-height: 160rpx;
+	padding: 20rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
+	font-size: 28rpx;
+	color: $app-text;
+	background: $app-bg;
+	box-sizing: border-box;
+}
+
+.char-count {
+	display: block;
+	text-align: right;
+	font-size: 24rpx;
+	color: $app-text-muted;
+	margin-top: 8rpx;
+}
+
 .upload-area {
 	border: 2rpx dashed $app-border;
 	border-radius: $app-radius;
 	padding: 48rpx;
 	text-align: center;
-	margin-bottom: 24rpx;
 }
 
 .upload-icon {
@@ -231,6 +348,7 @@ export default {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 16rpx;
+	margin-top: 20rpx;
 }
 
 .image-item {
@@ -259,38 +377,6 @@ export default {
 	justify-content: center;
 	font-size: 28rpx;
 	line-height: 1;
-}
-
-.textarea {
-	width: 100%;
-	min-height: 240rpx;
-	padding: 20rpx;
-	border: 2rpx solid $app-border;
-	border-radius: $app-radius;
-	font-size: 28rpx;
-	color: $app-text;
-	background: $app-bg;
-	box-sizing: border-box;
-}
-
-.char-count {
-	display: block;
-	text-align: right;
-	font-size: 24rpx;
-	color: $app-text-muted;
-	margin-top: 8rpx;
-}
-
-.input {
-	width: 100%;
-	height: 88rpx;
-	padding: 0 24rpx;
-	border: 2rpx solid $app-border;
-	border-radius: $app-radius;
-	font-size: 28rpx;
-	color: $app-text;
-	background: $app-bg;
-	box-sizing: border-box;
 }
 
 .btn {

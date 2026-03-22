@@ -78,9 +78,14 @@
 					<text class="external-date">{{ item.date }}</text>
 					<text class="external-hospital" v-if="item.hospital">{{ item.hospital }}</text>
 				</view>
+				<view class="external-info" v-if="item.department || item.doctorName">
+					<text class="info-tag" v-if="item.department">{{ item.department }}</text>
+					<text class="info-tag" v-if="item.doctorName">{{ item.doctorName }}医生</text>
+				</view>
+				<text class="external-diagnosis" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
 				<text class="external-content">{{ item.content || item.notes || '无内容' }}</text>
 				<view class="external-images" v-if="item.attachments">
-					<image v-for="(img, idx) in item.attachments.split(',')" :key="idx" :src="img" mode="aspectFill" class="thumb-img" />
+					<image v-for="(img, idx) in item.attachments.split(',')" :key="idx" :src="img" mode="aspectFill" class="thumb-img" @click.stop="previewImage(img, item.attachments)" />
 				</view>
 			</view>
 		</view>
@@ -222,6 +227,9 @@ export default {
 						id: r.id,
 						date: r.date ? r.date.split('T')[0] : '',
 						hospital: r.hospital || '',
+						department: r.department || '',
+						doctorName: r.doctorName || '',
+						diagnosis: r.diagnosis || '',
 						content: r.content || '',
 						notes: r.notes || '',
 						attachments: r.attachments || ''
@@ -243,11 +251,25 @@ export default {
 			uni.navigateTo({ url });
 		},
 		showExternalDetail(item) {
+			let content = `就诊日期：${item.date || '未知'}\n`
+			if (item.hospital) content += `医院：${item.hospital}\n`
+			if (item.department) content += `科室：${item.department}\n`
+			if (item.doctorName) content += `医生：${item.doctorName}\n`
+			if (item.diagnosis) content += `诊断：${item.diagnosis}\n`
+			content += `\n${item.content || item.notes || '暂无内容'}`
+
 			uni.showModal({
 				title: '外院病历详情',
-				content: item.content || item.notes || '暂无内容',
+				content: content,
 				showCancel: false
 			});
+		},
+		previewImage(current, attachments) {
+			const urls = attachments.split(',').filter(url => url)
+			uni.previewImage({
+				current: current,
+				urls: urls
+			})
 		}
 	}
 };
@@ -290,10 +312,13 @@ export default {
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .add-btn { font-size: 26rpx; color: $app-primary; }
 .external-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.external-head { display: flex; justify-content: space-between; margin-bottom: 12rpx; }
+.external-head { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
 .external-date { font-size: 26rpx; color: $app-text-muted; }
 .external-hospital { font-size: 26rpx; color: $app-primary; }
-.external-content { font-size: 28rpx; color: $app-text; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.external-info { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
+.info-tag { font-size: 24rpx; color: $app-text-secondary; background: rgba($app-primary, 0.1); padding: 4rpx 12rpx; border-radius: 6rpx; }
+.external-diagnosis { font-size: 28rpx; color: $app-text; margin-bottom: 8rpx; font-weight: 500; }
+.external-content { font-size: 28rpx; color: $app-text-secondary; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .external-images { display: flex; gap: 12rpx; margin-top: 12rpx; flex-wrap: wrap; }
 .thumb-img { width: 100rpx; height: 100rpx; border-radius: 8rpx; }
 </style>
