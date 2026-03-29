@@ -205,16 +205,43 @@ export default {
 				return
 			}
 
-			uni.showLoading({ title: '解析中...' })
+			uni.showLoading({ title: '上传并解析中...' })
 			try {
-				const res = await parseMedicalRecord(this.images)
-				if (res && res.content) {
-					if (this.form.content) {
-						this.form.content += '\n\n' + res.content
+				// 先上传图片获取真实URL
+				const urls = []
+				for (const path of this.images) {
+					if (this.existingAttachments.includes(path)) {
+						// 已上传过的图片直接使用
+						urls.push(path)
 					} else {
-						this.form.content = res.content
+						// 上传临时图片到服务器
+						const res = await uploadFile(path)
+						if (res && res.url) {
+							urls.push(res.url)
+							// 更新images显示为真实URL
+							const idx = this.images.indexOf(path)
+							if (idx >= 0) {
+								this.images[idx] = res.url
+								// 同步更新existingAttachments避免重复上传
+								this.existingAttachments.push(res.url)
+							}
+						}
 					}
-					uni.showToast({ title: '解析成功', icon: 'success' })
+				}
+
+				// 用真实URL调用OCR识别
+				if (urls.length > 0) {
+					const res = await parseMedicalRecord(urls)
+					if (res && res.content) {
+						if (this.form.content) {
+							this.form.content += '\n\n' + res.content
+						} else {
+							this.form.content = res.content
+						}
+						uni.showToast({ title: '解析成功', icon: 'success' })
+					} else if (res && !res.success) {
+						uni.showToast({ title: res.errorMsg || '识别失败', icon: 'none' })
+					}
 				}
 			} catch (e) {
 				console.error('解析失败:', e)
