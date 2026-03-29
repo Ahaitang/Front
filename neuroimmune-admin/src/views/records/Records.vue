@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getRecordList, deleteRecord as deleteRecordApi } from '@/api'
-import type { MedicalRecord } from '@/api'
+import { Plus, Delete, Upload, Picture } from '@element-plus/icons-vue'
+import { getRecordList, saveRecord, deleteRecord as deleteRecordApi, getPatientList, uploadFile, ocrParseMedical } from '@/api'
+import type { MedicalRecord, Patient } from '@/api'
 
 const searchForm = ref({
   keyword: '',
@@ -13,6 +14,7 @@ const searchForm = ref({
 })
 
 const tableData = ref<MedicalRecord[]>([])
+const patients = ref<Patient[]>([])
 const loading = ref(false)
 const total = ref(0)
 const pagination = ref({
@@ -21,7 +23,18 @@ const pagination = ref({
 })
 
 const dialogVisible = ref(false)
-const currentRecord = ref<MedicalRecord | null>(null)
+const dialogType = ref<'view' | 'add' | 'edit'>('view')
+const currentRecord = ref<Partial<MedicalRecord>>({})
+const saveLoading = ref(false)
+
+// 图片相关
+const imageList = ref<string[]>([])
+const imagePreviewVisible = ref(false)
+const previewImageUrl = ref('')
+const ocrLoading = ref(false)
+
+// 病历类型选项
+const recordTypes = ['门诊病历', '住院病历', '外院病历']
 
 // 加载数据
 const loadData = async () => {
@@ -46,8 +59,19 @@ const loadData = async () => {
   }
 }
 
+// 加载患者列表
+const loadPatients = async () => {
+  try {
+    const res = await getPatientList({ pageNum: 1, pageSize: 1000 })
+    patients.value = res?.list || []
+  } catch (e) {
+    console.error('加载患者列表失败:', e)
+  }
+}
+
 onMounted(() => {
   loadData()
+  loadPatients()
 })
 
 const handleSearch = () => {
@@ -79,6 +103,35 @@ const handleSizeChange = (size: number) => {
 
 const viewRecord = (row: MedicalRecord) => {
   currentRecord.value = { ...row }
+  // 加载已有图片
+  if (row.attachments) {
+    imageList.value = row.attachments.split(',').filter((url: string) => url)
+  } else {
+    imageList.value = []
+  }
+  dialogType.value = 'view'
+  dialogVisible.value = true
+}
+
+const addRecord = () => {
+  currentRecord.value = {
+    type: '门诊病历',
+    date: new Date().toISOString().split('T')[0]
+  }
+  imageList.value = []
+  dialogType.value = 'add'
+  dialogVisible.value = true
+}
+
+const editRecord = (row: MedicalRecord) => {
+  currentRecord.value = { ...row }
+  // 加载已有图片
+  if (row.attachments) {
+    imageList.value = row.attachments.split(',').filter((url: string) => url)
+  } else {
+    imageList.value = []
+  }
+  dialogType.value = 'edit'
   dialogVisible.value = true
 }
 
@@ -98,9 +151,100 @@ const deleteRecord = (row: MedicalRecord) => {
   }).catch(() => {})
 }
 
+const saveRecordSubmit = async () => {
+  if (!currentRecord.value.patientId) {
+    ElMessage.warning('请选择患者')
+    return
+  }
+  if (!currentRecord.value.diagnosis) {
+    ElMessage.warning('请输入诊断结果')
+    return
+  }
+  // 保存图片URL列表
+  currentRecord.value.attachments = imageList.value.join(',')
+
+  saveLoading.value = true
+  try {
+    await saveRecord(currentRecord.value)
+    ElMessage.success(dialogType.value === 'add' ? '添加成功' : '保存成功')
+    dialogVisible.value = false
+    loadData()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+// 选择患者
+const handlePatientSelect = (patientId: number) => {
+  const patient = patients.value.find(p => p.id === patientId)
+  if (patient && currentRecord.value) {
+    currentRecord.value.patientId = patientId
+    currentRecord.value.patientName = patient.name
+  }
+}
+
+// 图片上传
+const handleImageUpload = async (options: any) => {
+  const { file } = options
+  try {
+    ElMessage.info('正在上传图片...')
+    const res = await uploadFile(file)
+    if (res && res.url) {
+      imageList.value.push(res.url)
+      ElMessage.success('上传成功')
+    }
+  } catch (e) {
+    ElMessage.error('上传失败')
+  }
+}
+
+// 删除图片
+const removeImage = (index: number) => {
+  imageList.value.splice(index, 1)
+}
+
+// 预览图片
+const previewImage = (url: string) => {
+  previewImageUrl.value = url
+  imagePreviewVisible.value = true
+}
+
+// OCR识别
+const handleOcrParse = async () => {
+  if (imageList.value.length === 0) {
+    ElMessage.warning('请先上传图片')
+    return
+  }
+
+  ocrLoading.value = true
+  try {
+    const res = await ocrParseMedical(imageList.value)
+    if (res && res.success && res.content) {
+      // 将识别内容追加到病历内容
+      if (currentRecord.value.content) {
+        currentRecord.value.content += '\n\n' + res.content
+      } else {
+        currentRecord.value.content = res.content
+      }
+      ElMessage.success('识别成功')
+    } else {
+      ElMessage.warning(res.errorMsg || '识别失败，请手动输入')
+    }
+  } catch (e) {
+    ElMessage.error('识别失败')
+  } finally {
+    ocrLoading.value = false
+  }
+}
+
 const formatDate = (date: string) => {
   return date || '-'
 }
+
+// 判断是否有图片
+const hasImages = computed(() => imageList.value.length > 0)
 </script>
 
 <template>
@@ -137,6 +281,7 @@ const formatDate = (date: string) => {
         <el-form-item>
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
+          <el-button type="success" @click="addRecord">新增病历</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -156,14 +301,23 @@ const formatDate = (date: string) => {
         <el-table-column prop="department" label="科室" min-width="100" />
         <el-table-column prop="doctorName" label="医生" min-width="100" />
         <el-table-column prop="date" label="日期" min-width="120" />
+        <el-table-column label="图片" width="80">
+          <template #default="{ row }">
+            <el-tag v-if="row.attachments" type="success" size="small">
+              <el-icon><Picture /></el-icon>
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="创建时间" min-width="160">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="viewRecord(row)">查看</el-button>
+            <el-button type="primary" link @click="editRecord(row)">编辑</el-button>
             <el-button type="danger" link @click="deleteRecord(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -183,26 +337,154 @@ const formatDate = (date: string) => {
       </div>
     </div>
 
-    <!-- 详情对话框 -->
-    <el-dialog v-model="dialogVisible" title="病历详情" width="600px">
+    <!-- 详情/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogType === 'view' ? '病历详情' : dialogType === 'add' ? '新增病历' : '编辑病历'"
+      width="750px"
+    >
       <template v-if="currentRecord">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="ID">{{ currentRecord.id }}</el-descriptions-item>
-          <el-descriptions-item label="患者">{{ currentRecord.patientName }}</el-descriptions-item>
-          <el-descriptions-item label="类型">
-            <el-tag size="small">{{ currentRecord.type }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="诊断">{{ currentRecord.diagnosis }}</el-descriptions-item>
-          <el-descriptions-item label="医院">{{ currentRecord.hospital }}</el-descriptions-item>
-          <el-descriptions-item label="科室">{{ currentRecord.department }}</el-descriptions-item>
-          <el-descriptions-item label="医生">{{ currentRecord.doctorName }}</el-descriptions-item>
-          <el-descriptions-item label="日期">{{ currentRecord.date }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ formatDate(currentRecord.createTime) }}</el-descriptions-item>
-          <el-descriptions-item label="病历内容" :span="2">
-            <div style="white-space: pre-wrap">{{ currentRecord.content }}</div>
-          </el-descriptions-item>
-        </el-descriptions>
+        <el-form :model="currentRecord" label-width="100px" :disabled="dialogType === 'view'">
+          <el-row :gutter="20" v-if="dialogType !== 'view'">
+            <el-col :span="12">
+              <el-form-item label="患者" required>
+                <el-select
+                  v-model="currentRecord.patientId"
+                  placeholder="选择患者"
+                  style="width: 100%"
+                  filterable
+                  @change="handlePatientSelect"
+                >
+                  <el-option
+                    v-for="p in patients"
+                    :key="p.id"
+                    :label="`${p.name} (${p.phone})`"
+                    :value="p.id"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="病历类型">
+                <el-select v-model="currentRecord.type" style="width: 100%">
+                  <el-option v-for="t in recordTypes" :key="t" :label="t" :value="t" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12" v-if="dialogType === 'view'">
+              <el-form-item label="ID">{{ currentRecord.id }}</el-form-item>
+            </el-col>
+            <el-col :span="12" v-if="dialogType === 'view'">
+              <el-form-item label="患者">{{ currentRecord.patientName }}</el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="就诊日期">
+                <el-date-picker
+                  v-model="currentRecord.date"
+                  type="date"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12" v-if="dialogType === 'view'">
+              <el-form-item label="类型">
+                <el-tag size="small">{{ currentRecord.type }}</el-tag>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="医院">
+                <el-input v-model="currentRecord.hospital" placeholder="请输入医院名称" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="科室">
+                <el-input v-model="currentRecord.department" placeholder="请输入科室" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="医生姓名">
+                <el-input v-model="currentRecord.doctorName" placeholder="请输入医生姓名" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-form-item label="诊断结果" required>
+            <el-input v-model="currentRecord.diagnosis" placeholder="请输入诊断结果" />
+          </el-form-item>
+
+          <!-- 图片上传区域 -->
+          <el-form-item label="病历图片">
+            <div class="image-upload-area">
+              <!-- 已上传的图片列表 -->
+              <div class="image-list">
+                <div
+                  v-for="(url, index) in imageList"
+                  :key="index"
+                  class="image-item"
+                >
+                  <el-image
+                    :src="url"
+                    fit="cover"
+                    class="image-thumb"
+                    @click="previewImage(url)"
+                  />
+                  <div v-if="dialogType !== 'view'" class="image-actions">
+                    <el-button
+                      type="danger"
+                      :icon="Delete"
+                      circle
+                      size="small"
+                      @click="removeImage(index)"
+                    />
+                  </div>
+                </div>
+              </div>
+              <!-- 上传按钮 -->
+              <el-upload
+                v-if="dialogType !== 'view'"
+                :show-file-list="false"
+                :http-request="handleImageUpload"
+                accept="image/*"
+              >
+                <el-button type="primary" plain :icon="Plus">上传图片</el-button>
+              </el-upload>
+              <!-- OCR识别按钮 -->
+              <el-button
+                v-if="dialogType !== 'view' && hasImages"
+                type="success"
+                plain
+                :loading="ocrLoading"
+                @click="handleOcrParse"
+                style="margin-left: 10px"
+              >
+                {{ ocrLoading ? '识别中...' : 'OCR识别' }}
+              </el-button>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="病历内容">
+            <el-input v-model="currentRecord.content" type="textarea" :rows="4" placeholder="请输入病历内容，或上传图片后点击OCR识别" />
+          </el-form-item>
+          <el-form-item label="创建时间" v-if="currentRecord.createTime">
+            <el-input :model-value="formatDate(currentRecord.createTime)" disabled />
+          </el-form-item>
+        </el-form>
       </template>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button v-if="dialogType !== 'view'" type="primary" :loading="saveLoading" @click="saveRecordSubmit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 图片预览 -->
+    <el-dialog v-model="imagePreviewVisible" title="图片预览" width="700px">
+      <el-image :src="previewImageUrl" fit="contain" style="width: 100%" />
     </el-dialog>
   </div>
 </template>
@@ -212,5 +494,41 @@ const formatDate = (date: string) => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.image-upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.image-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  overflow: hidden;
+
+  .image-thumb {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .image-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 0 0 0 6px;
+  }
 }
 </style>

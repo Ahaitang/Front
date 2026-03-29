@@ -73,8 +73,8 @@ export const request = {
     return instance.get(url, { params })
   },
 
-  post<T>(url: string, data?: object): Promise<T> {
-    return instance.post(url, data)
+  post<T>(url: string, data?: object, config?: any): Promise<T> {
+    return instance.post(url, data, config)
   },
 
   put<T>(url: string, data?: object): Promise<T> {

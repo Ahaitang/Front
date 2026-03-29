@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getPatientList,
@@ -9,6 +10,8 @@ import {
   getAllDoctors
 } from '@/api'
 import type { Patient, Doctor } from '@/api'
+
+const router = useRouter()
 
 const searchForm = ref({
   keyword: '',
@@ -180,6 +183,11 @@ const formatDate = (date: string) => {
   return date || '-'
 }
 
+// 查看患者详情
+const viewPatientDetail = (row: Patient) => {
+  router.push(`/patients/${row.id}`)
+}
+
 // 修改密码
 const openPasswordDialog = (row: Patient) => {
   passwordForm.value = { id: row.id, password: '' }
@@ -332,8 +340,9 @@ const openImportDialog = () => {
             {{ formatDate(row.updateTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
+            <el-button type="success" link @click="viewPatientDetail(row)">详情</el-button>
             <el-button type="primary" link @click="viewPatient(row)">查看</el-button>
             <el-button type="primary" link @click="editPatient(row)">编辑</el-button>
             <el-button type="warning" link @click="openPasswordDialog(row)">改密</el-button>

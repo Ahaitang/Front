@@ -7,6 +7,7 @@ export interface PageRequest {
   gender?: string
   isRealAuth?: boolean
   doctorId?: number
+  patientId?: number
   type?: string
   startDate?: string
   endDate?: string

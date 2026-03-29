@@ -136,6 +136,29 @@ export const deleteRecord = (id: string | number) => {
   return request.delete(`/records/${id}`)
 }
 
+// 文件上传
+export const uploadFile = async (file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await fetch('http://localhost:8080/api/file/upload', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
+    }
+  })
+  const result = await response.json()
+  if (result.code === 200 && result.data) {
+    return result.data
+  }
+  throw new Error(result.message || '上传失败')
+}
+
+// OCR识别 - 解析病历图片
+export const ocrParseMedical = (images: string[]) => {
+  return request.post<{ success: boolean; content: string; errorMsg?: string }>('/ocr/parse-medical', { images })
+}
+
 // 类型定义
 export interface Patient {
   id: number

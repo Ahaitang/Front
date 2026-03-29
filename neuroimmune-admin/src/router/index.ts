@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '患者管理', icon: 'User' }
       },
       {
+        path: 'patients/:id',
+        name: 'PatientDetail',
+        component: () => import('@/views/patients/PatientDetail.vue'),
+        meta: { title: '患者详情', hidden: true }
+      },
+      {
         path: 'doctors',
         name: 'Doctors',
         component: () => import('@/views/doctors/Doctors.vue'),
