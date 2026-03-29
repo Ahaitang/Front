@@ -6,6 +6,11 @@ export const getMedicalRecordList = (params = {}) => {
   return get('/records', params)
 }
 
+// 按患者ID获取病历列表
+export const getMedicalRecords = (params = {}) => {
+  return get('/records', params)
+}
+
 // 获取病历详情
 export const getMedicalRecordById = (id) => {
   return get(`/records/${id}`)
@@ -13,6 +18,11 @@ export const getMedicalRecordById = (id) => {
 
 // 新增病历
 export const createMedicalRecord = (data) => {
+  return post('/records', data)
+}
+
+// 上传病历（别名）
+export const uploadMedicalRecord = (data) => {
   return post('/records', data)
 }
 
@@ -28,8 +38,10 @@ export const deleteMedicalRecord = (id) => {
 
 export default {
   getMedicalRecordList,
+  getMedicalRecords,
   getMedicalRecordById,
   createMedicalRecord,
+  uploadMedicalRecord,
   updateMedicalRecord,
   deleteMedicalRecord
 }

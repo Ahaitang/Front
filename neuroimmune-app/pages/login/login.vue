@@ -79,11 +79,8 @@ export default {
 					uni.setStorageSync('role', res.role || this.form.role);
 					uni.showToast({ title: '登录成功' });
 					setTimeout(() => {
-						if (this.form.role === 'doctor') {
-							uni.reLaunch({ url: '/pages/doctor/index/index' });
-						} else {
-							uni.switchTab({ url: '/pages/index/index' });
-						}
+						// 医生端和患者端都跳转到有 tabBar 的首页
+						uni.switchTab({ url: '/pages/index/index' });
 					}, 500);
 				}
 			} catch (e) {

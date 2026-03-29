@@ -22,28 +22,14 @@
 			</view>
 		</view>
 
-		<!-- 疾病分类 -->
-		<view class="section">
-			<view class="section-header">
-				<text class="section-title">患者疾病分类</text>
-			</view>
-			<view class="disease-grid">
-				<view class="disease-item" v-for="(item, i) in diseaseTypes" :key="i"
-					:class="{ active: currentDisease === item.value }" @click="selectDisease(item.value)">
-					<text class="disease-count">{{ item.count }}</text>
-					<text class="disease-name">{{ item.label }}</text>
-				</view>
-			</view>
-		</view>
-
 		<!-- 患者列表 -->
 		<view class="section">
 			<view class="section-header">
-				<text class="section-title">{{ currentDiseaseLabel }}患者</text>
-				<text class="section-more" @click="navTo('/pages/patient-center/patient-center')">查看全部</text>
+				<text class="section-title">我的患者</text>
+				<text class="section-more" @click="goPatientCenter">查看全部</text>
 			</view>
-			<view class="patient-list" v-if="filteredPatients.length">
-				<view class="patient-item" v-for="(item, i) in filteredPatients" :key="i"
+			<view class="patient-list" v-if="recentPatients.length">
+				<view class="patient-item" v-for="(item, i) in recentPatients" :key="i"
 					@click="navTo('/pages/doctor/patient-info/patient-info?id=' + item.id)">
 					<image class="patient-avatar" :src="item.avatar || '/static/component.png'" mode="aspectFill"></image>
 					<view class="patient-content">
@@ -51,7 +37,7 @@
 							<text class="patient-name">{{ item.name }}</text>
 							<text class="patient-meta">{{ item.gender }} {{ item.age }}岁</text>
 						</view>
-						<text class="patient-disease">{{ item.diseaseType || '未分类' }}</text>
+						<text class="patient-disease" v-if="item.diseaseType">{{ item.diseaseType }}</text>
 					</view>
 					<view class="patient-tag" v-if="item.hasFollowUp">待随访</view>
 				</view>
@@ -98,7 +84,6 @@ export default {
 	data() {
 		return {
 			userInfo: {},
-			currentDisease: '',
 			allPatients: [],
 			diseaseTypes: [
 				{ label: 'MS', value: 'MS', count: 0 },
@@ -123,15 +108,8 @@ export default {
 			if (hour < 22) return '晚上好'
 			return '夜深了'
 		},
-		currentDiseaseLabel() {
-			const found = this.diseaseTypes.find(d => d.value === this.currentDisease)
-			return found ? found.label : '全部'
-		},
-		filteredPatients() {
-			if (!this.currentDisease) {
-				return this.allPatients.slice(0, 10)
-			}
-			return this.allPatients.filter(p => p.diseaseType === this.currentDisease).slice(0, 10)
+		recentPatients() {
+			return this.allPatients.slice(0, 5)
 		}
 	},
 	onLoad() {
@@ -172,16 +150,12 @@ export default {
 				console.error('获取患者列表失败:', e)
 			}
 		},
-		selectDisease(value) {
-			if (this.currentDisease === value) {
-				this.currentDisease = ''
-			} else {
-				this.currentDisease = value
-			}
-		},
 		navTo(url) {
 			if (!url) return
 			uni.navigateTo({ url })
+		},
+		goPatientCenter() {
+			uni.switchTab({ url: '/pages/patient-center/patient-center' })
 		},
 		handleLogout() {
 			uni.showModal({
@@ -325,49 +299,6 @@ export default {
 
 .section-more {
 	font-size: 26rpx;
-	color: $app-primary;
-}
-
-/* 疾病分类 */
-.disease-grid {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 16rpx;
-}
-
-.disease-item {
-	width: calc(25% - 12rpx);
-	padding: 20rpx 12rpx;
-	text-align: center;
-	border: 2rpx solid $app-border;
-	border-radius: 12rpx;
-	background: #FAFAFA;
-}
-
-.disease-item.active {
-	border-color: $app-primary;
-	background: $app-primary-bg;
-}
-
-.disease-count {
-	display: block;
-	font-size: 36rpx;
-	font-weight: bold;
-	color: $app-text;
-}
-
-.disease-item.active .disease-count {
-	color: $app-primary;
-}
-
-.disease-name {
-	display: block;
-	font-size: 22rpx;
-	color: $app-text-muted;
-	margin-top: 6rpx;
-}
-
-.disease-item.active .disease-name {
 	color: $app-primary;
 }
 

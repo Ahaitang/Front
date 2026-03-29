@@ -2,34 +2,81 @@
 	<view class="container">
 		<!-- 医生端：病人中心 -->
 		<template v-if="isDoctor">
-			<view class="search-bar card">
-				<text class="app-icon sm muted uniui-search"></text>
-				<input class="search-input" type="text" placeholder="请输入姓名搜索" v-model="keyword" @input="onSearchPatient" />
-			</view>
-			<view class="doctor-stats card">
-				<text class="stats-title"><text class="app-icon primary uniui-contact-filled"></text> 患者管理</text>
-				<view class="stats-row-inner">
-					<view class="stat"><text class="num">{{ filteredPatientList.length }}</text><text class="txt">人</text></view>
+			<!-- 搜索和筛选区 -->
+			<view class="filter-section">
+				<view class="search-bar">
+					<text class="app-icon uniui-search"></text>
+					<input class="search-input" type="text" placeholder="搜索患者姓名" v-model="keyword" @input="onSearchPatient" />
+				</view>
+				<view class="disease-tags">
+					<view class="tag" :class="{ active: currentDisease === '' }" @click="selectDisease('')">全部</view>
+					<view class="tag" :class="{ active: currentDisease === 'MS' }" @click="selectDisease('MS')">MS</view>
+					<view class="tag" :class="{ active: currentDisease === 'NMOSD' }" @click="selectDisease('NMOSD')">NMOSD</view>
+					<view class="tag" :class="{ active: currentDisease === 'MG' }" @click="selectDisease('MG')">MG</view>
+					<view class="tag more" @click="showMoreDiseases">
+						更多
+						<text class="app-icon uniui-arrowdown"></text>
+					</view>
 				</view>
 			</view>
+
+			<!-- 统计概览 -->
+			<view class="stats-overview">
+				<view class="stats-left">
+					<text class="stats-label">患者总数</text>
+					<text class="stats-num">{{ filteredPatientList.length }}</text>
+				</view>
+				<view class="stats-right">
+					<view class="stat-badge pending">
+						<text class="badge-num">{{ pendingCount }}</text>
+						<text class="badge-label">待随访</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 患者列表 -->
 			<view class="patient-list">
-				<view class="patient-item card" v-for="(p, i) in filteredPatientList" :key="i">
-					<view class="p-main" @click="goPatientInfo(p)">
-						<image class="p-avatar" :src="p.avatar || '/static/component.png'" mode="aspectFill"></image>
-						<view class="p-info">
-							<text class="p-name">{{ p.name }}</text>
-							<text class="p-meta">{{ p.gender || '男' }} {{ p.age || 45 }}岁</text>
-							<text class="p-id" v-if="p.id">ID: {{ p.id }}</text>
+				<view class="patient-card" v-for="(p, i) in filteredPatientList" :key="i">
+					<view class="card-header" @click="goPatientInfo(p)">
+						<view class="avatar-wrap">
+							<image class="patient-avatar" :src="p.avatar || '/static/component.png'" mode="aspectFill"></image>
+							<view class="online-dot" v-if="p.hasFollowUp"></view>
 						</view>
-						<view class="p-badge" v-if="p.hasFollowUp"></view>
+						<view class="patient-info">
+							<view class="info-row">
+								<text class="patient-name">{{ p.name }}</text>
+								<text class="patient-gender">{{ p.gender }}</text>
+							</view>
+							<view class="info-meta">
+								<text class="patient-age">{{ p.age }}岁</text>
+								<view class="disease-tag" :class="getDiseaseClass(p.diseaseType)" v-if="p.diseaseType">
+									{{ getDiseaseShort(p.diseaseType) }}
+								</view>
+							</view>
+						</view>
+						<text class="app-icon uniui-arrowright"></text>
 					</view>
-					<view class="p-actions">
-						<button class="btn-mini primary" @click="navTo('/pages/doctor/add-follow/add-follow?patientId=' + (p.id||'1'))">随访</button>
-						<button class="btn-mini" @click="callP(p.phone)"><text class="app-icon sm uniui-phone-filled"></text> 电话</button>
+					<view class="card-footer">
+						<view class="action-btn follow" @click="navTo('/pages/doctor/add-follow/add-follow?patientId=' + p.id)">
+							<text class="app-icon uniui-list"></text>
+							<text>随访</text>
+						</view>
+						<view class="action-btn call" @click="callP(p.phone)">
+							<text class="app-icon uniui-phone-filled"></text>
+							<text>电话</text>
+						</view>
+						<view class="action-btn info" @click="goPatientInfo(p)">
+							<text class="app-icon uniui-info-filled"></text>
+							<text>详情</text>
+						</view>
 					</view>
 				</view>
 			</view>
-			<text class="empty-tip" v-if="!filteredPatientList.length">暂无患者</text>
+			<view class="empty-state" v-if="!filteredPatientList.length">
+				<text class="app-icon empty-icon uniui-contact"></text>
+				<text class="empty-text">暂无患者</text>
+				<text class="empty-tip">添加患者后将在此显示</text>
+			</view>
 		</template>
 
 		<!-- 患者端：我的（个人中心） -->
@@ -114,13 +161,16 @@
 				<button class="logout-btn" @click="handleLogout"><text class="app-icon uniui-gear-filled"></text> 退出登录</button>
 			</view>
 		</template>
+
+		<!-- 自定义tabBar -->
+		<custom-tabbar :current="2" />
 	</view>
 </template>
 
 <script>
-import { getPatientList } from '@/api/patient.js'
 import { getFollowUpList } from '@/api/followup.js'
 import { getMedicationList } from '@/api/medication.js'
+import { getDoctorPatientDetails } from '@/api/relation.js'
 
 export default {
 	data() {
@@ -129,22 +179,55 @@ export default {
 			patientList: [],
 			userInfo: {},
 			doctorBound: false,
-			stats: { followUpCount: 0, medicationCount: 0, adviceCount: 0 }
+			stats: { followUpCount: 0, medicationCount: 0, adviceCount: 0 },
+			currentDisease: '',
+			diseaseOptions: [
+				{ label: '全部疾病', value: '' },
+				{ label: 'MS（多发性硬化）', value: 'MS' },
+				{ label: 'NMOSD（视神经脊髓炎）', value: 'NMOSD' },
+				{ label: 'MG（重症肌无力）', value: 'MG' },
+				{ label: 'MOGAD（MOG抗体病）', value: 'MOGAD' },
+				{ label: '自身免疫性脑炎', value: '自身免疫性脑炎' },
+				{ label: 'GBS（格林-巴利综合征）', value: 'GBS' },
+				{ label: 'CIDP（慢性炎性脱髓鞘性多发性神经病）', value: 'CIDP' },
+				{ label: '其它疾病', value: '其它疾病' }
+			]
 		};
 	},
 	computed: {
 		isDoctor() {
 			return (uni.getStorageSync('role') || 'patient') === 'doctor';
 		},
+		currentDiseaseLabel() {
+			const found = this.diseaseOptions.find(d => d.value === this.currentDisease)
+			return found ? found.label : '全部疾病'
+		},
 		filteredPatientList() {
+			let list = this.patientList
+			// 按疾病筛选
+			if (this.currentDisease) {
+				list = list.filter(p => p.diseaseType === this.currentDisease)
+			}
+			// 按姓名搜索
 			const k = (this.keyword || '').trim().toLowerCase();
-			if (!k) return this.patientList;
-			return this.patientList.filter((p) => (p.name || '').toLowerCase().indexOf(k) >= 0);
-		}
-	},
-	onLoad() {
+			if (k) {
+				list = list.filter((p) => (p.name || '').toLowerCase().indexOf(k) >= 0);
+			}
+			return list;
+			},
+			pendingCount() {
+				return this.patientList.filter(p => p.hasFollowUp).length
+			}
+		},
+		onLoad() {
 		this.userInfo = uni.getStorageSync('userInfo') || {};
 		this.doctorBound = !!uni.getStorageSync('doctorBound');
+		// 根据角色动态设置导航栏标题
+		if (this.isDoctor) {
+			uni.setNavigationBarTitle({ title: '患者管理' });
+		} else {
+			uni.setNavigationBarTitle({ title: '我的' });
+		}
 	},
 	onShow() {
 		if (!uni.getStorageSync('token')) {
@@ -158,19 +241,28 @@ export default {
 	methods: {
 		async loadData() {
 			if (this.isDoctor) {
-				// 医生端：加载患者列表
+				// 医生端：加载患者列表（从关系表获取）
 				try {
-					const res = await getPatientList({ pageNum: 1, pageSize: 100 });
-					if (res && res.list) {
-						this.patientList = res.list.map(p => ({
-							id: p.id,
-							name: p.name,
-							gender: p.gender || '男',
-							age: p.age || 45,
+					const doctorId = this.userInfo.id
+					if (!doctorId) {
+						console.error('医生ID不存在')
+						return
+					}
+					console.log('加载患者列表, doctorId:', doctorId)
+					const patients = await getDoctorPatientDetails(doctorId)
+					console.log('患者列表响应:', patients)
+					if (patients && patients.length) {
+						this.patientList = patients.map(p => ({
+							id: p.patientId,
+							name: p.patientName,
+							gender: p.gender === 'male' ? '男' : (p.gender === 'female' ? '女' : p.gender),
+							age: p.age,
 							phone: p.phone || '',
 							avatar: '',
-							hasFollowUp: p.hasFollowUp
-						}));
+							hasFollowUp: p.hasFollowUp,
+							diseaseType: p.diseaseType || ''
+						}))
+						console.log('处理后的患者列表:', this.patientList)
 					}
 				} catch (e) {
 					console.error('加载患者列表失败:', e);
@@ -203,6 +295,58 @@ export default {
 			uni.navigateTo({ url });
 		},
 		onSearchPatient() {},
+		onDiseaseChange(e) {
+			const selected = this.diseaseOptions[e.detail.value]
+			this.currentDisease = selected.value
+		},
+		selectDisease(value) {
+			this.currentDisease = value
+		},
+		showMoreDiseases() {
+			const moreOptions = this.diseaseOptions.filter(d => d.value)
+			if (!moreOptions.length) {
+				uni.showToast({ title: '没有更多选项', icon: 'none' })
+				return
+			}
+			uni.showActionSheet({
+				itemList: moreOptions.map(d => d.label),
+				success: (res) => {
+					const selected = moreOptions[res.tapIndex]
+					if (selected) {
+						this.currentDisease = selected.value
+					}
+				},
+				fail: (err) => {
+					console.log('ActionSheet cancelled or failed:', err)
+				}
+			})
+		},
+		getDiseaseClass(type) {
+			const classMap = {
+				'MS': 'ms',
+				'NMOSD': 'nmosd',
+				'MG': 'mg',
+				'MOGAD': 'mogad',
+				'自身免疫性脑炎': 'ae',
+				'GBS': 'gbs',
+				'CIDP': 'cidp',
+				'其它疾病': 'other'
+			}
+			return classMap[type] || 'other'
+		},
+		getDiseaseShort(type) {
+			const shortMap = {
+				'MS': 'MS',
+				'NMOSD': 'NMOSD',
+				'MG': 'MG',
+				'MOGAD': 'MOGAD',
+				'自身免疫性脑炎': '自免脑',
+				'GBS': 'GBS',
+				'CIDP': 'CIDP',
+				'其它疾病': '其他'
+			}
+			return shortMap[type] || type
+		},
 		callP(phone) {
 			if (phone) uni.makePhoneCall({ phoneNumber: phone });
 			else uni.showToast({ title: '暂无电话', icon: 'none' });
@@ -231,28 +375,279 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/static/app-theme.scss';
-.container { min-height: 100vh; background: $app-bg; padding: 24rpx 24rpx 120rpx; }
+
+.container { min-height: 100vh; background: $app-bg; padding: 24rpx 24rpx 180rpx; }
 .card { background: $app-card-bg; border-radius: $app-radius; padding: 28rpx; margin-bottom: 24rpx; box-shadow: $app-shadow; }
-.search-bar { display: flex; align-items: center; gap: 16rpx; }
-.search-input { flex: 1; font-size: 28rpx; color: $app-text; }
-.doctor-stats { margin-bottom: 24rpx; }
-.stats-title { font-size: 30rpx; font-weight: bold; color: $app-text; display: flex; align-items: center; gap: 12rpx; }
-.stats-row-inner { margin-top: 16rpx; }
-.stat .num { font-size: 36rpx; font-weight: bold; color: $app-primary; }
-.stat .txt { font-size: 28rpx; color: $app-text-secondary; margin-left: 8rpx; }
-.patient-item { display: flex; flex-direction: column; margin-bottom: 24rpx; }
-.patient-item .p-main { display: flex; align-items: center; flex: 1; }
-.p-avatar { width: 88rpx; height: 88rpx; border-radius: 50%; margin-right: 24rpx; }
-.p-info { display: flex; flex-direction: column; flex: 1; }
-.p-name { font-size: 30rpx; color: $app-text; font-weight: bold; }
-.p-meta { font-size: 26rpx; color: $app-text-muted; margin-top: 6rpx; }
-.p-id { font-size: 24rpx; color: $app-text-muted; margin-top: 4rpx; }
-.p-badge { width: 16rpx; height: 16rpx; border-radius: 50%; background: $app-success; margin-left: 12rpx; }
-.p-actions { display: flex; gap: 16rpx; margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid $app-border; }
-.btn-mini { font-size: 24rpx; padding: 10rpx 28rpx; border-radius: 8rpx; background: #F3F4F6; display: inline-flex; align-items: center; gap: 6rpx; }
-.btn-mini.primary { background: $app-primary; color: #fff; }
-.btn-mini::after { border: none; }
-.empty-tip { font-size: 28rpx; color: $app-text-muted; text-align: center; padding: 40rpx; }
+
+/* 搜索筛选区 */
+.filter-section {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	padding: 24rpx;
+	margin-bottom: 24rpx;
+	box-shadow: $app-shadow;
+}
+
+.search-bar {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	padding: 20rpx 24rpx;
+	background: $app-bg;
+	border-radius: 16rpx;
+	margin-bottom: 20rpx;
+}
+
+.search-bar .app-icon {
+	font-size: 32rpx;
+	color: $app-text-muted;
+}
+
+.search-input {
+	flex: 1;
+	font-size: 28rpx;
+	color: $app-text;
+}
+
+.disease-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16rpx;
+}
+
+.disease-tags .tag {
+	font-size: 26rpx;
+	color: $app-text-secondary;
+	padding: 12rpx 24rpx;
+	background: $app-bg;
+	border-radius: 20rpx;
+	border: 1rpx solid $app-border;
+}
+
+.disease-tags .tag.active {
+	background: $app-primary;
+	color: #fff;
+	border-color: $app-primary;
+}
+
+.disease-tags .tag.more {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+}
+
+.disease-tags .tag.more .app-icon {
+	font-size: 20rpx;
+}
+
+/* 统计概览 */
+.stats-overview {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	border-radius: $app-radius;
+	padding: 32rpx;
+	margin-bottom: 24rpx;
+	box-shadow: 0 4rpx 16rpx rgba(99, 102, 241, 0.3);
+}
+
+.stats-left {
+	display: flex;
+	flex-direction: column;
+}
+
+.stats-label {
+	font-size: 28rpx;
+	color: rgba(255,255,255,0.85);
+	margin-bottom: 8rpx;
+}
+
+.stats-num {
+	font-size: 56rpx;
+	font-weight: bold;
+	color: #fff;
+}
+
+.stats-right {
+	display: flex;
+	gap: 16rpx;
+}
+
+.stat-badge {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 16rpx 28rpx;
+	background: rgba(255,255,255,0.2);
+	border-radius: 16rpx;
+}
+
+.stat-badge.pending .badge-num {
+	font-size: 36rpx;
+	font-weight: bold;
+	color: #FCD34D;
+}
+
+.stat-badge .badge-label {
+	font-size: 22rpx;
+	color: rgba(255,255,255,0.85);
+	margin-top: 4rpx;
+}
+
+/* 患者卡片 */
+.patient-list {
+	display: flex;
+	flex-direction: column;
+	gap: 20rpx;
+}
+
+.patient-card {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	box-shadow: $app-shadow;
+	overflow: hidden;
+}
+
+.card-header {
+	display: flex;
+	align-items: center;
+	padding: 28rpx;
+}
+
+.avatar-wrap {
+	position: relative;
+	margin-right: 20rpx;
+}
+
+.patient-avatar {
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 50%;
+}
+
+.online-dot {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 20rpx;
+	height: 20rpx;
+	border-radius: 50%;
+	background: #10B981;
+	border: 3rpx solid #fff;
+}
+
+.patient-info {
+	flex: 1;
+}
+
+.info-row {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	margin-bottom: 8rpx;
+}
+
+.patient-name {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: $app-text;
+}
+
+.patient-gender {
+	font-size: 24rpx;
+	color: $app-text-muted;
+	padding: 4rpx 12rpx;
+	background: $app-bg;
+	border-radius: 8rpx;
+}
+
+.info-meta {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+}
+
+.patient-age {
+	font-size: 26rpx;
+	color: $app-text-secondary;
+}
+
+.disease-tag {
+	font-size: 22rpx;
+	padding: 6rpx 16rpx;
+	border-radius: 12rpx;
+	font-weight: 500;
+}
+
+.disease-tag.ms { background: #DBEAFE; color: #2563EB; }
+.disease-tag.nmosd { background: #FCE7F3; color: #DB2777; }
+.disease-tag.mg { background: #D1FAE5; color: #059669; }
+.disease-tag.mogad { background: #FEF3C7; color: #D97706; }
+.disease-tag.ae { background: #E0E7FF; color: #4F46E5; }
+.disease-tag.gbs { background: #FED7AA; color: #EA580C; }
+.disease-tag.cidp { background: #CFFAFE; color: #0891B2; }
+.disease-tag.other { background: #F3F4F6; color: #6B7280; }
+
+.card-header .app-icon {
+	font-size: 32rpx;
+	color: $app-text-muted;
+}
+
+.card-footer {
+	display: flex;
+	border-top: 1rpx solid $app-border;
+	padding: 20rpx 28rpx;
+	background: $app-bg;
+}
+
+.action-btn {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8rpx;
+	padding: 12rpx;
+	border-radius: 12rpx;
+}
+
+.action-btn .app-icon {
+	font-size: 36rpx;
+}
+
+.action-btn text:last-child {
+	font-size: 24rpx;
+	color: $app-text-secondary;
+}
+
+.action-btn.follow .app-icon { color: $app-primary; }
+.action-btn.call .app-icon { color: #10B981; }
+.action-btn.info .app-icon { color: #6366F1; }
+
+/* 空状态 */
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 80rpx 0;
+}
+
+.empty-icon {
+	font-size: 120rpx;
+	color: $app-text-muted !important;
+	margin-bottom: 24rpx;
+}
+
+.empty-text {
+	font-size: 32rpx;
+	color: $app-text-secondary;
+	margin-bottom: 12rpx;
+}
+
+.empty-tip {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
 .my-card { position: relative; display: flex; flex-direction: column; align-items: center; padding: 48rpx; }
 .my-avatar { width: 160rpx; height: 160rpx; border-radius: 50%; margin-bottom: 20rpx; }
 .my-name-row { display: flex; align-items: center; }

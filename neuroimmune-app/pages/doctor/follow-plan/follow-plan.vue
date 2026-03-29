@@ -1,36 +1,114 @@
 <template>
 	<view class="container">
-		<view class="search-bar card">
-			<input class="search-input" type="text" placeholder="搜索患者/随访计划" v-model="keyword" />
-		</view>
-		<view class="section card">
-			<view class="section-title">待随访</view>
-			<text class="empty-tip" v-if="!pendingList.length">暂无待随访</text>
-			<view class="follow-item" v-for="(item, i) in pendingList" :key="i" @click="goPatient(item.patientId)">
-				<view class="item-head">
-					<text class="patient-name">{{ item.patientName }}</text>
-					<text class="date">{{ item.date }}</text>
-				</view>
-				<view class="item-body">
-					<text class="label">随访项目：</text><text class="value">{{ item.project }}</text>
-				</view>
-				<view class="item-actions">
-					<button class="btn-mini primary" @click.stop="goPatient(item.patientId)">去随访</button>
-					<button class="btn-mini" @click.stop="callPatient(item.phone)">电话</button>
-				</view>
+		<!-- 统计概览 -->
+		<view class="stats-card">
+			<view class="stat-item">
+				<text class="stat-num pending">{{ pendingList.length }}</text>
+				<text class="stat-label">待随访</text>
+			</view>
+			<view class="stat-divider"></view>
+			<view class="stat-item">
+				<text class="stat-num completed">{{ completedList.length }}</text>
+				<text class="stat-label">已完成</text>
+			</view>
+			<view class="stat-divider"></view>
+			<view class="stat-item">
+				<text class="stat-num">{{ totalCount }}</text>
+				<text class="stat-label">总计</text>
 			</view>
 		</view>
-		<view class="section card">
-			<view class="section-title">已随访</view>
-			<text class="empty-tip" v-if="!completedList.length">暂无记录</text>
-			<view class="follow-item" v-for="(item, i) in completedList" :key="i">
-				<view class="item-head">
-					<text class="patient-name">{{ item.patientName }}</text>
-					<text class="date">{{ item.date }}</text>
+
+		<!-- 搜索栏 -->
+		<view class="search-bar">
+			<text class="app-icon uniui-search"></text>
+			<input class="search-input" type="text" placeholder="搜索患者姓名" v-model="keyword" />
+		</view>
+
+		<!-- 筛选标签 -->
+		<view class="filter-tags">
+			<view class="tag" :class="{ active: filterStatus === 'all' }" @click="filterStatus = 'all'">全部</view>
+			<view class="tag" :class="{ active: filterStatus === 'pending' }" @click="filterStatus = 'pending'">待随访</view>
+			<view class="tag" :class="{ active: filterStatus === 'completed' }" @click="filterStatus = 'completed'">已完成</view>
+		</view>
+
+		<!-- 随访列表 -->
+		<view class="follow-list">
+			<!-- 待随访 -->
+			<template v-if="filterStatus === 'all' || filterStatus === 'pending'">
+				<view class="section-title" v-if="filteredPendingList.length && filterStatus === 'all'">
+					<view class="title-dot pending"></view>
+					<text>待随访</text>
+					<text class="count">{{ filteredPendingList.length }}</text>
 				</view>
-				<view class="item-body">
-					<text class="label">随访项目：</text><text class="value">{{ item.project }}</text>
+				<view class="follow-card pending" v-for="(item, i) in filteredPendingList" :key="'p'+i" @click="goPatient(item.patientId)">
+					<view class="card-header">
+						<view class="patient-info">
+							<view class="avatar-wrap">
+								<text class="avatar-text">{{ item.patientName.charAt(0) }}</text>
+							</view>
+							<view class="patient-meta">
+								<text class="patient-name">{{ item.patientName }}</text>
+								<text class="project-tag">{{ item.project }}</text>
+							</view>
+						</view>
+						<view class="status-badge pending">待随访</view>
+					</view>
+					<view class="card-body">
+						<view class="info-row">
+							<text class="app-icon uniui-calendar"></text>
+							<text>{{ item.date }}</text>
+						</view>
+						<view class="info-row" v-if="item.content">
+							<text class="app-icon uniui-list"></text>
+							<text>{{ item.content }}</text>
+						</view>
+					</view>
+					<view class="card-footer">
+						<view class="action-btn primary" @click.stop="goPatient(item.patientId)">
+							<text class="app-icon uniui-compose"></text>
+							<text>去随访</text>
+						</view>
+						<view class="action-btn" @click.stop="callPatient(item.phone)">
+							<text class="app-icon uniui-phone-filled"></text>
+							<text>电话</text>
+						</view>
+					</view>
 				</view>
+			</template>
+
+			<!-- 已完成 -->
+			<template v-if="filterStatus === 'all' || filterStatus === 'completed'">
+				<view class="section-title" v-if="filteredCompletedList.length && filterStatus === 'all'">
+					<view class="title-dot completed"></view>
+					<text>已完成</text>
+					<text class="count">{{ filteredCompletedList.length }}</text>
+				</view>
+				<view class="follow-card completed" v-for="(item, i) in filteredCompletedList" :key="'c'+i" @click="goPatient(item.patientId)">
+					<view class="card-header">
+						<view class="patient-info">
+							<view class="avatar-wrap completed">
+								<text class="avatar-text">{{ item.patientName.charAt(0) }}</text>
+							</view>
+							<view class="patient-meta">
+								<text class="patient-name">{{ item.patientName }}</text>
+								<text class="project-tag completed">{{ item.project }}</text>
+							</view>
+						</view>
+						<view class="status-badge completed">已完成</view>
+					</view>
+					<view class="card-body">
+						<view class="info-row">
+							<text class="app-icon uniui-calendar"></text>
+							<text>{{ item.date }}</text>
+						</view>
+					</view>
+				</view>
+			</template>
+
+			<!-- 空状态 -->
+			<view class="empty-state" v-if="!filteredPendingList.length && !filteredCompletedList.length">
+				<text class="app-icon empty-icon uniui-calendar"></text>
+				<text class="empty-text">暂无随访记录</text>
 			</view>
 		</view>
 	</view>
@@ -43,9 +121,25 @@ export default {
 	data() {
 		return {
 			keyword: '',
+			filterStatus: 'all',
 			pendingList: [],
 			completedList: []
 		};
+	},
+	computed: {
+		filteredPendingList() {
+			if (!this.keyword) return this.pendingList;
+			const k = this.keyword.toLowerCase();
+			return this.pendingList.filter(item => item.patientName.toLowerCase().includes(k));
+		},
+		filteredCompletedList() {
+			if (!this.keyword) return this.completedList;
+			const k = this.keyword.toLowerCase();
+			return this.completedList.filter(item => item.patientName.toLowerCase().includes(k));
+		},
+		totalCount() {
+			return this.pendingList.length + this.completedList.length;
+		}
 	},
 	onShow() {
 		this.loadData();
@@ -62,28 +156,22 @@ export default {
 							patientId: f.patientId,
 							patientName: f.patientName || '患者',
 							date: f.followDate || f.date,
-							project: f.project || f.content || '随访',
+							project: f.project || '随访',
+							content: f.content || '',
 							phone: f.patientPhone || ''
 						}));
 					this.completedList = res.list
 						.filter(f => f.status === 'completed' || f.status === '已完成')
 						.map(f => ({
 							id: f.id,
+							patientId: f.patientId,
 							patientName: f.patientName || '患者',
 							date: f.followDate || f.date,
-							project: f.project || f.content || '随访'
+							project: f.project || '随访'
 						}));
 				}
 			} catch (e) {
 				console.error('加载随访列表失败:', e);
-				// 使用模拟数据
-				this.pendingList = [
-					{ patientId: '1', patientName: '刘博超', date: '2025-02-28', project: '神经功能评估', phone: '183440293123' },
-					{ patientId: '2', patientName: '张哲瀚', date: '2025-02-27', project: '复诊', phone: '' }
-				];
-				this.completedList = [
-					{ patientName: '刘博超', date: '2025-02-20', project: '神经功能评估' }
-				];
 			}
 		},
 		goPatient(id) {
@@ -98,18 +186,295 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.container { min-height: 100vh; background: #F5F5F5; padding: 24rpx 24rpx 60rpx; }
-.card { background: #fff; border-radius: 16rpx; padding: 28rpx; margin-bottom: 24rpx; }
-.search-input { font-size: 28rpx; color: #333; }
-.section-title { font-size: 30rpx; font-weight: bold; color: #333; margin-bottom: 20rpx; }
-.empty-tip { font-size: 26rpx; color: #999; display: block; padding: 20rpx 0; }
-.follow-item { background: #f8f8f8; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.item-head { display: flex; justify-content: space-between; margin-bottom: 12rpx; }
-.patient-name { font-size: 30rpx; font-weight: bold; color: #333; }
-.date { font-size: 26rpx; color: #999; }
-.item-body { font-size: 28rpx; color: #666; margin-bottom: 12rpx; }
-.item-body .label { margin-right: 8rpx; }
-.item-actions { display: flex; gap: 16rpx; }
-.btn-mini { font-size: 24rpx; padding: 10rpx 24rpx; border-radius: 8rpx; background: #f0f0f0; }
-.btn-mini.primary { background: #007AFF; color: #fff; }
+@import '@/static/app-theme.scss';
+
+.container {
+	min-height: 100vh;
+	background: $app-bg;
+	padding: 24rpx 24rpx 60rpx;
+}
+
+/* 统计概览 */
+.stats-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-around;
+	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	border-radius: 20rpx;
+	padding: 32rpx;
+	margin-bottom: 24rpx;
+	box-shadow: 0 4rpx 16rpx rgba(99, 102, 241, 0.3);
+}
+
+.stat-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.stat-num {
+	font-size: 48rpx;
+	font-weight: bold;
+	color: #fff;
+}
+
+.stat-num.pending {
+	color: #FCD34D;
+}
+
+.stat-num.completed {
+	color: #86EFAC;
+}
+
+.stat-label {
+	font-size: 24rpx;
+	color: rgba(255, 255, 255, 0.85);
+	margin-top: 8rpx;
+}
+
+.stat-divider {
+	width: 1rpx;
+	height: 60rpx;
+	background: rgba(255, 255, 255, 0.2);
+}
+
+/* 搜索栏 */
+.search-bar {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	padding: 20rpx 24rpx;
+	background: $app-card-bg;
+	border-radius: 16rpx;
+	margin-bottom: 20rpx;
+	box-shadow: $app-shadow;
+}
+
+.search-bar .app-icon {
+	font-size: 32rpx;
+	color: $app-text-muted;
+}
+
+.search-input {
+	flex: 1;
+	font-size: 28rpx;
+	color: $app-text;
+}
+
+/* 筛选标签 */
+.filter-tags {
+	display: flex;
+	gap: 16rpx;
+	margin-bottom: 24rpx;
+}
+
+.filter-tags .tag {
+	font-size: 26rpx;
+	color: $app-text-secondary;
+	padding: 12rpx 28rpx;
+	background: $app-card-bg;
+	border-radius: 20rpx;
+	box-shadow: $app-shadow;
+}
+
+.filter-tags .tag.active {
+	background: $app-primary;
+	color: #fff;
+}
+
+/* 列表区块标题 */
+.section-title {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	margin-bottom: 20rpx;
+	font-size: 28rpx;
+	font-weight: bold;
+	color: $app-text;
+}
+
+.title-dot {
+	width: 12rpx;
+	height: 12rpx;
+	border-radius: 50%;
+}
+
+.title-dot.pending {
+	background: #F59E0B;
+}
+
+.title-dot.completed {
+	background: #10B981;
+}
+
+.section-title .count {
+	font-size: 24rpx;
+	color: $app-text-muted;
+	font-weight: normal;
+}
+
+/* 随访卡片 */
+.follow-card {
+	background: $app-card-bg;
+	border-radius: 16rpx;
+	margin-bottom: 20rpx;
+	overflow: hidden;
+	box-shadow: $app-shadow;
+}
+
+.follow-card.pending {
+	border-left: 6rpx solid #F59E0B;
+}
+
+.follow-card.completed {
+	border-left: 6rpx solid #10B981;
+	opacity: 0.85;
+}
+
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 24rpx;
+	border-bottom: 1rpx solid $app-border;
+}
+
+.patient-info {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+}
+
+.avatar-wrap {
+	width: 72rpx;
+	height: 72rpx;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.avatar-wrap.completed {
+	background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
+}
+
+.avatar-text {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: #fff;
+}
+
+.patient-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
+}
+
+.patient-name {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: $app-text;
+}
+
+.project-tag {
+	font-size: 22rpx;
+	color: #F59E0B;
+	background: #FEF3C7;
+	padding: 4rpx 12rpx;
+	border-radius: 8rpx;
+	display: inline-block;
+}
+
+.project-tag.completed {
+	color: #10B981;
+	background: #D1FAE5;
+}
+
+.status-badge {
+	font-size: 22rpx;
+	padding: 8rpx 20rpx;
+	border-radius: 16rpx;
+}
+
+.status-badge.pending {
+	background: #FEF3C7;
+	color: #F59E0B;
+}
+
+.status-badge.completed {
+	background: #D1FAE5;
+	color: #10B981;
+}
+
+.card-body {
+	padding: 20rpx 24rpx;
+}
+
+.info-row {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	font-size: 26rpx;
+	color: $app-text-secondary;
+	margin-bottom: 12rpx;
+}
+
+.info-row:last-child {
+	margin-bottom: 0;
+}
+
+.info-row .app-icon {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
+
+.card-footer {
+	display: flex;
+	gap: 16rpx;
+	padding: 16rpx 24rpx;
+	background: $app-bg;
+}
+
+.action-btn {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8rpx;
+	padding: 16rpx;
+	border-radius: 12rpx;
+	font-size: 26rpx;
+	background: #F3F4F6;
+	color: $app-text-secondary;
+}
+
+.action-btn .app-icon {
+	font-size: 28rpx;
+}
+
+.action-btn.primary {
+	background: $app-primary;
+	color: #fff;
+}
+
+/* 空状态 */
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 80rpx 0;
+}
+
+.empty-icon {
+	font-size: 120rpx !important;
+	color: $app-text-muted;
+	opacity: 0.3;
+	margin-bottom: 24rpx;
+}
+
+.empty-text {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
 </style>

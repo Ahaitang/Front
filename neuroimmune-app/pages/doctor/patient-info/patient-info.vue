@@ -5,7 +5,7 @@
 			<view class="meta">
 				<text class="name">{{ patient.name }}</text>
 				<text class="age-gender">{{ patient.age }}岁 {{ patient.gender }}</text>
-				<text class="disease-tag" v-if="patient.diseaseType">{{ patient.diseaseType }}</text>
+				<text class="disease-tag" v-if="diseaseTypeLabel">{{ diseaseTypeLabel }}</text>
 			</view>
 			<view class="contact-btns">
 				<view class="icon-btn" @click="callPhone"><text class="app-icon uniui-phone"></text></view>
@@ -21,12 +21,8 @@
 				<text class="stat-label">用药记录</text>
 			</view>
 			<view class="stat-item">
-				<text class="stat-value">{{ patient.episodeCount || 0 }}</text>
-				<text class="stat-label">疾病发作</text>
-			</view>
-			<view class="stat-item">
-				<text class="stat-value">{{ patient.adviceCount || 0 }}</text>
-				<text class="stat-label">医生建议</text>
+				<text class="stat-value">{{ patient.recordCount || 0 }}</text>
+				<text class="stat-label">病历记录</text>
 			</view>
 		</view>
 		<view class="quick-actions card">
@@ -52,13 +48,20 @@
 				<view class="tab" :class="{ active: activeTab === 'records' }" @click="activeTab = 'records'">病历记录</view>
 				<view class="tab" :class="{ active: activeTab === 'follow' }" @click="activeTab = 'follow'">随访记录</view>
 				<view class="tab" :class="{ active: activeTab === 'medication' }" @click="activeTab = 'medication'">用药记录</view>
-				<view class="tab" :class="{ active: activeTab === 'episode' }" @click="activeTab = 'episode'">疾病发作</view>
-			</view>
+							</view>
 			<view class="tabs-content">
 				<view v-show="activeTab === 'basic'" class="tab-panel">
 					<view class="row"><text class="label">电话</text><text class="value">{{ patient.phone }}</text></view>
 					<view class="row"><text class="label">身份证号</text><text class="value">{{ patient.idCard }}</text></view>
-					<view class="row"><text class="label">疾病分类</text><text class="value highlight">{{ patient.diseaseType || '未分类' }}</text></view>
+					<view class="row disease-row">
+						<text class="label">疾病分类</text>
+						<picker mode="selector" :range="diseaseOptions" range-key="label" @change="onDiseaseTypeChange">
+							<view class="picker-box">
+								<text class="picker-text">{{ diseaseTypeLabel || '请选择' }}</text>
+								<text class="app-icon uniui-arrowdown"></text>
+							</view>
+						</picker>
+					</view>
 					<view class="row"><text class="label">民族</text><text class="value">{{ patient.nation }}</text></view>
 					<view class="row"><text class="label">出生日期</text><text class="value">{{ patient.birthday }}</text></view>
 					<view class="row"><text class="label">婚姻状况</text><text class="value">{{ patient.marital }}</text></view>
@@ -73,31 +76,49 @@
 				</view>
 				<view v-show="activeTab === 'records'" class="tab-panel">
 					<view class="records-section">
-						<text class="section-label">本院病历</text>
+						<view class="section-header-row">
+							<text class="section-label">本院病历</text>
+							<text class="add-link" @click="addRecord('门诊病历')">+添加</text>
+						</view>
 						<text class="empty-tip" v-if="!hospitalRecords.length">暂无本院病历</text>
-						<view class="record-item" v-for="(item, i) in hospitalRecords" :key="'h'+i" @click="showRecordDetail(item)">
+						<view class="record-item" v-for="(item, i) in hospitalRecords" :key="'h'+i">
 							<view class="item-header">
 								<view class="item-left">
 									<text class="record-type-tag">{{ item.type || '门诊病历' }}</text>
 									<text class="item-date">{{ item.date }}</text>
 								</view>
+								<view class="item-actions">
+									<text class="action-btn edit" @click="editRecord(item)">编辑</text>
+									<text class="action-btn delete" @click="deleteRecord(item)">删除</text>
+								</view>
 							</view>
-							<text class="item-desc" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
-							<text class="item-content">{{ item.content || '无内容' }}</text>
+							<view class="record-body" @click="showRecordDetail(item)">
+								<text class="item-desc" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
+								<text class="item-content">{{ item.content || '无内容' }}</text>
+							</view>
 						</view>
 					</view>
 					<view class="records-section">
-						<text class="section-label">外院病历</text>
+						<view class="section-header-row">
+							<text class="section-label">外院病历</text>
+							<text class="add-link" @click="addRecord('外院病历')">+添加</text>
+						</view>
 						<text class="empty-tip" v-if="!externalRecords.length">暂无外院病历</text>
-						<view class="record-item" v-for="(item, i) in externalRecords" :key="'e'+i" @click="showRecordDetail(item)">
+						<view class="record-item" v-for="(item, i) in externalRecords" :key="'e'+i">
 							<view class="item-header">
 								<text class="item-date">{{ item.date }}</text>
 								<text class="item-hospital" v-if="item.hospital">{{ item.hospital }}</text>
+								<view class="item-actions">
+									<text class="action-btn edit" @click="editRecord(item)">编辑</text>
+									<text class="action-btn delete" @click="deleteRecord(item)">删除</text>
+								</view>
 							</view>
-							<text class="item-desc" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
-							<text class="item-content">{{ item.content || '无内容' }}</text>
-							<view class="record-images" v-if="item.attachments">
-								<image v-for="(img, idx) in item.attachments.split(',').slice(0,3)" :key="idx" :src="img" mode="aspectFill" class="thumb-img" @click.stop="previewImage(img, item.attachments)" />
+							<view class="record-body" @click="showRecordDetail(item)">
+								<text class="item-desc" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
+								<text class="item-content">{{ item.content || '无内容' }}</text>
+								<view class="record-images" v-if="item.attachments">
+									<image v-for="(img, idx) in item.attachments.split(',').slice(0,3)" :key="idx" :src="img" mode="aspectFill" class="thumb-img" @click.stop="previewImage(img, item.attachments)" />
+								</view>
 							</view>
 						</view>
 					</view>
@@ -123,20 +144,7 @@
 						<text class="item-date">{{ item.date }}</text>
 					</view>
 				</view>
-				<view v-show="activeTab === 'episode'" class="tab-panel">
-					<text class="empty-tip" v-if="!episodeList.length">暂无疾病发作记录</text>
-					<view class="list-item" v-for="(item, i) in episodeList" :key="i" @click="showEpisodeDetail(item)">
-						<view class="item-header">
-							<text class="item-title">第{{ item.episodeNumber }}次发作</text>
-							<text class="item-date">{{ item.episodeDate }}</text>
-						</view>
-						<text class="item-desc">{{ item.chiefComplaint }}</text>
-						<view class="item-actions">
-							<text class="action-text" @click.stop="copyEpisodeToRecord(item)">复制为病历</text>
-						</view>
-					</view>
-				</view>
-			</view>
+							</view>
 		</view>
 		<view class="actions">
 			<button class="btn" @click="callPhone">打电话</button>
@@ -146,17 +154,26 @@
 </template>
 
 <script>
-import { getPatientById } from '@/api/patient.js'
+import { getPatientById, updatePatient } from '@/api/patient.js'
 import { getFollowUpList } from '@/api/followup.js'
 import { getMedicationList } from '@/api/medication.js'
-import { getEpisodeList } from '@/api/episode.js'
-import { createMedicalRecord, getMedicalRecordList } from '@/api/medicalRecord.js'
+import { createMedicalRecord, getMedicalRecordList, updateMedicalRecord, deleteMedicalRecord } from '@/api/medicalRecord.js'
 
 export default {
 	data() {
 		return {
 			activeTab: 'basic',
 			patientId: '',
+			diseaseOptions: [
+				{ label: 'MS（多发性硬化）', value: 'MS' },
+				{ label: 'NMOSD（视神经脊髓炎）', value: 'NMOSD' },
+				{ label: 'MG（重症肌无力）', value: 'MG' },
+				{ label: 'MOGAD（MOG抗体病）', value: 'MOGAD' },
+				{ label: '自身免疫性脑炎', value: '自身免疫性脑炎' },
+				{ label: 'GBS（格林-巴利综合征）', value: 'GBS' },
+				{ label: 'CIDP（慢性炎性脱髓鞘性多发性神经病）', value: 'CIDP' },
+				{ label: '其它疾病', value: '其它疾病' }
+			],
 			patient: {
 				name: '',
 				age: '',
@@ -171,15 +188,20 @@ export default {
 				patientType: '',
 				followUpCount: 0,
 				medicationCount: 0,
-				episodeCount: 0,
-				adviceCount: 0
+				recordCount: 0
 			},
 			followList: [],
 			medicationList: [],
-			episodeList: [],
 			hospitalRecords: [],
 			externalRecords: []
 		};
+	},
+	computed: {
+		diseaseTypeLabel() {
+			if (!this.patient.diseaseType) return '';
+			const found = this.diseaseOptions.find(d => d.value === this.patient.diseaseType);
+			return found ? found.label : this.patient.diseaseType;
+		}
 	},
 	onLoad(op) {
 		if (op.id) this.patientId = op.id;
@@ -206,8 +228,7 @@ export default {
 						patientType: res.patientType || '门诊患者',
 						followUpCount: 0,
 						medicationCount: 0,
-						episodeCount: 0,
-						adviceCount: 0
+						recordCount: 0
 					};
 				}
 			} catch (e) {
@@ -248,25 +269,6 @@ export default {
 				console.error('加载用药记录失败:', e);
 			}
 
-			// 加载疾病发作记录
-			try {
-				const epRes = await getEpisodeList({ pageNum: 1, pageSize: 100, patientId: this.patientId });
-				if (epRes && epRes.list) {
-					this.episodeList = epRes.list.map(ep => ({
-						id: ep.id,
-						episodeNumber: ep.episodeNumber,
-						episodeDate: ep.episodeDate,
-						chiefComplaint: ep.chiefComplaint,
-						symptoms: ep.symptoms,
-						diseaseProgress: ep.diseaseProgress,
-						treatmentProcess: ep.treatmentProcess
-					}));
-					this.patient.episodeCount = epRes.total || this.episodeList.length;
-				}
-			} catch (e) {
-				console.error('加载疾病发作记录失败:', e);
-			}
-
 			// 加载病历记录
 			try {
 				const recordRes = await getMedicalRecordList({ pageNum: 1, pageSize: 100, patientId: this.patientId });
@@ -284,6 +286,7 @@ export default {
 					}));
 					this.externalRecords = allRecords.filter(r => r.type === '外院病历');
 					this.hospitalRecords = allRecords.filter(r => r.type !== '外院病历');
+					this.patient.recordCount = recordRes.total || allRecords.length;
 				}
 			} catch (e) {
 				console.error('加载病历记录失败:', e);
@@ -348,61 +351,6 @@ export default {
 			});
 		},
 		// 查看疾病发作详情
-		showEpisodeDetail(item) {
-			const content = `第${item.episodeNumber}次发作
-发作时间：${item.episodeDate}
-主诉：${item.chiefComplaint || '无'}
-症状：${item.symptoms || '无'}
-病情变化：${item.diseaseProgress || '无'}
-诊治经过：${item.treatmentProcess || '无'}`;
-
-			uni.showModal({
-				title: '疾病发作详情',
-				content: content,
-				confirmText: '复制',
-				success: (res) => {
-					if (res.confirm) {
-						uni.setClipboardData({
-							data: content,
-							success: () => {
-								uni.showToast({ title: '已复制', icon: 'success' });
-							}
-						});
-					}
-				}
-			});
-		},
-		// 复制疾病发作记录为病历
-		copyEpisodeToRecord(item) {
-			uni.showModal({
-				title: '确认复制',
-				content: '将此疾病发作记录复制为新病历记录？',
-				success: async (res) => {
-					if (res.confirm) {
-						const content = `主诉：${item.chiefComplaint || ''}
-症状：${item.symptoms || ''}
-病情变化：${item.diseaseProgress || ''}
-诊治经过：${item.treatmentProcess || ''}`;
-
-						try {
-							await createMedicalRecord({
-								patientId: this.patientId,
-								patientName: this.patient.name,
-								type: '住院病历',
-								diagnosis: '待诊断',
-								content: content,
-								date: item.episodeDate
-							});
-							uni.showToast({ title: '已复制为病历', icon: 'success' });
-							this.loadData();
-						} catch (e) {
-							console.error('复制失败:', e);
-							uni.showToast({ title: '复制失败', icon: 'none' });
-						}
-					}
-				}
-			});
-		},
 		// 查看病历详情
 		showRecordDetail(item) {
 			let content = `就诊日期：${item.date || '未知'}\n`
@@ -435,6 +383,52 @@ export default {
 			uni.previewImage({
 				current: current,
 				urls: urls
+			})
+		},
+		// 疾病分类变更
+		async onDiseaseTypeChange(e) {
+			const selected = this.diseaseOptions[e.detail.value]
+			const newType = selected.value
+			if (newType === this.patient.diseaseType) return
+
+			try {
+				await updatePatient(this.patientId, { diseaseType: newType })
+				this.patient.diseaseType = newType
+				uni.showToast({ title: '已更新', icon: 'success' })
+			} catch (err) {
+				console.error('更新疾病分类失败:', err)
+				uni.showToast({ title: '更新失败', icon: 'none' })
+			}
+		},
+		// 添加病历
+		addRecord(type) {
+			uni.navigateTo({
+				url: '/pages/doctor/edit-record/edit-record?patientId=' + this.patientId + '&patientName=' + encodeURIComponent(this.patient.name) + '&type=' + type
+			})
+		},
+		// 编辑病历
+		editRecord(item) {
+			uni.navigateTo({
+				url: '/pages/doctor/edit-record/edit-record?id=' + item.id + '&patientId=' + this.patientId + '&patientName=' + encodeURIComponent(this.patient.name)
+			})
+		},
+		// 删除病历
+		deleteRecord(item) {
+			uni.showModal({
+				title: '确认删除',
+				content: '确定要删除这条病历记录吗？',
+				success: async (res) => {
+					if (res.confirm) {
+						try {
+							await deleteMedicalRecord(item.id)
+							uni.showToast({ title: '删除成功', icon: 'success' })
+							this.loadData()
+						} catch (e) {
+							console.error('删除失败:', e)
+							uni.showToast({ title: '删除失败', icon: 'none' })
+						}
+					}
+				}
 			})
 		}
 	}
@@ -801,5 +795,70 @@ export default {
 .btn.primary {
 	background: $app-primary;
 	color: #fff;
+}
+
+.disease-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	.picker-box {
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+		padding: 12rpx 24rpx;
+		background: $app-bg;
+		border: 2rpx solid $app-border;
+		border-radius: 12rpx;
+		min-width: 300rpx;
+	}
+	.picker-text {
+		font-size: 28rpx;
+		color: $app-text;
+		flex: 1;
+	}
+	.app-icon {
+		font-size: 24rpx;
+		color: $app-text-muted;
+	}
+}
+
+.section-header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16rpx;
+	padding-bottom: 12rpx;
+	border-bottom: 1rpx solid $app-border;
+}
+
+.add-link {
+	font-size: 26rpx;
+	color: $app-primary;
+}
+
+.record-item .item-actions {
+	display: flex;
+	gap: 16rpx;
+	margin-top: 0;
+}
+
+.action-btn {
+	font-size: 24rpx;
+	padding: 4rpx 16rpx;
+	border-radius: 6rpx;
+}
+
+.action-btn.edit {
+	color: $app-primary;
+	background: rgba($app-primary, 0.1);
+}
+
+.action-btn.delete {
+	color: #EF4444;
+	background: rgba(#EF4444, 0.1);
+}
+
+.record-body {
+	margin-top: 8rpx;
 }
 </style>

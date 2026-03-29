@@ -58,6 +58,9 @@
 
 		<!-- 日历弹窗 -->
 		<uni-calendar ref="calendar" :insert="false" @confirm="onCalendarConfirm" />
+
+		<!-- 自定义tabBar -->
+		<custom-tabbar :current="1" />
 	</view>
 </template>
 
