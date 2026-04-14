@@ -3,7 +3,7 @@ import { get } from './request'
 
 // 获取统计数据
 export const getStats = () => {
-  return get('/dashboard/stats')
+  return get('/neuroimmune/dashboard/stats')
 }
 
 export default {

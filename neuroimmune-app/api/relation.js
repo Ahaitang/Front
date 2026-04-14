@@ -4,7 +4,7 @@ import request from './request.js'
  * 患者绑定医生
  */
 export const bindDoctor = (patientId, doctorId, bindMethod = 'patient', remark = '') => {
-	return request.post('/relation/bind', {
+	return request.post('/neuroimmune/relation/bind', {
 		patientId,
 		doctorId,
 		bindMethod,
@@ -16,7 +16,7 @@ export const bindDoctor = (patientId, doctorId, bindMethod = 'patient', remark =
  * 解除绑定
  */
 export const unbindRelation = (id) => {
-	return request.post('/relation/unbind', { id })
+	return request.post('/neuroimmune/relation/unbind', { id })
 }
 
 /**
@@ -58,7 +58,7 @@ export const getBindHistory = (patientId) => {
  * 获取所有绑定关系（管理端）
  */
 export const getRelationList = (params = {}) => {
-	return request.get('/relation/list', params)
+	return request.get('/neuroimmune/relation/list', params)
 }
 
 /**
@@ -72,7 +72,7 @@ export const countDoctorPatients = (doctorId) => {
  * 获取所有医生列表（供患者选择）
  */
 export const getDoctorList = () => {
-	return request.get('/relation/doctors')
+	return request.get('/neuroimmune/relation/doctors')
 }
 
 /**

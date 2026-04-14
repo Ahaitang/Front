@@ -86,7 +86,7 @@ export const uploadFile = (filePath) => {
     const userInfo = uni.getStorageSync('userInfo')
 
     uni.uploadFile({
-      url: config.BASE_URL + '/file/upload',
+      url: config.BASE_URL + '/neuroimmune/file/upload',
       filePath: filePath,
       name: 'file',
       header: {

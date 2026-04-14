@@ -3,7 +3,7 @@ import { get, post, put, del } from './request'
 
 // 获取用药列表
 export const getMedicationList = (params = {}) => {
-  return get('/medications', params)
+  return get('/neuroimmune/medications', params)
 }
 
 // 获取用药详情
@@ -13,7 +13,7 @@ export const getMedicationById = (id) => {
 
 // 新增用药
 export const createMedication = (data) => {
-  return post('/medications', data)
+  return post('/neuroimmune/medications', data)
 }
 
 // 更新用药

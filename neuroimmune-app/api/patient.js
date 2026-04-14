@@ -3,7 +3,7 @@ import { get, post, put, del } from './request'
 
 // 获取患者列表
 export const getPatientList = (params = {}) => {
-  return get('/patients', params)
+  return get('/neuroimmune/patients', params)
 }
 
 // 获取患者详情
@@ -13,7 +13,7 @@ export const getPatientById = (id) => {
 
 // 新增患者
 export const createPatient = (data) => {
-  return post('/patients', data)
+  return post('/neuroimmune/patients', data)
 }
 
 // 更新患者
@@ -28,7 +28,7 @@ export const deletePatient = (id) => {
 
 // 获取医生的患者列表
 export const getMyPatients = (params = {}) => {
-  return get('/patients/my', params)
+  return get('/neuroimmune/patients/my', params)
 }
 
 // 更新患者密码

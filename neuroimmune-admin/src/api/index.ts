@@ -3,17 +3,17 @@ import type { PageRequest, PageResult } from '@/utils/types'
 
 // 登录
 export const login = (data: { username: string; password: string; role?: string }) => {
-  return request.post('/login', data)
+  return request.post('/neuroimmune/login', data)
 }
 
 // 仪表盘统计
 export const getDashboardStats = () => {
-  return request.get('/dashboard/stats')
+  return request.get('/neuroimmune/dashboard/stats')
 }
 
 // 患者相关
 export const getPatientList = (params: PageRequest) => {
-  return request.get<PageResult<Patient>>('/patients', params)
+  return request.get<PageResult<Patient>>('/neuroimmune/patients', params)
 }
 
 export const getPatientById = (id: string | number) => {
@@ -24,7 +24,7 @@ export const savePatient = (data: Partial<Patient>) => {
   if (data.id) {
     return request.put(`/patients/${data.id}`, data)
   }
-  return request.post('/patients', data)
+  return request.post('/neuroimmune/patients', data)
 }
 
 export const deletePatient = (id: string | number) => {
@@ -37,11 +37,11 @@ export const updatePatientPassword = (id: string | number, password: string) => 
 
 // 医生相关
 export const getDoctorList = (params: PageRequest) => {
-  return request.get<PageResult<Doctor>>('/doctors', params)
+  return request.get<PageResult<Doctor>>('/neuroimmune/doctors', params)
 }
 
 export const getAllDoctors = () => {
-  return request.get<Doctor[]>('/doctors/all')
+  return request.get<Doctor[]>('/neuroimmune/doctors/all')
 }
 
 export const getDoctorById = (id: string | number) => {
@@ -52,7 +52,7 @@ export const saveDoctor = (data: Partial<Doctor>) => {
   if (data.id) {
     return request.put(`/doctors/${data.id}`, data)
   }
-  return request.post('/doctors', data)
+  return request.post('/neuroimmune/doctors', data)
 }
 
 export const deleteDoctor = (id: string | number) => {
@@ -74,7 +74,7 @@ export const updateAdminPassword = (id: string | number, password: string) => {
 
 // 随访相关
 export const getFollowUpList = (params: PageRequest) => {
-  return request.get<PageResult<FollowUp>>('/followups', params)
+  return request.get<PageResult<FollowUp>>('/neuroimmune/followups', params)
 }
 
 export const getFollowUpById = (id: string | number) => {
@@ -85,7 +85,7 @@ export const saveFollowUp = (data: Partial<FollowUp>) => {
   if (data.id) {
     return request.put(`/followups/${data.id}`, data)
   }
-  return request.post('/followups', data)
+  return request.post('/neuroimmune/followups', data)
 }
 
 export const updateFollowUpStatus = (id: string | number, status: string) => {
@@ -98,7 +98,7 @@ export const deleteFollowUp = (id: string | number) => {
 
 // 用药相关
 export const getMedicationList = (params: PageRequest) => {
-  return request.get<PageResult<Medication>>('/medications', params)
+  return request.get<PageResult<Medication>>('/neuroimmune/medications', params)
 }
 
 export const getMedicationById = (id: string | number) => {
@@ -109,7 +109,7 @@ export const saveMedication = (data: Partial<Medication>) => {
   if (data.id) {
     return request.put(`/medications/${data.id}`, data)
   }
-  return request.post('/medications', data)
+  return request.post('/neuroimmune/medications', data)
 }
 
 export const deleteMedication = (id: string | number) => {
@@ -118,29 +118,29 @@ export const deleteMedication = (id: string | number) => {
 
 // 病历相关
 export const getRecordList = (params: PageRequest) => {
-  return request.get<PageResult<MedicalRecord>>('/records', params)
+  return request.get<PageResult<MedicalRecord>>('/neuroimmune/records', params)
 }
 
 export const getRecordById = (id: string | number) => {
-  return request.get<MedicalRecord>(`/records/${id}`)
+  return request.get<MedicalRecord>(`/neuroimmune/records/${id}`)
 }
 
 export const saveRecord = (data: Partial<MedicalRecord>) => {
   if (data.id) {
-    return request.put(`/records/${data.id}`, data)
+    return request.put(`/neuroimmune/records/${data.id}`, data)
   }
-  return request.post('/records', data)
+  return request.post('/neuroimmune/records', data)
 }
 
 export const deleteRecord = (id: string | number) => {
-  return request.delete(`/records/${id}`)
+  return request.delete(`/neuroimmune/records/${id}`)
 }
 
 // 文件上传
 export const uploadFile = async (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  const response = await fetch('http://localhost:8080/api/file/upload', {
+  const response = await fetch('http://localhost:8080/api/neuroimmune/file/upload', {
     method: 'POST',
     body: formData,
     headers: {

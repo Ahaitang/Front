@@ -3,7 +3,7 @@ import { post, get } from './request'
 
 // 统一登录接口
 export const login = (data) => {
-  return post('/login', data)
+  return post('/neuroimmune/login', data)
 }
 
 // 管理员登录
@@ -23,7 +23,7 @@ export const patientLogin = (data) => {
 
 // 获取管理员信息
 export const getAdminInfo = (id) => {
-  return get('/admin/info', { id })
+  return get('/neuroimmune/admin/info', { id })
 }
 
 // 修改管理员密码

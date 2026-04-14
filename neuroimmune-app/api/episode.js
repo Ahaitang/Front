@@ -3,7 +3,7 @@ import { get, post, put, del } from './request'
 
 // 获取发作记录列表
 export const getEpisodeList = (params = {}) => {
-  return get('/episodes', params)
+  return get('/neuroimmune/episodes', params)
 }
 
 // 获取患者的所有发作记录
@@ -18,7 +18,7 @@ export const getEpisodeById = (id) => {
 
 // 新增发作记录
 export const createEpisode = (data) => {
-  return post('/episodes', data)
+  return post('/neuroimmune/episodes', data)
 }
 
 // 更新发作记录

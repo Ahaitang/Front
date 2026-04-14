@@ -3,7 +3,7 @@ import { get, post, put, del } from './request'
 
 // 获取随访列表
 export const getFollowUpList = (params = {}) => {
-  return get('/followups', params)
+  return get('/neuroimmune/followups', params)
 }
 
 // 获取随访详情
@@ -13,7 +13,7 @@ export const getFollowUpById = (id) => {
 
 // 新增随访
 export const createFollowUp = (data) => {
-  return post('/followups', data)
+  return post('/neuroimmune/followups', data)
 }
 
 // 更新随访

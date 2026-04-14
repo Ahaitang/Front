@@ -109,14 +109,14 @@ export const doctorApi = {
    * 医生登录
    */
   login(username: string, password: string): Promise<any> {
-    return request('/doctor/login', 'POST', { username, password })
+    return request('/qmg/doctor/login', 'POST', { username, password })
   },
 
   /**
    * 根据用户名获取医生信息
    */
   getByUsername(username: string): Promise<any> {
-    return request('/doctor/getByUsername', 'POST', { username })
+    return request('/qmg/doctor/getByUsername', 'POST', { username })
   },
 
   /**
@@ -129,7 +129,7 @@ export const doctorApi = {
     username: string
     password: string
   }, currentUserLevel: number): Promise<any> {
-    return request('/doctor/register', 'POST', { ...doctor, currentUserLevel })
+    return request('/qmg/doctor/register', 'POST', { ...doctor, currentUserLevel })
   },
 
   /**
@@ -140,14 +140,14 @@ export const doctorApi = {
     username: string
     password: string
   }>, currentUserLevel: number): Promise<any> {
-    return request('/doctor/register', 'POST', { doctors, currentUserLevel })
+    return request('/qmg/doctor/register', 'POST', { doctors, currentUserLevel })
   },
 
   /**
    * 获取所有医生列表
    */
   getDoctorList(currentUserLevel: number): Promise<any[]> {
-    return request('/doctor/list', 'POST', { currentUserLevel })
+    return request('/qmg/doctor/list', 'POST', { currentUserLevel })
   },
 
   /**
@@ -160,7 +160,7 @@ export const doctorApi = {
     role?: string
     level?: number
   }, currentUserLevel: number): Promise<any> {
-    return request('/doctor/update', 'POST', { ...doctor, currentUserLevel })
+    return request('/qmg/doctor/update', 'POST', { ...doctor, currentUserLevel })
   }
 }
 
@@ -172,28 +172,28 @@ export const patientApi = {
    * 获取患者列表（根据权限过滤）
    */
   getPatientList(currentDoctorId?: number, currentUserLevel?: number): Promise<any[]> {
-    return request('/patient/list', 'POST', { currentDoctorId, currentUserLevel })
+    return request('/qmg/patient/list', 'POST', { currentDoctorId, currentUserLevel })
   },
 
   /**
    * 根据ID获取患者（根据权限过滤）
    */
   getPatientById(id: number, currentDoctorId?: number, currentUserLevel?: number): Promise<any> {
-    return request('/patient/getById', 'POST', { id, currentDoctorId, currentUserLevel })
+    return request('/qmg/patient/getById', 'POST', { id, currentDoctorId, currentUserLevel })
   },
 
   /**
    * 根据住院号获取患者
    */
   getPatientByAdmissionNumber(admissionNumber: string): Promise<any> {
-    return request('/patient/getByAdmissionNumber', 'POST', { admissionNumber })
+    return request('/qmg/patient/getByAdmissionNumber', 'POST', { admissionNumber })
   },
 
   /**
    * 搜索患者（根据权限过滤）
    */
   searchPatients(keyword: string, currentDoctorId?: number, currentUserLevel?: number): Promise<any[]> {
-    return request('/patient/search', 'POST', { keyword, currentDoctorId, currentUserLevel })
+    return request('/qmg/patient/search', 'POST', { keyword, currentDoctorId, currentUserLevel })
   },
 
   /**
@@ -205,7 +205,7 @@ export const patientApi = {
     admissionNumber: string
     phone: string
   }, currentDoctorId?: number): Promise<any> {
-    return request('/patient/add', 'POST', { ...patient, currentDoctorId })
+    return request('/qmg/patient/add', 'POST', { ...patient, currentDoctorId })
   },
 
   /**
@@ -218,14 +218,14 @@ export const patientApi = {
     admissionNumber: string
     phone: string
   }, currentUserLevel?: number): Promise<any> {
-    return request('/patient/update', 'POST', { ...patient, currentUserLevel })
+    return request('/qmg/patient/update', 'POST', { ...patient, currentUserLevel })
   },
 
   /**
    * 删除患者。传 currentUserLevel 用于权限校验（管理员不可删超级管理员添加的患者）。
    */
   deletePatient(id: number, currentUserLevel?: number): Promise<any> {
-    return request('/patient/delete', 'POST', { id, currentUserLevel })
+    return request('/qmg/patient/delete', 'POST', { id, currentUserLevel })
   },
 
   /**
@@ -238,7 +238,7 @@ export const patientApi = {
     patients: Array<{ name: string; gender: string; admissionNumber: string; phone: string }>,
     currentDoctorId?: number
   ): Promise<{ successCount: number; failCount: number; errors: Array<{ row: number; message: string }> }> {
-    return request('/patient/import', 'POST', { patients, currentDoctorId })
+    return request('/qmg/patient/import', 'POST', { patients, currentDoctorId })
   }
 }
 
@@ -258,7 +258,7 @@ export const questionnaireApi = {
     doctorUsername?: string
     userInputData?: any  // 用户自定义输入数据（可以是字符串或对象）
   }): Promise<any> {
-    return request('/questionnaire/save', 'POST', record)
+    return request('/qmg/questionnaire/save', 'POST', record)
   },
 
   /**
@@ -276,14 +276,14 @@ export const questionnaireApi = {
     currentUsername?: string
     userInputData?: any  // 用户自定义输入数据（可以是字符串或对象）
   }): Promise<any> {
-    return request('/questionnaire/update', 'POST', record)
+    return request('/qmg/questionnaire/update', 'POST', record)
   },
 
   /**
    * 根据ID获取问卷结果
    */
   getRecordById(id: number): Promise<any> {
-    return request('/questionnaire/getById', 'POST', { id })
+    return request('/qmg/questionnaire/getById', 'POST', { id })
   },
 
   /**
@@ -297,7 +297,7 @@ export const questionnaireApi = {
     currentDoctorId?: number,
     currentUserLevel?: number
   ): Promise<any[]> {
-    return request('/questionnaire/getByPatientId', 'POST', {
+    return request('/qmg/questionnaire/getByPatientId', 'POST', {
       patientId,
       startDate,
       endDate,
@@ -311,7 +311,7 @@ export const questionnaireApi = {
    * 获取所有问卷结果（不分页）
    */
   getAllRecords(): Promise<any[]> {
-    return request('/questionnaire/list', 'POST')
+    return request('/qmg/questionnaire/list', 'POST')
   },
 
   /**
@@ -333,7 +333,7 @@ export const questionnaireApi = {
     pageSize: number
     hasMore: boolean
   }> {
-    return request('/questionnaire/list', 'POST', {
+    return request('/qmg/questionnaire/list', 'POST', {
       patientName,
       startDate,
       endDate,
@@ -349,14 +349,14 @@ export const questionnaireApi = {
    * 删除问卷结果
    */
   deleteRecord(id: number): Promise<any> {
-    return request('/questionnaire/delete', 'POST', { id })
+    return request('/qmg/questionnaire/delete', 'POST', { id })
   },
 
   /**
    * 统计最近一周每天的问卷数量
    */
   countByDayLast7Days(): Promise<Array<{ date: string; count: number }>> {
-    return request('/questionnaire/countByDayLast7Days', 'POST')
+    return request('/qmg/questionnaire/countByDayLast7Days', 'POST')
   }
 }
 
@@ -368,41 +368,41 @@ export const questionnaireConfigApi = {
    * 获取所有问卷项目（包含选项）
    */
   getAllItems(): Promise<any[]> {
-    return request('/questionnaireConfig/getAllItems', 'POST')
+    return request('/qmg/questionnaireConfig/getAllItems', 'POST')
   },
 
   /**
    * 根据分类获取问卷项目
    */
   getItemsByCategory(category: string): Promise<any[]> {
-    return request('/questionnaireConfig/getItemsByCategory', 'POST', { category })
+    return request('/qmg/questionnaireConfig/getItemsByCategory', 'POST', { category })
   },
 
   /**
    * 根据键名获取问卷项目
    */
   getItemByKey(key: string): Promise<any> {
-    return request('/questionnaireConfig/getItemByKey', 'POST', { key })
+    return request('/qmg/questionnaireConfig/getItemByKey', 'POST', { key })
   },
 
   /**
    * 保存或更新问卷项目（包含选项）
    */
   saveOrUpdateItem(item: any): Promise<any> {
-    return request('/questionnaireConfig/saveOrUpdateItem', 'POST', item)
+    return request('/qmg/questionnaireConfig/saveOrUpdateItem', 'POST', item)
   },
 
   /**
    * 批量保存或更新问卷项目
    */
   batchSaveOrUpdateItems(items: any[]): Promise<any> {
-    return request('/questionnaireConfig/batchSaveOrUpdateItems', 'POST', { items })
+    return request('/qmg/questionnaireConfig/batchSaveOrUpdateItems', 'POST', { items })
   },
 
   /**
    * 删除问卷项目
    */
   deleteItem(itemId: number): Promise<any> {
-    return request('/questionnaireConfig/deleteItem', 'POST', { itemId })
+    return request('/qmg/questionnaireConfig/deleteItem', 'POST', { itemId })
   }
 }

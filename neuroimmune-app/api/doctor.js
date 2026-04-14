@@ -3,12 +3,12 @@ import { get, post, put, del } from './request'
 
 // 获取医生列表
 export const getDoctorList = (params = {}) => {
-  return get('/doctors', params)
+  return get('/neuroimmune/doctors', params)
 }
 
 // 获取所有医生
 export const getAllDoctors = () => {
-  return get('/doctors/all')
+  return get('/neuroimmune/doctors/all')
 }
 
 // 获取医生详情
@@ -18,7 +18,7 @@ export const getDoctorById = (id) => {
 
 // 新增医生
 export const createDoctor = (data) => {
-  return post('/doctors', data)
+  return post('/neuroimmune/doctors', data)
 }
 
 // 更新医生
