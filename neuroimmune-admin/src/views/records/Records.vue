@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete, Upload, Picture } from '@element-plus/icons-vue'
+import { Plus, Delete, Picture, Folder } from '@element-plus/icons-vue'
 import { getRecordList, saveRecord, deleteRecord as deleteRecordApi, getPatientList, uploadFile, ocrParseMedical } from '@/api'
 import type { MedicalRecord, Patient } from '@/api'
 
@@ -249,6 +249,14 @@ const hasImages = computed(() => imageList.value.length > 0)
 
 <template>
   <div class="page-container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="page-title">
+        <el-icon><Folder /></el-icon>
+        病历管理
+      </div>
+    </div>
+
     <!-- 搜索栏 -->
     <div class="search-bar">
       <el-form :model="searchForm" inline>
@@ -291,34 +299,34 @@ const hasImages = computed(() => imageList.value.length > 0)
       <el-table :data="tableData" stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="patientName" label="患者" min-width="100" />
-        <el-table-column prop="type" label="类型" min-width="100">
+        <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
-            <el-tag size="small">{{ row.type }}</el-tag>
+            <el-tag size="small" effect="light">{{ row.type }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="diagnosis" label="诊断" min-width="140" />
+        <el-table-column prop="diagnosis" label="诊断" min-width="140" show-overflow-tooltip />
         <el-table-column prop="hospital" label="医院" min-width="120" />
         <el-table-column prop="department" label="科室" min-width="100" />
         <el-table-column prop="doctorName" label="医生" min-width="100" />
-        <el-table-column prop="date" label="日期" min-width="120" />
+        <el-table-column prop="date" label="日期" width="110" />
         <el-table-column label="图片" width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.attachments" type="success" size="small">
+            <el-tag v-if="row.attachments" type="success" size="small" effect="light">
               <el-icon><Picture /></el-icon>
             </el-tag>
-            <span v-else>-</span>
+            <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="160">
+        <el-table-column prop="createTime" label="创建时间" width="160">
           <template #default="{ row }">
-            {{ formatDate(row.createTime) }}
+            <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="viewRecord(row)">查看</el-button>
-            <el-button type="primary" link @click="editRecord(row)">编辑</el-button>
-            <el-button type="danger" link @click="deleteRecord(row)">删除</el-button>
+            <el-button type="primary" link size="small" @click="viewRecord(row)">查看</el-button>
+            <el-button type="primary" link size="small" @click="editRecord(row)">编辑</el-button>
+            <el-button type="danger" link size="small" @click="deleteRecord(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -490,12 +498,6 @@ const hasImages = computed(() => imageList.value.length > 0)
 </template>
 
 <style lang="scss" scoped>
-.pagination-wrap {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .image-upload-area {
   display: flex;
   flex-direction: column;
@@ -512,14 +514,19 @@ const hasImages = computed(() => imageList.value.length > 0)
   position: relative;
   width: 100px;
   height: 100px;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   overflow: hidden;
 
   .image-thumb {
     width: 100%;
     height: 100%;
     cursor: pointer;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
   }
 
   .image-actions {
@@ -530,5 +537,9 @@ const hasImages = computed(() => imageList.value.length > 0)
     background: rgba(0, 0, 0, 0.5);
     border-radius: 0 0 0 6px;
   }
+}
+
+.text-muted {
+  color: #9CA3AF;
 }
 </style>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Calendar, Document, Clock, CircleCheck, CircleClose } from '@element-plus/icons-vue'
 import {
   getFollowUpList,
   saveFollowUp as saveFollowUpApi,
@@ -275,21 +276,41 @@ const formatDate = (date: string) => {
 
 <template>
   <div class="page-container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="page-title">
+        <el-icon><Calendar /></el-icon>
+        随访管理
+      </div>
+    </div>
+
     <!-- 统计卡片 -->
     <div class="stats-row">
       <div class="stat-card">
+        <div class="stat-icon">
+          <el-icon :size="24"><Document /></el-icon>
+        </div>
         <div class="stat-value">{{ statusStats.total }}</div>
         <div class="stat-label">总随访</div>
       </div>
       <div class="stat-card warning">
+        <div class="stat-icon">
+          <el-icon :size="24"><Clock /></el-icon>
+        </div>
         <div class="stat-value">{{ statusStats.pending }}</div>
         <div class="stat-label">待随访</div>
       </div>
       <div class="stat-card success">
+        <div class="stat-icon">
+          <el-icon :size="24"><CircleCheck /></el-icon>
+        </div>
         <div class="stat-value">{{ statusStats.completed }}</div>
         <div class="stat-label">已完成</div>
       </div>
       <div class="stat-card danger">
+        <div class="stat-icon">
+          <el-icon :size="24"><CircleClose /></el-icon>
+        </div>
         <div class="stat-value">{{ statusStats.cancelled }}</div>
         <div class="stat-label">已取消</div>
       </div>
@@ -341,56 +362,58 @@ const formatDate = (date: string) => {
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column label="患者信息" min-width="160">
+        <el-table-column label="患者信息" min-width="140">
           <template #default="{ row }">
             <div class="patient-info">
-              <span class="patient-name">{{ row.patientName }}</span>
-              <span class="patient-meta">{{ row.patientGender }} | {{ row.patientAge }}岁</span>
+              <span class="name">{{ row.patientName }}</span>
+              <span class="meta">{{ row.patientGender }} | {{ row.patientAge }}岁</span>
             </div>
           </template>
         </el-table-column>
         <el-table-column prop="doctorName" label="随访医生" min-width="100" />
         <el-table-column prop="date" label="随访日期" min-width="110" />
-        <el-table-column prop="project" label="随访项目" min-width="140" />
+        <el-table-column prop="project" label="随访项目" min-width="140" show-overflow-tooltip />
         <el-table-column prop="type" label="类型" min-width="100">
           <template #default="{ row }">
             <el-tag type="info" effect="plain" size="small">{{ row.type }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" min-width="90">
+        <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
+            <el-tag :type="getStatusType(row.status)" size="small" effect="light">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="content" label="备注" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="content" label="备注" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="text-muted">{{ row.content || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="160">
+        <el-table-column prop="createTime" label="创建时间" width="160">
           <template #default="{ row }">
-            {{ formatDate(row.createTime) }}
+            <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="viewFollowUp(row)">查看</el-button>
-            <el-button type="primary" link @click="editFollowUp(row)">编辑</el-button>
+            <el-button type="primary" link size="small" @click="viewFollowUp(row)">查看</el-button>
+            <el-button type="primary" link size="small" @click="editFollowUp(row)">编辑</el-button>
             <el-button
               v-if="row.status === 'pending'"
               type="success"
               link
+              size="small"
               @click="completeFollowUp(row)"
             >完成</el-button>
             <el-button
               v-if="row.status === 'pending'"
               type="warning"
               link
+              size="small"
               @click="cancelFollowUp(row)"
             >取消</el-button>
-            <el-button type="danger" link @click="deleteFollowUp(row)">删除</el-button>
+            <el-button type="danger" link size="small" @click="deleteFollowUp(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -513,67 +536,7 @@ const formatDate = (date: string) => {
 </template>
 
 <style lang="scss" scoped>
-.stats-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  flex: 1;
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-
-  .stat-value {
-    font-size: 28px;
-    font-weight: 600;
-    color: #409eff;
-  }
-
-  .stat-label {
-    font-size: 14px;
-    color: #909399;
-    margin-top: 8px;
-  }
-
-  &.warning .stat-value {
-    color: #e6a23c;
-  }
-
-  &.success .stat-value {
-    color: #67c23a;
-  }
-
-  &.danger .stat-value {
-    color: #f56c6c;
-  }
-}
-
-.pagination-wrap {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.patient-info {
-  display: flex;
-  flex-direction: column;
-
-  .patient-name {
-    font-weight: 500;
-    color: #303133;
-  }
-
-  .patient-meta {
-    font-size: 12px;
-    color: #909399;
-  }
-}
-
 .text-muted {
-  color: #909399;
+  color: #9CA3AF;
 }
 </style>

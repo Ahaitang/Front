@@ -1,17 +1,227 @@
 // 神经免疫随访 - 全局设计变量（温和专业风格）
 $app-primary: #0D9488;
 $app-primary-light: #14B8A6;
-$app-primary-bg: #CCFBF1;
+$app-primary-dark: #0F766E;
+$app-primary-bg: rgba(#0D9488, 0.08);
+
+// 背景颜色
 $app-bg: #FAFAF9;
 $app-card-bg: #FFFFFF;
+$app-hover-bg: #F3F4F6;
+
+// 文字颜色
 $app-text: #1F2937;
 $app-text-secondary: #6B7280;
 $app-text-muted: #9CA3AF;
+
+// 边框颜色
 $app-border: #E5E7EB;
-$app-success: #059669;
-$app-warning: #D97706;
-$app-error: #DC2626;
-$app-radius: 16rpx;
+$app-divider: #F3F4F6;
+
+// 状态颜色
+$app-success: #10B981;
+$app-success-bg: rgba(#10B981, 0.1);
+$app-warning: #F59E0B;
+$app-warning-bg: rgba(#F59E0B, 0.1);
+$app-error: #EF4444;
+$app-error-bg: rgba(#EF4444, 0.1);
+$app-info: #3B82F6;
+$app-info-bg: rgba(#3B82F6, 0.1);
+
+// 圆角
+$app-radius: 20rpx;
 $app-radius-sm: 12rpx;
-$app-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-$app-shadow-card: 0 4rpx 20rpx rgba(13, 148, 136, 0.08);
+$app-radius-lg: 28rpx;
+$app-radius-full: 9999rpx;
+
+// 阴影
+$app-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+$app-shadow-sm: 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
+$app-shadow-md: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+$app-shadow-card: 0 4rpx 20rpx rgba(13, 148, 136, 0.06);
+$app-shadow-primary: 0 8rpx 24rpx rgba(13, 148, 136, 0.25);
+
+// 间距
+$app-spacing-xs: 8rpx;
+$app-spacing-sm: 16rpx;
+$app-spacing-md: 24rpx;
+$app-spacing-lg: 32rpx;
+$app-spacing-xl: 48rpx;
+
+// 动画
+$app-transition: all 0.25s ease;
+$app-transition-fast: all 0.15s ease;
+
+// 渐变背景
+$app-gradient-primary: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+$app-gradient-doctor: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+$app-gradient-success: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+$app-gradient-warning: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+
+// 全局动画类
+.fade-enter-active, .fade-leave-active {
+	transition: opacity 0.25s ease;
+}
+.fade-enter-from, .fade-leave-to {
+	opacity: 0;
+}
+
+.slide-up-enter-active, .slide-up-leave-active {
+	transition: all 0.3s ease;
+}
+.slide-up-enter-from, .slide-up-leave-to {
+	opacity: 0;
+	transform: translateY(40rpx);
+}
+
+// 通用卡片样式
+.app-card {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	padding: $app-spacing-md;
+	box-shadow: $app-shadow;
+	transition: $app-transition;
+}
+
+.app-card:active {
+	transform: scale(0.98);
+	box-shadow: $app-shadow-sm;
+}
+
+// 通用按钮样式
+.app-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-spacing-xs;
+	height: 88rpx;
+	border-radius: $app-radius-sm;
+	font-size: 30rpx;
+	font-weight: 500;
+	transition: $app-transition;
+	border: none;
+}
+
+.app-btn-primary {
+	background: $app-primary;
+	color: #fff;
+	box-shadow: $app-shadow-primary;
+}
+
+.app-btn-primary:active {
+	background: $app-primary-dark;
+	transform: scale(0.98);
+}
+
+.app-btn-outline {
+	background: transparent;
+	color: $app-primary;
+	border: 2rpx solid $app-primary;
+}
+
+.app-btn-outline:active {
+	background: $app-primary-bg;
+}
+
+// 通用标签样式
+.app-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8rpx 16rpx;
+	border-radius: $app-radius-sm;
+	font-size: 24rpx;
+	font-weight: 500;
+	transition: $app-transition-fast;
+}
+
+.app-tag-primary {
+	background: $app-primary-bg;
+	color: $app-primary;
+}
+
+.app-tag-success {
+	background: $app-success-bg;
+	color: $app-success;
+}
+
+.app-tag-warning {
+	background: $app-warning-bg;
+	color: $app-warning;
+}
+
+.app-tag-error {
+	background: $app-error-bg;
+	color: $app-error;
+}
+
+.app-tag-info {
+	background: $app-info-bg;
+	color: $app-info;
+}
+
+// 空状态样式
+.app-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: $app-spacing-xl * 2;
+}
+
+.app-empty-icon {
+	font-size: 120rpx;
+	color: $app-text-muted;
+	margin-bottom: $app-spacing-md;
+	opacity: 0.6;
+}
+
+.app-empty-text {
+	font-size: 30rpx;
+	color: $app-text-secondary;
+	margin-bottom: $app-spacing-xs;
+}
+
+.app-empty-tip {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
+
+// 分割线
+.app-divider {
+	height: 1rpx;
+	background: $app-divider;
+	margin: $app-spacing-md 0;
+}
+
+// 徽章
+.app-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 36rpx;
+	height: 36rpx;
+	padding: 0 12rpx;
+	border-radius: $app-radius-full;
+	font-size: 22rpx;
+	font-weight: 600;
+	background: $app-error;
+	color: #fff;
+}
+
+// 状态点
+.app-status-dot {
+	width: 16rpx;
+	height: 16rpx;
+	border-radius: 50%;
+	background: $app-success;
+	border: 3rpx solid #fff;
+}
+
+.app-status-dot.warning {
+	background: $app-warning;
+}
+
+.app-status-dot.error {
+	background: $app-error;
+}

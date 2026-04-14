@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { FirstAidKit } from '@element-plus/icons-vue'
 import {
   getMedicationList,
   saveMedication,
@@ -192,6 +193,14 @@ const formatDate = (date: string) => {
 
 <template>
   <div class="page-container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="page-title">
+        <el-icon><FirstAidKit /></el-icon>
+        用药管理
+      </div>
+    </div>
+
     <!-- 搜索栏 -->
     <div class="search-bar">
       <el-form :model="searchForm" inline>
@@ -230,23 +239,27 @@ const formatDate = (date: string) => {
         <el-table-column prop="medicationName" label="药品名称" min-width="140" />
         <el-table-column label="剂量" min-width="100">
           <template #default="{ row }">
-            {{ row.dosage }}{{ row.unit }}
+            <span class="dosage-value">{{ row.dosage }}{{ row.unit }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="frequency" label="频率" min-width="100" />
-        <el-table-column prop="route" label="途径" min-width="80" />
+        <el-table-column prop="route" label="途径" width="80">
+          <template #default="{ row }">
+            <el-tag type="info" effect="plain" size="small">{{ row.route }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="duration" label="疗程" min-width="80">
           <template #default="{ row }">
-            {{ row.duration || '-' }}
+            <span :class="row.duration ? '' : 'text-muted'">{{ row.duration || '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="doctorName" label="开药医生" min-width="100" />
-        <el-table-column prop="date" label="开药日期" min-width="120" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column prop="date" label="开药日期" width="110" />
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="viewMedication(row)">详情</el-button>
-            <el-button type="primary" link @click="editMedication(row)">编辑</el-button>
-            <el-button type="danger" link @click="deleteMedication(row)">删除</el-button>
+            <el-button type="primary" link size="small" @click="viewMedication(row)">详情</el-button>
+            <el-button type="primary" link size="small" @click="editMedication(row)">编辑</el-button>
+            <el-button type="danger" link size="small" @click="deleteMedication(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -403,9 +416,12 @@ const formatDate = (date: string) => {
 </template>
 
 <style lang="scss" scoped>
-.pagination-wrap {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
+.dosage-value {
+  font-weight: 600;
+  color: #0D9488;
+}
+
+.text-muted {
+  color: #9CA3AF;
 }
 </style>

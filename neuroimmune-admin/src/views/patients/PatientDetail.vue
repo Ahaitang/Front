@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowLeft, Plus, User } from '@element-plus/icons-vue'
 import {
   getPatientById,
   getRecordList,
@@ -346,8 +347,11 @@ const formatDate = (date: string) => date || '-'
   <div class="page-container">
     <!-- 返回按钮 -->
     <div class="page-header">
-      <el-button @click="goBack" :icon="'ArrowLeft'">返回患者列表</el-button>
-      <h2 class="page-title" v-if="patient">患者详情 - {{ patient.name }}</h2>
+      <el-button @click="goBack" :icon="ArrowLeft">返回患者列表</el-button>
+      <div class="page-title" v-if="patient">
+        <el-icon><User /></el-icon>
+        患者详情 - {{ patient.name }}
+      </div>
     </div>
 
     <!-- 患者基本信息 -->
@@ -355,7 +359,7 @@ const formatDate = (date: string) => date || '-'
       <template v-if="patient">
         <div class="patient-header">
           <div class="patient-avatar">
-            <el-avatar :size="64">{{ patient.name?.charAt(0) }}</el-avatar>
+            <el-avatar :size="72" :style="{ background: '#0D9488' }">{{ patient.name?.charAt(0) }}</el-avatar>
           </div>
           <div class="patient-info">
             <h3>{{ patient.name }}</h3>
@@ -366,10 +370,10 @@ const formatDate = (date: string) => date || '-'
             </div>
           </div>
           <div class="patient-tags">
-            <el-tag :type="patient.isRealAuth ? 'success' : 'warning'">
+            <el-tag :type="patient.isRealAuth ? 'success' : 'warning'" effect="light">
               {{ patient.isRealAuth ? '已实名' : '未实名' }}
             </el-tag>
-            <el-tag :type="patient.hasFollowUp ? 'danger' : 'info'">
+            <el-tag :type="patient.hasFollowUp ? 'danger' : 'info'" effect="light">
               {{ patient.hasFollowUp ? '待随访' : '正常' }}
             </el-tag>
           </div>
@@ -397,23 +401,23 @@ const formatDate = (date: string) => date || '-'
         <!-- 病历记录 -->
         <el-tab-pane label="病历记录" name="records">
           <div class="tab-header">
-            <el-button type="primary" @click="openAddRecordDialog">新增病历</el-button>
+            <el-button type="primary" :icon="Plus" @click="openAddRecordDialog">新增病历</el-button>
           </div>
           <el-table :data="records" stripe v-loading="recordsLoading">
             <el-table-column prop="type" label="类型" width="100">
               <template #default="{ row }">
-                <el-tag size="small">{{ row.type }}</el-tag>
+                <el-tag size="small" effect="light">{{ row.type }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="diagnosis" label="诊断" min-width="140" show-overflow-tooltip />
             <el-table-column prop="hospital" label="医院" min-width="120" />
             <el-table-column prop="department" label="科室" width="100" />
             <el-table-column prop="doctorName" label="医生" width="100" />
-            <el-table-column prop="date" label="就诊日期" width="120" />
-            <el-table-column label="操作" width="140" fixed="right">
+            <el-table-column prop="date" label="就诊日期" width="110" />
+            <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link @click="openEditRecordDialog(row)">编辑</el-button>
-                <el-button type="danger" link @click="deleteRecordConfirm(row)">删除</el-button>
+                <el-button type="primary" link size="small" @click="openEditRecordDialog(row)">编辑</el-button>
+                <el-button type="danger" link size="small" @click="deleteRecordConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -422,29 +426,29 @@ const formatDate = (date: string) => date || '-'
         <!-- 随访记录 -->
         <el-tab-pane label="随访记录" name="followups">
           <div class="tab-header">
-            <el-button type="primary" @click="openAddFollowUpDialog">新增随访</el-button>
+            <el-button type="primary" :icon="Plus" @click="openAddFollowUpDialog">新增随访</el-button>
           </div>
           <el-table :data="followUps" stripe v-loading="followUpsLoading">
-            <el-table-column prop="date" label="随访日期" width="120" />
+            <el-table-column prop="date" label="随访日期" width="110" />
             <el-table-column prop="project" label="随访项目" min-width="140" />
             <el-table-column prop="type" label="类型" width="100">
               <template #default="{ row }">
-                <el-tag type="info" size="small">{{ row.type }}</el-tag>
+                <el-tag type="info" size="small" effect="plain">{{ row.type }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="doctorName" label="随访医生" width="100" />
-            <el-table-column prop="status" label="状态" width="100">
+            <el-table-column prop="status" label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)" size="small">
+                <el-tag :type="getStatusType(row.status)" size="small" effect="light">
                   {{ getStatusText(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="content" label="备注" min-width="120" show-overflow-tooltip />
-            <el-table-column label="操作" width="140" fixed="right">
+            <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link @click="openEditFollowUpDialog(row)">编辑</el-button>
-                <el-button type="danger" link @click="deleteFollowUpConfirm(row)">删除</el-button>
+                <el-button type="primary" link size="small" @click="openEditFollowUpDialog(row)">编辑</el-button>
+                <el-button type="danger" link size="small" @click="deleteFollowUpConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -453,24 +457,28 @@ const formatDate = (date: string) => date || '-'
         <!-- 用药记录 -->
         <el-tab-pane label="用药记录" name="medications">
           <div class="tab-header">
-            <el-button type="primary" @click="openAddMedicationDialog">新增用药</el-button>
+            <el-button type="primary" :icon="Plus" @click="openAddMedicationDialog">新增用药</el-button>
           </div>
           <el-table :data="medications" stripe v-loading="medicationsLoading">
             <el-table-column prop="medicationName" label="药品名称" min-width="140" />
             <el-table-column label="剂量" width="100">
               <template #default="{ row }">
-                {{ row.dosage }}{{ row.unit }}
+                <span class="dosage-value">{{ row.dosage }}{{ row.unit }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="frequency" label="频率" width="100" />
-            <el-table-column prop="route" label="途径" width="80" />
+            <el-table-column prop="route" label="途径" width="80">
+              <template #default="{ row }">
+                <el-tag type="info" size="small" effect="plain">{{ row.route }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="duration" label="疗程" width="80" />
             <el-table-column prop="doctorName" label="开药医生" width="100" />
-            <el-table-column prop="date" label="开药日期" width="120" />
-            <el-table-column label="操作" width="140" fixed="right">
+            <el-table-column prop="date" label="开药日期" width="110" />
+            <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link @click="openEditMedicationDialog(row)">编辑</el-button>
-                <el-button type="danger" link @click="deleteMedicationConfirm(row)">删除</el-button>
+                <el-button type="primary" link size="small" @click="openEditMedicationDialog(row)">编辑</el-button>
+                <el-button type="danger" link size="small" @click="deleteMedicationConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -658,84 +666,71 @@ const formatDate = (date: string) => date || '-'
 </template>
 
 <style lang="scss" scoped>
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-
-  .page-title {
-    font-size: 18px;
-    font-weight: 500;
-    color: #303133;
-  }
-}
-
 .patient-card {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
   .patient-header {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     margin-bottom: 20px;
 
     .patient-info {
       flex: 1;
 
       h3 {
-        font-size: 20px;
-        font-weight: 500;
-        margin-bottom: 8px;
+        font-size: 22px;
+        font-weight: 600;
+        color: #1F2937;
+        margin-bottom: 10px;
       }
 
       .patient-meta {
         display: flex;
-        gap: 16px;
-        color: #909399;
+        gap: 20px;
+        color: #6B7280;
         font-size: 14px;
       }
     }
 
     .patient-tags {
       display: flex;
-      gap: 8px;
+      gap: 10px;
     }
   }
 
   .patient-detail {
     display: flex;
-    gap: 40px;
-    padding-top: 16px;
-    border-top: 1px solid #ebeef5;
+    gap: 48px;
+    padding-top: 20px;
+    border-top: 1px solid #E5E7EB;
 
     .detail-item {
       .label {
-        color: #909399;
+        color: #6B7280;
         margin-right: 8px;
       }
 
       .value {
-        color: #303133;
+        color: #1F2937;
+        font-weight: 500;
       }
     }
   }
-}
-
-.content-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 }
 
 .tab-header {
   margin-bottom: 16px;
   display: flex;
   justify-content: flex-end;
+}
+
+.dosage-value {
+  font-weight: 600;
+  color: #0D9488;
 }
 </style>

@@ -227,185 +227,217 @@
 </script>
 
 <style lang="scss" scoped>
-	@import '@/static/app-theme.scss';
+@import '@/static/app-theme.scss';
 
-	.container {
-		min-height: 100vh;
-		background: $app-bg;
-		padding: 24rpx 24rpx 120rpx;
-	}
+.container {
+	min-height: 100vh;
+	background: $app-bg;
+	padding: $app-spacing-md;
+	padding-bottom: 160rpx;
+}
 
-	.card {
-		background: $app-card-bg;
-		border-radius: $app-radius;
-		padding: 28rpx;
-		margin-bottom: 24rpx;
-		box-shadow: $app-shadow;
-	}
+.card {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-md;
+	box-shadow: $app-shadow;
+}
 
-	/* 日期选择器 */
-	.date-picker {
-		margin-bottom: 24rpx;
-	}
+/* 日期选择器 */
+.date-picker {
+	margin-bottom: $app-spacing-md;
+}
 
-	.date-nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 24rpx;
-	}
+.date-nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: $app-spacing-md;
+}
 
-	.nav-btn {
-		width: 64rpx;
-		height: 64rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: $app-primary-bg;
-		border-radius: 50%;
-	}
+.nav-btn {
+	width: 72rpx;
+	height: 72rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: $app-primary-bg;
+	border-radius: 50%;
+	transition: $app-transition;
+}
 
-	.nav-btn .app-icon {
-		font-size: 32rpx;
-		color: $app-primary;
-	}
+.nav-btn:active {
+	background: rgba(13, 148, 136, 0.15);
+	transform: scale(0.95);
+}
 
-	.current-date {
-		text-align: center;
-	}
+.nav-btn .app-icon {
+	font-size: 36rpx;
+	color: $app-primary;
+}
 
-	.date-text {
-		display: block;
-		font-size: 32rpx;
-		font-weight: bold;
-		color: $app-text;
-	}
+.current-date {
+	text-align: center;
+}
 
-	.week-text {
-		display: block;
-		font-size: 26rpx;
-		color: $app-text-muted;
-		margin-top: 4rpx;
-	}
+.date-text {
+	display: block;
+	font-size: 34rpx;
+	font-weight: 700;
+	color: $app-text;
+}
 
-	.date-tabs {
-		display: flex;
-		justify-content: space-between;
-	}
+.week-text {
+	display: block;
+	font-size: 26rpx;
+	color: $app-text-muted;
+	margin-top: 6rpx;
+}
 
-	.date-tab {
-		flex: 1;
-		text-align: center;
-		padding: 16rpx 0;
-		border-radius: 12rpx;
-	}
+.date-tabs {
+	display: flex;
+	justify-content: space-between;
+}
 
-	.date-tab.active {
-		background: $app-primary-bg;
-	}
+.date-tab {
+	flex: 1;
+	text-align: center;
+	padding: 18rpx 0;
+	border-radius: $app-radius-sm;
+	transition: $app-transition;
+}
 
-	.tab-week {
-		display: block;
-		font-size: 24rpx;
-		color: $app-text-muted;
-	}
+.date-tab:active {
+	background: rgba(13, 148, 136, 0.05);
+}
 
-	.tab-day {
-		display: block;
-		font-size: 32rpx;
-		font-weight: bold;
-		color: $app-text;
-		margin-top: 8rpx;
-	}
+.date-tab.active {
+	background: $app-primary-bg;
+}
 
-	.tab-day.today {
-		color: $app-primary;
-	}
+.tab-week {
+	display: block;
+	font-size: 24rpx;
+	color: $app-text-muted;
+}
 
-	.date-tab.active .tab-week,
-	.date-tab.active .tab-day {
-		color: $app-primary;
-	}
+.tab-day {
+	display: block;
+	font-size: 34rpx;
+	font-weight: 700;
+	color: $app-text;
+	margin-top: 8rpx;
+}
 
-	/* 区块 */
-	.block-title {
-		font-size: 30rpx;
-		font-weight: bold;
-		color: $app-text;
-		margin-bottom: 20rpx;
-		display: flex;
-		align-items: center;
-		gap: 12rpx;
-	}
+.tab-day.today {
+	color: $app-primary;
+}
 
-	.empty-tip {
-		font-size: 26rpx;
-		color: $app-text-muted;
-	}
+.date-tab.active .tab-week,
+.date-tab.active .tab-day {
+	color: $app-primary;
+}
 
-	.schedule-item {
-		display: flex;
-		align-items: center;
-		padding: 20rpx 0;
-		border-bottom: 1rpx solid $app-border;
-	}
+/* 区块 */
+.block-title {
+	font-size: 32rpx;
+	font-weight: 700;
+	color: $app-text;
+	margin-bottom: $app-spacing-md;
+	display: flex;
+	align-items: center;
+	gap: $app-spacing-sm;
+}
 
-	.schedule-item:last-child {
-		border-bottom: none;
-	}
+.block-title .app-icon {
+	font-size: 36rpx !important;
+}
 
-	.time {
-		font-size: 28rpx;
-		color: $app-text;
-		margin-right: 24rpx;
-		min-width: 180rpx;
-	}
+.block-title .app-icon.primary {
+	color: $app-primary !important;
+}
 
-	.who {
-		font-size: 28rpx;
-		color: $app-text-secondary;
-		flex: 1;
-	}
+.empty-tip {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	text-align: center;
+	padding: 32rpx 0;
+}
 
-	.date {
-		font-size: 26rpx;
-		color: $app-text-muted;
-	}
+.schedule-item {
+	display: flex;
+	align-items: center;
+	padding: $app-spacing-sm 0;
+	border-bottom: 1rpx solid $app-divider;
+	transition: $app-transition;
+}
 
-	/* 用药建议项 */
-	.medication-item {
-		flex-direction: column;
-		align-items: flex-start;
-	}
+.schedule-item:active {
+	background: $app-hover-bg;
+	margin: 0 -28rpx;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
+}
 
-	.med-info {
-		display: flex;
-		align-items: center;
-		width: 100%;
-		margin-bottom: 8rpx;
-	}
+.schedule-item:last-child {
+	border-bottom: none;
+}
 
-	.med-name {
-		font-size: 30rpx;
-		color: $app-text;
-		font-weight: 500;
-		flex: 1;
-	}
+.time {
+	font-size: 28rpx;
+	color: $app-text;
+	font-weight: 500;
+	margin-right: $app-spacing-md;
+	min-width: 180rpx;
+}
 
-	.med-freq {
-		font-size: 26rpx;
-		color: $app-text-secondary;
-	}
+.who {
+	font-size: 28rpx;
+	color: $app-text-secondary;
+	flex: 1;
+}
 
-	.med-date {
-		margin-bottom: 8rpx;
-	}
+.date {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
 
-	.date-range {
-		font-size: 24rpx;
-		color: $app-primary;
-		background: $app-primary-bg;
-		padding: 4rpx 12rpx;
-		border-radius: 8rpx;
-	}
+/* 用药建议项 */
+.medication-item {
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.med-info {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	margin-bottom: 10rpx;
+}
+
+.med-name {
+	font-size: 32rpx;
+	color: $app-text;
+	font-weight: 600;
+	flex: 1;
+}
+
+.med-freq {
+	font-size: 26rpx;
+	color: $app-text-secondary;
+}
+
+.med-date {
+	margin-bottom: 10rpx;
+}
+
+.date-range {
+	font-size: 24rpx;
+	color: $app-primary;
+	background: $app-primary-bg;
+	padding: 8rpx 16rpx;
+	border-radius: 12rpx;
+	font-weight: 500;
+}
 </style>

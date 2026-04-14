@@ -240,14 +240,14 @@ export default {
 .container {
 	min-height: 100vh;
 	background: $app-bg;
-	padding-bottom: 60rpx;
+	padding-bottom: 80rpx;
 }
 
 .card {
 	background: $app-card-bg;
 	border-radius: $app-radius;
-	padding: 28rpx;
-	margin: 24rpx;
+	padding: $app-spacing-md;
+	margin: $app-spacing-md;
 	box-shadow: $app-shadow;
 }
 
@@ -260,21 +260,27 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 24rpx;
+	margin-bottom: $app-spacing-md;
 }
 
 .nav-btn {
-	width: 64rpx;
-	height: 64rpx;
+	width: 72rpx;
+	height: 72rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	background: $app-primary-bg;
 	border-radius: 50%;
+	transition: $app-transition;
+}
+
+.nav-btn:active {
+	background: rgba(13, 148, 136, 0.15);
+	transform: scale(0.95);
 }
 
 .nav-btn .app-icon {
-	font-size: 32rpx;
+	font-size: 36rpx;
 	color: $app-primary;
 }
 
@@ -284,8 +290,8 @@ export default {
 
 .date-text {
 	display: block;
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 34rpx;
+	font-weight: 700;
 	color: $app-text;
 }
 
@@ -293,7 +299,7 @@ export default {
 	display: block;
 	font-size: 26rpx;
 	color: $app-text-muted;
-	margin-top: 4rpx;
+	margin-top: 6rpx;
 }
 
 .date-tabs {
@@ -304,8 +310,13 @@ export default {
 .date-tab {
 	flex: 1;
 	text-align: center;
-	padding: 16rpx 0;
-	border-radius: 12rpx;
+	padding: 18rpx 0;
+	border-radius: $app-radius-sm;
+	transition: $app-transition;
+}
+
+.date-tab:active {
+	background: rgba(13, 148, 136, 0.05);
 }
 
 .date-tab.active {
@@ -320,8 +331,8 @@ export default {
 
 .tab-day {
 	display: block;
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 34rpx;
+	font-weight: 700;
 	color: $app-text;
 	margin-top: 8rpx;
 }
@@ -340,19 +351,25 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 0 24rpx;
-	margin: 24rpx 0;
+	padding: 0 $app-spacing-md;
+	margin: $app-spacing-md 0;
 }
 
 .view-all-btn {
 	display: flex;
 	align-items: center;
-	gap: 8rpx;
+	gap: 10rpx;
 	font-size: 28rpx;
 	color: $app-primary;
-	padding: 12rpx 24rpx;
-	border: 1rpx solid $app-primary;
+	padding: 14rpx 28rpx;
+	border: 2rpx solid $app-primary;
 	border-radius: 32rpx;
+	font-weight: 500;
+	transition: $app-transition;
+}
+
+.view-all-btn:active {
+	background: $app-primary-bg;
 }
 
 .view-all-btn.active {
@@ -361,7 +378,7 @@ export default {
 }
 
 .view-all-btn .app-icon {
-	font-size: 32rpx;
+	font-size: 36rpx;
 }
 
 .total-count {
@@ -371,13 +388,21 @@ export default {
 
 /* 用药项 */
 .empty .empty-tip {
-	display: block;
-	text-align: center;
-	padding: 40rpx 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 0;
 }
 
 .item {
 	margin-top: 0;
+	transition: $app-transition;
+}
+
+.item:active {
+	transform: scale(0.99);
+	box-shadow: $app-shadow-sm;
 }
 
 .empty-tip {
@@ -389,14 +414,14 @@ export default {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 20rpx;
-	padding-bottom: 16rpx;
-	border-bottom: 1rpx solid #f0f0f0;
+	margin-bottom: $app-spacing-md;
+	padding-bottom: $app-spacing-sm;
+	border-bottom: 1rpx solid $app-divider;
 }
 
 .name {
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 34rpx;
+	font-weight: 700;
 	color: $app-text;
 }
 
@@ -408,13 +433,14 @@ export default {
 .item-body {
 	font-size: 28rpx;
 	color: $app-text-secondary;
-	margin-bottom: 12rpx;
+	margin-bottom: $app-spacing-sm;
 	display: flex;
+	line-height: 1.5;
 }
 
 .item-body .label {
 	color: $app-text-muted;
-	min-width: 160rpx;
+	min-width: 180rpx;
 }
 
 .item-body .value {
@@ -424,13 +450,13 @@ export default {
 
 .item-body .highlight {
 	color: $app-primary;
-	font-weight: 500;
+	font-weight: 600;
 }
 
 .item-footer {
-	margin-top: 16rpx;
-	padding-top: 16rpx;
-	border-top: 1rpx solid #f0f0f0;
+	margin-top: $app-spacing-sm;
+	padding-top: $app-spacing-sm;
+	border-top: 1rpx solid $app-divider;
 }
 
 .doctor {

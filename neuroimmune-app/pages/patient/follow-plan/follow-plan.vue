@@ -285,41 +285,47 @@ export default {
 .container {
 	min-height: 100vh;
 	background: $app-bg;
-	padding-bottom: 40rpx;
+	padding-bottom: 60rpx;
 }
 
 .card {
 	background: $app-card-bg;
 	border-radius: $app-radius;
-	padding: 28rpx;
-	margin: 24rpx;
+	padding: $app-spacing-md;
+	margin: $app-spacing-md;
 	box-shadow: $app-shadow;
 }
 
 /* 日期选择器 */
 .date-picker {
-	margin-bottom: 24rpx;
+	margin-bottom: $app-spacing-md;
 }
 
 .date-nav {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 24rpx;
+	margin-bottom: $app-spacing-md;
 }
 
 .nav-btn {
-	width: 64rpx;
-	height: 64rpx;
+	width: 72rpx;
+	height: 72rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	background: $app-primary-bg;
 	border-radius: 50%;
+	transition: $app-transition;
+}
+
+.nav-btn:active {
+	background: rgba(13, 148, 136, 0.15);
+	transform: scale(0.95);
 }
 
 .nav-btn .app-icon {
-	font-size: 32rpx;
+	font-size: 36rpx;
 	color: $app-primary;
 }
 
@@ -329,8 +335,8 @@ export default {
 
 .date-text {
 	display: block;
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 34rpx;
+	font-weight: 700;
 	color: $app-text;
 }
 
@@ -338,7 +344,7 @@ export default {
 	display: block;
 	font-size: 26rpx;
 	color: $app-text-muted;
-	margin-top: 4rpx;
+	margin-top: 6rpx;
 }
 
 .date-tabs {
@@ -349,8 +355,13 @@ export default {
 .date-tab {
 	flex: 1;
 	text-align: center;
-	padding: 16rpx 0;
-	border-radius: 12rpx;
+	padding: 18rpx 0;
+	border-radius: $app-radius-sm;
+	transition: $app-transition;
+}
+
+.date-tab:active {
+	background: rgba(13, 148, 136, 0.05);
 }
 
 .date-tab.active {
@@ -365,8 +376,8 @@ export default {
 
 .tab-day {
 	display: block;
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 34rpx;
+	font-weight: 700;
 	color: $app-text;
 	margin-top: 8rpx;
 }
@@ -382,25 +393,26 @@ export default {
 
 /* 区块 */
 .section {
-	margin: 0 24rpx;
+	margin: 0 $app-spacing-md;
 }
 
 .section-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 20rpx;
+	margin-bottom: $app-spacing-md;
 }
 
 .section-title {
-	font-size: 30rpx;
-	font-weight: bold;
+	font-size: 32rpx;
+	font-weight: 700;
 	color: $app-text;
 }
 
 .section-more {
 	font-size: 26rpx;
 	color: $app-primary;
+	font-weight: 500;
 }
 
 /* 空状态 */
@@ -409,15 +421,15 @@ export default {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: 60rpx 0;
+	padding: 80rpx 0;
 	color: $app-text-muted;
 	font-size: 28rpx;
 }
 
 .empty-tip .app-icon {
-	font-size: 80rpx;
-	margin-bottom: 16rpx;
-	opacity: 0.5;
+	font-size: 100rpx;
+	margin-bottom: $app-spacing-md;
+	opacity: 0.4;
 }
 
 /* 随访项 */
@@ -425,8 +437,17 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 20rpx;
-	padding: 24rpx;
+	margin-bottom: $app-spacing-sm;
+	padding: $app-spacing-md;
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	box-shadow: $app-shadow;
+	transition: $app-transition;
+}
+
+.follow-item:active {
+	transform: scale(0.99);
+	box-shadow: $app-shadow-sm;
 }
 
 .follow-left {
@@ -436,30 +457,31 @@ export default {
 }
 
 .follow-icon {
-	width: 80rpx;
-	height: 80rpx;
-	border-radius: 16rpx;
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 18rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-right: 20rpx;
+	margin-right: $app-spacing-md;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 }
 
 .follow-icon .app-icon {
-	font-size: 40rpx;
+	font-size: 44rpx;
 	color: #fff;
 }
 
 .follow-icon.status-pending {
-	background: #F59E0B;
+	background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
 }
 
 .follow-icon.status-completed {
-	background: #10B981;
+	background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
 }
 
 .follow-icon.status-cancelled {
-	background: #9CA3AF;
+	background: linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%);
 }
 
 .follow-info {
@@ -468,10 +490,10 @@ export default {
 
 .follow-project {
 	display: block;
-	font-size: 30rpx;
-	font-weight: bold;
+	font-size: 32rpx;
+	font-weight: 700;
 	color: $app-text;
-	margin-bottom: 8rpx;
+	margin-bottom: 10rpx;
 }
 
 .follow-doctor,
@@ -479,35 +501,36 @@ export default {
 	display: block;
 	font-size: 24rpx;
 	color: $app-text-muted;
-	margin-top: 4rpx;
+	margin-top: 6rpx;
 }
 
 .follow-detail {
-	margin-top: 8rpx;
+	margin-top: 10rpx;
 }
 
 .follow-detail text {
 	font-size: 22rpx;
 	color: $app-text-secondary;
 	background: $app-primary-bg;
-	padding: 4rpx 12rpx;
-	border-radius: 8rpx;
+	padding: 6rpx 14rpx;
+	border-radius: 10rpx;
 }
 
 .follow-status {
 	font-size: 24rpx;
-	padding: 8rpx 20rpx;
-	border-radius: 20rpx;
+	padding: 10rpx 24rpx;
+	border-radius: 24rpx;
+	font-weight: 500;
 }
 
 .follow-status.status-pending {
-	background: #FEF3C7;
-	color: #F59E0B;
+	background: $app-warning-bg;
+	color: $app-warning;
 }
 
 .follow-status.status-completed {
-	background: #D1FAE5;
-	color: #10B981;
+	background: $app-success-bg;
+	color: $app-success;
 }
 
 .follow-status.status-cancelled {
@@ -518,20 +541,26 @@ export default {
 /* 添加按钮 */
 .add-btn {
 	position: fixed;
-	right: 40rpx;
-	bottom: 60rpx;
-	width: 100rpx;
-	height: 100rpx;
-	background: $app-primary;
+	right: 48rpx;
+	bottom: 80rpx;
+	width: 112rpx;
+	height: 112rpx;
+	background: $app-gradient-primary;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 8rpx 24rpx rgba(13, 148, 136, 0.4);
+	box-shadow: $app-shadow-primary;
+	transition: $app-transition;
+}
+
+.add-btn:active {
+	transform: scale(0.95);
+	box-shadow: $app-shadow;
 }
 
 .add-btn .app-icon {
-	font-size: 48rpx;
+	font-size: 52rpx;
 	color: #fff;
 }
 </style>

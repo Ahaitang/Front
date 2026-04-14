@@ -376,58 +376,82 @@ export default {
 <style lang="scss" scoped>
 @import '@/static/app-theme.scss';
 
-.container { min-height: 100vh; background: $app-bg; padding: 24rpx 24rpx 180rpx; }
-.card { background: $app-card-bg; border-radius: $app-radius; padding: 28rpx; margin-bottom: 24rpx; box-shadow: $app-shadow; }
+.container {
+	min-height: 100vh;
+	background: $app-bg;
+	padding: $app-spacing-md;
+	padding-bottom: 200rpx;
+}
+
+.card {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-md;
+	box-shadow: $app-shadow;
+}
 
 /* 搜索筛选区 */
 .filter-section {
 	background: $app-card-bg;
 	border-radius: $app-radius;
-	padding: 24rpx;
-	margin-bottom: 24rpx;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-md;
 	box-shadow: $app-shadow;
 }
 
 .search-bar {
 	display: flex;
 	align-items: center;
-	gap: 16rpx;
-	padding: 20rpx 24rpx;
-	background: $app-bg;
-	border-radius: 16rpx;
-	margin-bottom: 20rpx;
+	gap: $app-spacing-sm;
+	padding: $app-spacing-sm $app-spacing-md;
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	margin-bottom: $app-spacing-md;
+	transition: $app-transition;
+}
+
+.search-bar:focus-within {
+	background: #fff;
+	box-shadow: 0 0 0 2rpx $app-primary;
 }
 
 .search-bar .app-icon {
-	font-size: 32rpx;
+	font-size: 36rpx;
 	color: $app-text-muted;
 }
 
 .search-input {
 	flex: 1;
-	font-size: 28rpx;
+	font-size: 30rpx;
 	color: $app-text;
 }
 
 .disease-tags {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16rpx;
+	gap: $app-spacing-sm;
 }
 
 .disease-tags .tag {
 	font-size: 26rpx;
 	color: $app-text-secondary;
-	padding: 12rpx 24rpx;
-	background: $app-bg;
-	border-radius: 20rpx;
-	border: 1rpx solid $app-border;
+	padding: 14rpx 28rpx;
+	background: $app-hover-bg;
+	border-radius: 24rpx;
+	border: 2rpx solid transparent;
+	transition: $app-transition;
+}
+
+.disease-tags .tag:active {
+	transform: scale(0.96);
 }
 
 .disease-tags .tag.active {
 	background: $app-primary;
 	color: #fff;
 	border-color: $app-primary;
+	box-shadow: 0 4rpx 12rpx rgba(13, 148, 136, 0.25);
 }
 
 .disease-tags .tag.more {
@@ -445,11 +469,24 @@ export default {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	background: $app-gradient-doctor;
 	border-radius: $app-radius;
-	padding: 32rpx;
-	margin-bottom: 24rpx;
-	box-shadow: 0 4rpx 16rpx rgba(99, 102, 241, 0.3);
+	padding: $app-spacing-lg;
+	margin-bottom: $app-spacing-md;
+	box-shadow: 0 8rpx 24rpx rgba(99, 102, 241, 0.25);
+	position: relative;
+	overflow: hidden;
+}
+
+.stats-overview::before {
+	content: '';
+	position: absolute;
+	top: -50rpx;
+	right: -50rpx;
+	width: 200rpx;
+	height: 200rpx;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 50%;
 }
 
 .stats-left {
@@ -464,42 +501,43 @@ export default {
 }
 
 .stats-num {
-	font-size: 56rpx;
-	font-weight: bold;
+	font-size: 64rpx;
+	font-weight: 700;
 	color: #fff;
 }
 
 .stats-right {
 	display: flex;
-	gap: 16rpx;
+	gap: $app-spacing-sm;
 }
 
 .stat-badge {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 16rpx 28rpx;
-	background: rgba(255,255,255,0.2);
-	border-radius: 16rpx;
+	padding: 20rpx 32rpx;
+	background: rgba(255,255,255,0.15);
+	border-radius: $app-radius-sm;
+	backdrop-filter: blur(10px);
 }
 
 .stat-badge.pending .badge-num {
-	font-size: 36rpx;
-	font-weight: bold;
+	font-size: 40rpx;
+	font-weight: 700;
 	color: #FCD34D;
 }
 
 .stat-badge .badge-label {
 	font-size: 22rpx;
 	color: rgba(255,255,255,0.85);
-	margin-top: 4rpx;
+	margin-top: 6rpx;
 }
 
 /* 患者卡片 */
 .patient-list {
 	display: flex;
 	flex-direction: column;
-	gap: 20rpx;
+	gap: $app-spacing-md;
 }
 
 .patient-card {
@@ -507,34 +545,42 @@ export default {
 	border-radius: $app-radius;
 	box-shadow: $app-shadow;
 	overflow: hidden;
+	transition: $app-transition;
+}
+
+.patient-card:active {
+	transform: scale(0.99);
+	box-shadow: $app-shadow-sm;
 }
 
 .card-header {
 	display: flex;
 	align-items: center;
-	padding: 28rpx;
+	padding: $app-spacing-md;
 }
 
 .avatar-wrap {
 	position: relative;
-	margin-right: 20rpx;
+	margin-right: $app-spacing-md;
 }
 
 .patient-avatar {
-	width: 88rpx;
-	height: 88rpx;
+	width: 96rpx;
+	height: 96rpx;
 	border-radius: 50%;
+	border: 3rpx solid $app-border;
 }
 
 .online-dot {
 	position: absolute;
 	right: 0;
 	bottom: 0;
-	width: 20rpx;
-	height: 20rpx;
+	width: 24rpx;
+	height: 24rpx;
 	border-radius: 50%;
-	background: #10B981;
+	background: $app-success;
 	border: 3rpx solid #fff;
+	box-shadow: 0 2rpx 6rpx rgba(16, 185, 129, 0.4);
 }
 
 .patient-info {
@@ -544,40 +590,40 @@ export default {
 .info-row {
 	display: flex;
 	align-items: center;
-	gap: 12rpx;
-	margin-bottom: 8rpx;
+	gap: $app-spacing-sm;
+	margin-bottom: 10rpx;
 }
 
 .patient-name {
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 34rpx;
+	font-weight: 700;
 	color: $app-text;
 }
 
 .patient-gender {
 	font-size: 24rpx;
 	color: $app-text-muted;
-	padding: 4rpx 12rpx;
-	background: $app-bg;
-	border-radius: 8rpx;
+	padding: 6rpx 16rpx;
+	background: $app-hover-bg;
+	border-radius: 10rpx;
 }
 
 .info-meta {
 	display: flex;
 	align-items: center;
-	gap: 12rpx;
+	gap: $app-spacing-sm;
 }
 
 .patient-age {
-	font-size: 26rpx;
+	font-size: 28rpx;
 	color: $app-text-secondary;
 }
 
 .disease-tag {
 	font-size: 22rpx;
-	padding: 6rpx 16rpx;
-	border-radius: 12rpx;
-	font-weight: 500;
+	padding: 8rpx 18rpx;
+	border-radius: 14rpx;
+	font-weight: 600;
 }
 
 .disease-tag.ms { background: #DBEAFE; color: #2563EB; }
@@ -590,15 +636,15 @@ export default {
 .disease-tag.other { background: #F3F4F6; color: #6B7280; }
 
 .card-header .app-icon {
-	font-size: 32rpx;
+	font-size: 36rpx;
 	color: $app-text-muted;
 }
 
 .card-footer {
 	display: flex;
-	border-top: 1rpx solid $app-border;
-	padding: 20rpx 28rpx;
-	background: $app-bg;
+	border-top: 1rpx solid $app-divider;
+	padding: $app-spacing-sm $app-spacing-md;
+	background: $app-hover-bg;
 }
 
 .action-btn {
@@ -606,22 +652,28 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 8rpx;
-	padding: 12rpx;
-	border-radius: 12rpx;
+	gap: 10rpx;
+	padding: $app-spacing-sm;
+	border-radius: $app-radius-sm;
+	transition: $app-transition;
+}
+
+.action-btn:active {
+	background: rgba(0, 0, 0, 0.03);
 }
 
 .action-btn .app-icon {
-	font-size: 36rpx;
+	font-size: 40rpx;
 }
 
 .action-btn text:last-child {
 	font-size: 24rpx;
 	color: $app-text-secondary;
+	font-weight: 500;
 }
 
 .action-btn.follow .app-icon { color: $app-primary; }
-.action-btn.call .app-icon { color: #10B981; }
+.action-btn.call .app-icon { color: $app-success; }
 .action-btn.info .app-icon { color: #6366F1; }
 
 /* 空状态 */
@@ -629,47 +681,232 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 80rpx 0;
+	padding: 100rpx 0;
 }
 
 .empty-icon {
-	font-size: 120rpx;
+	font-size: 140rpx;
 	color: $app-text-muted !important;
-	margin-bottom: 24rpx;
+	margin-bottom: $app-spacing-md;
+	opacity: 0.5;
 }
 
 .empty-text {
-	font-size: 32rpx;
+	font-size: 34rpx;
 	color: $app-text-secondary;
-	margin-bottom: 12rpx;
+	font-weight: 500;
+	margin-bottom: $app-spacing-sm;
 }
 
 .empty-tip {
-	font-size: 26rpx;
+	font-size: 28rpx;
 	color: $app-text-muted;
 }
-.my-card { position: relative; display: flex; flex-direction: column; align-items: center; padding: 48rpx; }
-.my-avatar { width: 160rpx; height: 160rpx; border-radius: 50%; margin-bottom: 20rpx; }
-.my-name-row { display: flex; align-items: center; }
-.my-name { font-size: 32rpx; font-weight: bold; color: $app-text; margin-right: 12rpx; }
-.my-badge { width: 24rpx; height: 24rpx; border-radius: 50%; background: $app-success; }
-.auth-tag { background: $app-primary; border-radius: 6rpx; padding: 4rpx 12rpx; margin-left: 12rpx; }
-.auth-tag text { font-size: 22rpx; color: #fff; }
-.my-id { font-size: 24rpx; color: $app-text-muted; margin-top: 8rpx; display: block; }
-.my-meta { font-size: 28rpx; color: $app-text-secondary; margin-top: 8rpx; display: block; }
-.edit-icon { position: absolute; right: 28rpx; top: 48rpx; font-size: 28rpx; color: $app-primary; display: inline-flex; align-items: center; gap: 6rpx; }
-.stats-row { display: flex; justify-content: space-around; padding: 32rpx; }
-.stat-item { display: flex; flex-direction: column; align-items: center; }
-.stat-item .app-icon { margin-bottom: 8rpx; }
-.stat-num { font-size: 36rpx; font-weight: bold; color: $app-text; }
-.stat-label { font-size: 24rpx; color: $app-text-muted; margin-top: 8rpx; }
-.menu-status.ok { color: $app-success; font-size: 26rpx; margin-right: 8rpx; }
-.menu-status.warn { color: $app-error; font-size: 26rpx; margin-right: 8rpx; }
-.logout-wrap { margin-top: 40rpx; padding: 0 24rpx; }
-.logout-btn { width: 100%; height: 88rpx; line-height: 88rpx; background: #fff; color: $app-error; border: 1rpx solid $app-error; border-radius: $app-radius-sm; font-size: 32rpx; display: flex; align-items: center; justify-content: center; gap: 12rpx; }
-.logout-btn::after { border: none; }
-.menu-item { display: flex; justify-content: space-between; align-items: center; padding: 28rpx 0; border-bottom: 1rpx solid $app-border; }
-.menu-item:last-child { border-bottom: none; }
-.menu-label { font-size: 28rpx; color: $app-text; display: inline-flex; align-items: center; gap: 16rpx; }
-.menu-right { display: flex; align-items: center; gap: 8rpx; }
+
+/* 患者端个人中心 */
+.my-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: $app-spacing-xl $app-spacing-md;
+	background: $app-gradient-primary;
+}
+
+.my-card::before {
+	content: '';
+	position: absolute;
+	top: -40rpx;
+	right: -40rpx;
+	width: 200rpx;
+	height: 200rpx;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 50%;
+}
+
+.my-avatar {
+	width: 180rpx;
+	height: 180rpx;
+	border-radius: 50%;
+	margin-bottom: $app-spacing-md;
+	border: 6rpx solid rgba(255, 255, 255, 0.3);
+	box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+}
+
+.my-name-row {
+	display: flex;
+	align-items: center;
+}
+
+.my-name {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: #fff;
+	margin-right: $app-spacing-sm;
+}
+
+.my-badge {
+	width: 24rpx;
+	height: 24rpx;
+	border-radius: 50%;
+	background: $app-success;
+}
+
+.auth-tag {
+	background: rgba(255,255,255,0.2);
+	border-radius: 8rpx;
+	padding: 8rpx 16rpx;
+	margin-left: $app-spacing-sm;
+}
+
+.auth-tag text {
+	font-size: 24rpx;
+	color: #fff;
+	font-weight: 500;
+}
+
+.my-id {
+	font-size: 26rpx;
+	color: rgba(255,255,255,0.85);
+	margin-top: 10rpx;
+	display: block;
+}
+
+.my-meta {
+	font-size: 28rpx;
+	color: rgba(255,255,255,0.85);
+	margin-top: 8rpx;
+	display: block;
+}
+
+.edit-icon {
+	position: absolute;
+	right: $app-spacing-md;
+	top: $app-spacing-xl;
+	font-size: 28rpx;
+	color: #fff;
+	display: inline-flex;
+	align-items: center;
+	gap: 8rpx;
+	background: rgba(255,255,255,0.2);
+	padding: 12rpx 24rpx;
+	border-radius: 24rpx;
+}
+
+.stats-row {
+	display: flex;
+	justify-content: space-around;
+	padding: $app-spacing-lg;
+}
+
+.stat-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	transition: $app-transition;
+}
+
+.stat-item:active {
+	transform: scale(0.95);
+}
+
+.stat-item .app-icon {
+	margin-bottom: 12rpx;
+	font-size: 44rpx !important;
+}
+
+.stat-item .app-icon.primary {
+	color: $app-primary !important;
+}
+
+.stat-num {
+	font-size: 40rpx;
+	font-weight: 700;
+	color: $app-text;
+}
+
+.stat-label {
+	font-size: 24rpx;
+	color: $app-text-muted;
+	margin-top: 10rpx;
+}
+
+.menu-status.ok {
+	color: $app-success;
+	font-size: 26rpx;
+	margin-right: 8rpx;
+	font-weight: 500;
+}
+
+.menu-status.warn {
+	color: $app-error;
+	font-size: 26rpx;
+	margin-right: 8rpx;
+	font-weight: 500;
+}
+
+.logout-wrap {
+	margin-top: $app-spacing-xl;
+	padding: 0 $app-spacing-md;
+}
+
+.logout-btn {
+	width: 100%;
+	height: 96rpx;
+	line-height: 96rpx;
+	background: #fff;
+	color: $app-error;
+	border: 2rpx solid $app-error;
+	border-radius: $app-radius-sm;
+	font-size: 32rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-spacing-sm;
+	font-weight: 500;
+	transition: $app-transition;
+}
+
+.logout-btn:active {
+	background: $app-error-bg;
+}
+
+.logout-btn::after {
+	border: none;
+}
+
+.menu-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: $app-spacing-md 0;
+	border-bottom: 1rpx solid $app-divider;
+	transition: $app-transition;
+}
+
+.menu-item:active {
+	background: $app-hover-bg;
+	margin: 0 -28rpx;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
+}
+
+.menu-item:last-child {
+	border-bottom: none;
+}
+
+.menu-label {
+	font-size: 30rpx;
+	color: $app-text;
+	display: inline-flex;
+	align-items: center;
+	gap: $app-spacing-md;
+	font-weight: 500;
+}
+
+.menu-right {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+}
 </style>

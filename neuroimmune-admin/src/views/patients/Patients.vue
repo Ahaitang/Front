@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { User, Download, UploadFilled } from '@element-plus/icons-vue'
 import {
   getPatientList,
   savePatient,
@@ -221,7 +222,7 @@ const downloadTemplate = () => {
 }
 
 // 文件变化
-const handleFileChange = (file: any, list: any[]) => {
+const handleFileChange = (_file: any, list: any[]) => {
   fileList.value = list.slice(-1)
 }
 
@@ -265,6 +266,14 @@ const openImportDialog = () => {
 
 <template>
   <div class="page-container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="page-title">
+        <el-icon><User /></el-icon>
+        患者管理
+      </div>
+    </div>
+
     <!-- 搜索栏 -->
     <div class="search-bar">
       <el-form :model="searchForm" inline>
@@ -311,42 +320,47 @@ const openImportDialog = () => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="姓名" min-width="100" />
-        <el-table-column prop="gender" label="性别" width="60" />
-        <el-table-column prop="age" label="年龄" width="60" />
+        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column label="患者信息" min-width="140">
+          <template #default="{ row }">
+            <div class="patient-info">
+              <span class="name">{{ row.name }}</span>
+              <span class="meta">{{ row.gender }} | {{ row.age }}岁</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="phone" label="手机号" min-width="120" />
         <el-table-column prop="doctorName" label="主治医生" min-width="100">
           <template #default="{ row }">
-            {{ row.doctorName || '-' }}
+            <span :class="row.doctorName ? '' : 'text-muted'">{{ row.doctorName || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="isRealAuth" label="实名状态" width="100">
+        <el-table-column prop="isRealAuth" label="实名状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.isRealAuth ? 'success' : 'warning'" size="small">
+            <el-tag :type="row.isRealAuth ? 'success' : 'warning'" size="small" effect="light">
               {{ row.isRealAuth ? '已实名' : '未实名' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="hasFollowUp" label="随访状态" width="100">
+        <el-table-column prop="hasFollowUp" label="随访状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.hasFollowUp ? 'primary' : 'info'" size="small">
+            <el-tag :type="row.hasFollowUp ? 'warning' : 'info'" size="small" effect="light">
               {{ row.hasFollowUp ? '待随访' : '正常' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="updateTime" label="更新时间" width="160">
           <template #default="{ row }">
-            {{ formatDate(row.updateTime) }}
+            <span class="text-secondary">{{ formatDate(row.updateTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button type="success" link @click="viewPatientDetail(row)">详情</el-button>
-            <el-button type="primary" link @click="viewPatient(row)">查看</el-button>
-            <el-button type="primary" link @click="editPatient(row)">编辑</el-button>
-            <el-button type="warning" link @click="openPasswordDialog(row)">改密</el-button>
-            <el-button type="danger" link @click="deletePatient(row)">删除</el-button>
+            <el-button type="success" link size="small" @click="viewPatientDetail(row)">详情</el-button>
+            <el-button type="primary" link size="small" @click="viewPatient(row)">查看</el-button>
+            <el-button type="primary" link size="small" @click="editPatient(row)">编辑</el-button>
+            <el-button type="warning" link size="small" @click="openPasswordDialog(row)">改密</el-button>
+            <el-button type="danger" link size="small" @click="deletePatient(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -528,12 +542,6 @@ const openImportDialog = () => {
 </template>
 
 <style lang="scss" scoped>
-.pagination-wrap {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .import-tips {
   margin-bottom: 16px;
 }
@@ -568,11 +576,11 @@ const openImportDialog = () => {
     }
 
     .success strong {
-      color: #67c23a;
+      color: #10B981;
     }
 
     .failed strong {
-      color: #f56c6c;
+      color: #EF4444;
     }
   }
 
@@ -586,7 +594,7 @@ const openImportDialog = () => {
 
     .error-item {
       font-size: 13px;
-      color: #f56c6c;
+      color: #EF4444;
       line-height: 1.6;
     }
   }

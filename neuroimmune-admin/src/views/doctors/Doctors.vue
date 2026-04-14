@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Download, UploadFilled } from '@element-plus/icons-vue'
+import { UserFilled, Download, UploadFilled } from '@element-plus/icons-vue'
 import {
   getDoctorList,
   saveDoctor as saveDoctorApi,
@@ -228,7 +228,7 @@ const downloadTemplate = () => {
 }
 
 // 文件变化
-const handleFileChange = (file: any, list: any[]) => {
+const handleFileChange = (_file: any, list: any[]) => {
   fileList.value = list.slice(-1)
 }
 
@@ -276,6 +276,14 @@ const formatDate = (date: string) => {
 
 <template>
   <div class="page-container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="page-title">
+        <el-icon><UserFilled /></el-icon>
+        医生管理
+      </div>
+    </div>
+
     <!-- 搜索栏 -->
     <div class="search-bar">
       <el-form :model="searchForm" inline>
@@ -315,34 +323,40 @@ const formatDate = (date: string) => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="姓名" min-width="90" />
+        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column label="医生信息" min-width="140">
+          <template #default="{ row }">
+            <div class="doctor-info">
+              <span class="name">{{ row.name }}</span>
+              <span class="meta">{{ row.department }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="title" label="职称" min-width="110">
           <template #default="{ row }">
             <el-tag type="primary" effect="plain" size="small">{{ row.title }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="department" label="科室" min-width="100" />
         <el-table-column prop="hospital" label="医院" min-width="140" />
         <el-table-column prop="phone" label="手机号" min-width="120" />
         <el-table-column label="患者数量" min-width="90">
           <template #default="{ row }">
-            <el-button type="primary" link @click="viewPatients(row)">
+            <el-button type="primary" link size="small" @click="viewPatients(row)">
               <span class="patient-count">{{ getPatientCount(row.id) }}</span> 人
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="160">
+        <el-table-column prop="createTime" label="创建时间" width="160">
           <template #default="{ row }">
-            {{ formatDate(row.createTime) }}
+            <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="viewDoctor(row)">查看</el-button>
-            <el-button type="primary" link @click="editDoctor(row)">编辑</el-button>
-            <el-button type="warning" link @click="openPasswordDialog(row)">修改密码</el-button>
-            <el-button type="danger" link @click="deleteDoctor(row)">删除</el-button>
+            <el-button type="primary" link size="small" @click="viewDoctor(row)">查看</el-button>
+            <el-button type="primary" link size="small" @click="editDoctor(row)">编辑</el-button>
+            <el-button type="warning" link size="small" @click="openPasswordDialog(row)">改密</el-button>
+            <el-button type="danger" link size="small" @click="deleteDoctor(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -556,25 +570,20 @@ const formatDate = (date: string) => {
 </template>
 
 <style lang="scss" scoped>
-.pagination-wrap {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .patient-count {
   font-weight: 600;
   font-size: 14px;
+  color: #0D9488;
 }
 
 .patient-count-info {
   margin-top: 16px;
   text-align: right;
-  color: #606266;
+  color: #6B7280;
   font-size: 14px;
 
   strong {
-    color: #409eff;
+    color: #0D9488;
     font-size: 16px;
   }
 }
@@ -613,11 +622,11 @@ const formatDate = (date: string) => {
     }
 
     .success strong {
-      color: #67c23a;
+      color: #10B981;
     }
 
     .failed strong {
-      color: #f56c6c;
+      color: #EF4444;
     }
   }
 
@@ -631,7 +640,7 @@ const formatDate = (date: string) => {
 
     .error-item {
       font-size: 13px;
-      color: #f56c6c;
+      color: #EF4444;
       line-height: 1.6;
     }
   }

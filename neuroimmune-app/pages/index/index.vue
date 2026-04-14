@@ -451,32 +451,45 @@ export default {
 .container {
 	min-height: 100vh;
 	background: $app-bg;
-	padding-bottom: 120rpx;
+	padding-bottom: 140rpx;
 }
 
 /* 顶部用户卡片 */
 .header-card {
-	background: linear-gradient(135deg, $app-primary 0%, #14B8A6 100%);
-	padding: 40rpx 32rpx 32rpx;
+	background: $app-gradient-primary;
+	padding: 48rpx 32rpx 36rpx;
 	position: relative;
+	overflow: hidden;
+}
+
+.header-card::before {
+	content: '';
+	position: absolute;
+	top: -80rpx;
+	right: -60rpx;
+	width: 280rpx;
+	height: 280rpx;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 50%;
 }
 
 .header-card.doctor {
-	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	background: $app-gradient-doctor;
 }
 
 .doctor-info-card {
-	margin-top: 24rpx;
+	margin-top: 28rpx;
 	background: rgba(255,255,255,0.15);
-	border-radius: 16rpx;
-	padding: 20rpx 24rpx;
+	border-radius: $app-radius-sm;
+	padding: 24rpx 28rpx;
 	display: flex;
 	align-items: center;
-	gap: 12rpx;
+	gap: 16rpx;
+	backdrop-filter: blur(10px);
 }
 
 .doctor-info-card .app-icon {
-	font-size: 32rpx !important;
+	font-size: 36rpx !important;
 	color: #fff !important;
 }
 
@@ -490,8 +503,8 @@ export default {
 	font-size: 24rpx;
 	color: #fff;
 	background: rgba(255,255,255,0.2);
-	padding: 6rpx 16rpx;
-	border-radius: 16rpx;
+	padding: 8rpx 20rpx;
+	border-radius: 20rpx;
 }
 
 .user-info {
@@ -500,11 +513,12 @@ export default {
 }
 
 .avatar {
-	width: 96rpx;
-	height: 96rpx;
+	width: 104rpx;
+	height: 104rpx;
 	border-radius: 50%;
-	border: 4rpx solid rgba(255,255,255,0.3);
-	margin-right: 24rpx;
+	border: 4rpx solid rgba(255,255,255,0.4);
+	margin-right: 28rpx;
+	box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
 }
 
 .user-meta {
@@ -512,16 +526,16 @@ export default {
 }
 
 .greeting {
-	font-size: 26rpx;
+	font-size: 28rpx;
 	color: rgba(255,255,255,0.85);
 	display: block;
 	margin-bottom: 8rpx;
 }
 
 .username {
-	font-size: 36rpx;
+	font-size: 40rpx;
 	color: #fff;
-	font-weight: bold;
+	font-weight: 700;
 	display: block;
 }
 
@@ -531,32 +545,39 @@ export default {
 }
 
 .action-btn {
-	width: 64rpx;
-	height: 64rpx;
+	width: 72rpx;
+	height: 72rpx;
 	border-radius: 50%;
 	background: rgba(255,255,255,0.2);
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transition: $app-transition;
+}
+
+.action-btn:active {
+	background: rgba(255,255,255,0.3);
+	transform: scale(0.95);
 }
 
 .action-btn .app-icon {
-	font-size: 36rpx !important;
+	font-size: 40rpx !important;
 	color: #fff !important;
 }
 
 .doctor-bind-card {
-	margin-top: 24rpx;
+	margin-top: 28rpx;
 	background: rgba(255,255,255,0.15);
-	border-radius: 16rpx;
-	padding: 20rpx 24rpx;
+	border-radius: $app-radius-sm;
+	padding: 24rpx 28rpx;
 	display: flex;
 	align-items: center;
-	gap: 12rpx;
+	gap: 16rpx;
+	backdrop-filter: blur(10px);
 }
 
 .doctor-bind-card .app-icon {
-	font-size: 32rpx !important;
+	font-size: 36rpx !important;
 	color: #fff !important;
 }
 
@@ -568,7 +589,7 @@ export default {
 .bind-name {
 	font-size: 28rpx;
 	color: #fff;
-	font-weight: 500;
+	font-weight: 600;
 	margin-left: auto;
 }
 
@@ -579,29 +600,32 @@ export default {
 
 /* 通用区块 */
 .section {
-	margin: 24rpx;
-	padding: 28rpx;
+	margin: $app-spacing-md;
+	padding: $app-spacing-md;
 	background: $app-card-bg;
-	border-radius: 20rpx;
-	box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+	border-radius: $app-radius;
+	box-shadow: $app-shadow;
 }
 
 .section-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 24rpx;
+	margin-bottom: $app-spacing-md;
 }
 
 .section-title {
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 34rpx;
+	font-weight: 700;
 	color: $app-text;
 }
 
 .section-more {
 	font-size: 26rpx;
 	color: $app-primary;
+	display: flex;
+	align-items: center;
+	gap: 4rpx;
 }
 
 /* 健康概览 */
@@ -615,44 +639,51 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	padding: $app-spacing-sm 0;
+	transition: $app-transition;
+}
+
+.health-item:active {
+	transform: scale(0.96);
 }
 
 .health-icon-wrap {
-	width: 72rpx;
-	height: 72rpx;
-	border-radius: 18rpx;
+	width: 80rpx;
+	height: 80rpx;
+	border-radius: 20rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-bottom: 12rpx;
+	margin-bottom: 16rpx;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 }
 
 .health-icon-wrap .app-icon {
-	font-size: 36rpx !important;
+	font-size: 40rpx !important;
 	color: #fff !important;
 }
 
 .health-icon-wrap.primary { background: $app-primary; }
-.health-icon-wrap.warning { background: #F59E0B; }
-.health-icon-wrap.success { background: #10B981; }
-.health-icon-wrap.info { background: #3B82F6; }
+.health-icon-wrap.warning { background: $app-warning; }
+.health-icon-wrap.success { background: $app-success; }
+.health-icon-wrap.info { background: $app-info; }
 
 /* 医生端工作概览图标 */
 .health-icon-wrap.doctor-primary { background: #6366F1; }
-.health-icon-wrap.doctor-warning { background: #F59E0B; }
-.health-icon-wrap.doctor-success { background: #10B981; }
+.health-icon-wrap.doctor-warning { background: $app-warning; }
+.health-icon-wrap.doctor-success { background: $app-success; }
 .health-icon-wrap.doctor-info { background: #EC4899; }
 
 .health-value {
-	font-size: 40rpx;
-	font-weight: bold;
+	font-size: 44rpx;
+	font-weight: 700;
 	color: $app-text;
 }
 
 .health-label {
 	font-size: 24rpx;
 	color: $app-text-muted;
-	margin-top: 4rpx;
+	margin-top: 6rpx;
 }
 
 /* 随访提醒 */
@@ -666,21 +697,26 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: #F9FAFB;
-	border-radius: 14rpx;
-	padding: 20rpx;
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	padding: 24rpx;
+	transition: $app-transition;
+}
+
+.reminder-item:active {
+	background: #EBEDEF;
 }
 
 .reminder-left {
 	display: flex;
 	align-items: center;
-	gap: 16rpx;
+	gap: 20rpx;
 }
 
 .reminder-icon {
-	width: 48rpx;
-	height: 48rpx;
-	border-radius: 12rpx;
+	width: 56rpx;
+	height: 56rpx;
+	border-radius: 14rpx;
 	background: $app-primary-bg;
 	display: flex;
 	align-items: center;
@@ -688,12 +724,12 @@ export default {
 }
 
 .reminder-icon .app-icon {
-	font-size: 28rpx !important;
+	font-size: 32rpx !important;
 	color: $app-primary !important;
 }
 
 .reminder-title {
-	font-size: 28rpx;
+	font-size: 30rpx;
 	color: $app-text;
 	font-weight: 500;
 	display: block;
@@ -702,16 +738,17 @@ export default {
 .reminder-meta {
 	font-size: 24rpx;
 	color: $app-text-muted;
-	margin-top: 4rpx;
+	margin-top: 6rpx;
 	display: block;
 }
 
 .reminder-tag {
 	font-size: 24rpx;
-	color: #F59E0B;
-	background: #FEF3C7;
-	padding: 6rpx 16rpx;
+	color: $app-warning;
+	background: $app-warning-bg;
+	padding: 8rpx 20rpx;
 	border-radius: 20rpx;
+	font-weight: 500;
 }
 
 /* 功能菜单 */
@@ -723,8 +760,16 @@ export default {
 .menu-item {
 	display: flex;
 	align-items: center;
-	padding: 24rpx 0;
-	border-bottom: 1rpx solid $app-border;
+	padding: 28rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+	transition: $app-transition;
+}
+
+.menu-item:active {
+	background: $app-hover-bg;
+	margin: 0 -28rpx;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
 }
 
 .menu-item:last-child {
@@ -732,36 +777,37 @@ export default {
 }
 
 .menu-icon {
-	width: 64rpx;
-	height: 64rpx;
-	border-radius: 14rpx;
+	width: 72rpx;
+	height: 72rpx;
+	border-radius: 16rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-right: 20rpx;
+	margin-right: 24rpx;
+	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
 .menu-icon .app-icon {
-	font-size: 32rpx !important;
+	font-size: 36rpx !important;
 	color: #fff !important;
 }
 
-.menu-icon.medical { background: #8B5CF6; }
-.menu-icon.medication { background: #EC4899; }
-.menu-icon.advice { background: #3B82F6; }
-.menu-icon.follow { background: $app-primary; }
+.menu-icon.medical { background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%); }
+.menu-icon.medication { background: linear-gradient(135deg, #EC4899 0%, #F472B6 100%); }
+.menu-icon.advice { background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%); }
+.menu-icon.follow { background: $app-gradient-primary; }
 
 /* 医生端菜单图标 */
-.menu-icon.doctor-patient { background: #6366F1; }
-.menu-icon.doctor-follow { background: #8B5CF6; }
-.menu-icon.doctor-medication { background: #EC4899; }
+.menu-icon.doctor-patient { background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%); }
+.menu-icon.doctor-follow { background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%); }
+.menu-icon.doctor-medication { background: linear-gradient(135deg, #EC4899 0%, #F472B6 100%); }
 
 .menu-content {
 	flex: 1;
 }
 
 .menu-title {
-	font-size: 30rpx;
+	font-size: 32rpx;
 	color: $app-text;
 	font-weight: 500;
 	display: block;
@@ -770,7 +816,7 @@ export default {
 .menu-desc {
 	font-size: 24rpx;
 	color: $app-text-muted;
-	margin-top: 4rpx;
+	margin-top: 6rpx;
 	display: block;
 }
 
@@ -778,34 +824,40 @@ export default {
 .med-list {
 	display: flex;
 	flex-direction: column;
-	gap: 12rpx;
+	gap: 16rpx;
 }
 
 .med-item {
-	background: #F9FAFB;
-	border-radius: 12rpx;
-	padding: 20rpx;
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	padding: 24rpx;
+	transition: $app-transition;
+}
+
+.med-item:active {
+	background: #EBEDEF;
 }
 
 .med-name {
-	font-size: 28rpx;
+	font-size: 30rpx;
 	color: $app-text;
-	font-weight: 500;
+	font-weight: 600;
 	display: block;
 }
 
 .med-dosage {
-	font-size: 24rpx;
-	color: $app-text-muted;
-	margin-top: 8rpx;
+	font-size: 26rpx;
+	color: $app-text-secondary;
+	margin-top: 10rpx;
 	display: block;
 }
 
 .med-duration {
-	font-size: 22rpx;
+	font-size: 24rpx;
 	color: $app-primary;
-	margin-top: 8rpx;
+	margin-top: 10rpx;
 	display: block;
+	font-weight: 500;
 }
 
 /* 快速操作 */
@@ -818,26 +870,35 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	padding: $app-spacing-sm;
+	transition: $app-transition;
+}
+
+.quick-item:active {
+	transform: scale(0.95);
 }
 
 .quick-icon {
-	width: 88rpx;
-	height: 88rpx;
+	width: 96rpx;
+	height: 96rpx;
 	border-radius: 50%;
 	background: $app-primary-bg;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-bottom: 12rpx;
+	margin-bottom: 16rpx;
+	box-shadow: 0 4rpx 16rpx rgba(13, 148, 136, 0.15);
+	transition: $app-transition;
 }
 
 .quick-icon .app-icon {
-	font-size: 40rpx !important;
+	font-size: 44rpx !important;
 	color: $app-primary !important;
 }
 
 .quick-icon.doctor {
 	background: rgba(99, 102, 241, 0.1);
+	box-shadow: 0 4rpx 16rpx rgba(99, 102, 241, 0.15);
 }
 
 .quick-icon.doctor .app-icon {
@@ -845,14 +906,15 @@ export default {
 }
 
 .quick-text {
-	font-size: 26rpx;
+	font-size: 28rpx;
 	color: $app-text;
+	font-weight: 500;
 }
 
 .empty-tip {
 	font-size: 28rpx;
 	color: $app-text-muted;
 	text-align: center;
-	padding: 40rpx 0;
+	padding: 48rpx 0;
 }
 </style>

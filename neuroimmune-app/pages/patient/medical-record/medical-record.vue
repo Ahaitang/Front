@@ -378,64 +378,411 @@ export default {
 <style lang="scss" scoped>
 @import '@/static/app-theme.scss';
 
-.container { min-height: 100vh; background: $app-bg; padding: 24rpx 24rpx 60rpx; }
-.card { background: $app-card-bg; border-radius: $app-radius; padding: 28rpx; margin-bottom: 24rpx; box-shadow: $app-shadow; }
+.container {
+	min-height: 100vh;
+	background: $app-bg;
+	padding: $app-spacing-md;
+	padding-bottom: 80rpx;
+}
 
-.filter-bar { padding: 20rpx 28rpx; }
-.filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16rpx; }
-.filter-label { font-size: 28rpx; color: $app-text; }
-.filter-sep { font-size: 28rpx; color: $app-text-muted; margin: 0 8rpx; }
-.picker-btn { font-size: 26rpx; color: $app-text; background: $app-bg; padding: 12rpx 20rpx; border-radius: 8rpx; min-width: 140rpx; text-align: center; }
-.filter-actions { display: flex; justify-content: flex-end; gap: 24rpx; margin-top: 20rpx; }
-.filter-btn { font-size: 28rpx; color: $app-text-muted; }
-.filter-btn.primary { color: $app-primary; font-weight: 500; }
+.card {
+	background: $app-card-bg;
+	border-radius: $app-radius;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-md;
+	box-shadow: $app-shadow;
+}
 
-.section-title { font-size: 32rpx; font-weight: bold; color: #333; margin-bottom: 20rpx; }
-.info-row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid $app-border; }
-.info-row .label { font-size: 28rpx; color: $app-text-muted; width: 180rpx; }
-.info-row .value { font-size: 28rpx; color: $app-text; flex: 1; text-align: right; }
-.info-block { padding: 16rpx 0; border-bottom: 1rpx solid $app-border; }
-.info-block .label { font-size: 28rpx; color: $app-text-muted; display: block; }
-.info-block .value.block { font-size: 28rpx; color: $app-text; margin-top: 8rpx; line-height: 1.5; }
-.empty-tip { font-size: 28rpx; color: $app-text-muted; }
-.exam-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.exam-head { display: flex; justify-content: space-between; margin-bottom: 12rpx; }
-.exam-title { font-size: 30rpx; font-weight: bold; color: $app-text; }
-.exam-date { font-size: 24rpx; color: $app-text-muted; }
-.exam-desc { font-size: 26rpx; color: $app-text-secondary; }
-.med-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.med-head { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
-.med-name { font-size: 30rpx; font-weight: bold; color: $app-text; }
-.med-date { font-size: 24rpx; color: $app-text-muted; }
-.med-body { font-size: 26rpx; color: $app-text-secondary; }
+.filter-bar {
+	padding: $app-spacing-sm $app-spacing-md;
+}
+
+.filter-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $app-spacing-sm;
+}
+
+.filter-label {
+	font-size: 28rpx;
+	color: $app-text;
+	font-weight: 500;
+}
+
+.filter-sep {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	margin: 0 8rpx;
+}
+
+.picker-btn {
+	font-size: 26rpx;
+	color: $app-text;
+	background: $app-hover-bg;
+	padding: 14rpx 24rpx;
+	border-radius: $app-radius-sm;
+	min-width: 160rpx;
+	text-align: center;
+	transition: $app-transition;
+}
+
+.picker-btn:active {
+	background: #EBEDEF;
+}
+
+.filter-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: $app-spacing-md;
+	margin-top: $app-spacing-md;
+}
+
+.filter-btn {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	padding: 8rpx 16rpx;
+	transition: $app-transition;
+}
+
+.filter-btn:active {
+	opacity: 0.7;
+}
+
+.filter-btn.primary {
+	color: $app-primary;
+	font-weight: 600;
+}
+
+.section-title {
+	font-size: 34rpx;
+	font-weight: 700;
+	color: $app-text;
+	margin-bottom: $app-spacing-md;
+}
+
+.info-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 18rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.info-row:last-child {
+	border-bottom: none;
+}
+
+.info-row .label {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	width: 180rpx;
+}
+
+.info-row .value {
+	font-size: 28rpx;
+	color: $app-text;
+	flex: 1;
+	text-align: right;
+	font-weight: 500;
+}
+
+.info-block {
+	padding: 18rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.info-block:last-child {
+	border-bottom: none;
+}
+
+.info-block .label {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	display: block;
+}
+
+.info-block .value.block {
+	font-size: 28rpx;
+	color: $app-text;
+	margin-top: 10rpx;
+	line-height: 1.6;
+}
+
+.empty-tip {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	text-align: center;
+	padding: 32rpx 0;
+}
+
+.exam-item {
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-sm;
+	transition: $app-transition;
+}
+
+.exam-item:active {
+	background: #EBEDEF;
+}
+
+.exam-head {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 12rpx;
+}
+
+.exam-title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: $app-text;
+}
+
+.exam-date {
+	font-size: 24rpx;
+	color: $app-text-muted;
+}
+
+.exam-desc {
+	font-size: 26rpx;
+	color: $app-text-secondary;
+	line-height: 1.5;
+}
+
+.med-item {
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-sm;
+	transition: $app-transition;
+}
+
+.med-item:active {
+	background: #EBEDEF;
+}
+
+.med-head {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 10rpx;
+}
+
+.med-name {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: $app-text;
+}
+
+.med-date {
+	font-size: 24rpx;
+	color: $app-text-muted;
+}
+
+.med-body {
+	font-size: 26rpx;
+	color: $app-text-secondary;
+	line-height: 1.5;
+}
 
 /* 本院病历样式 */
-.record-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.record-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
-.record-left { display: flex; align-items: center; gap: 16rpx; }
-.record-type { font-size: 26rpx; color: #fff; background: $app-primary; padding: 4rpx 16rpx; border-radius: 6rpx; }
-.record-date { font-size: 26rpx; color: $app-text-muted; }
-.record-actions { display: flex; gap: 20rpx; }
-.record-body { margin-top: 8rpx; }
-.record-info { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
-.record-diagnosis { font-size: 28rpx; color: $app-text; margin-bottom: 8rpx; font-weight: 500; }
-.record-content { font-size: 28rpx; color: $app-text-secondary; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.record-item {
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-sm;
+	transition: $app-transition;
+}
 
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.add-btn { font-size: 26rpx; color: $app-primary; }
-.external-item { background: $app-bg; border-radius: 12rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.external-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
-.external-date { font-size: 26rpx; color: $app-text-muted; }
-.external-actions { display: flex; gap: 20rpx; }
-.action-btn { font-size: 24rpx; padding: 4rpx 16rpx; border-radius: 6rpx; }
-.action-btn.edit { color: $app-primary; background: rgba($app-primary, 0.1); }
-.action-btn.delete { color: #EF4444; background: rgba(#EF4444, 0.1); }
-.external-body { margin-top: 8rpx; }
-.external-hospital { font-size: 26rpx; color: $app-primary; display: block; margin-bottom: 8rpx; }
-.external-info { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
-.info-tag { font-size: 24rpx; color: $app-text-secondary; background: rgba($app-primary, 0.1); padding: 4rpx 12rpx; border-radius: 6rpx; }
-.external-diagnosis { font-size: 28rpx; color: $app-text; margin-bottom: 8rpx; font-weight: 500; }
-.external-content { font-size: 28rpx; color: $app-text-secondary; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.external-images { display: flex; gap: 12rpx; margin-top: 12rpx; flex-wrap: wrap; }
-.thumb-img { width: 100rpx; height: 100rpx; border-radius: 8rpx; }
+.record-item:active {
+	background: #EBEDEF;
+}
+
+.record-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10rpx;
+}
+
+.record-left {
+	display: flex;
+	align-items: center;
+	gap: $app-spacing-sm;
+}
+
+.record-type {
+	font-size: 24rpx;
+	color: #fff;
+	background: $app-primary;
+	padding: 8rpx 18rpx;
+	border-radius: 8rpx;
+	font-weight: 500;
+}
+
+.record-date {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
+
+.record-actions {
+	display: flex;
+	gap: $app-spacing-md;
+}
+
+.record-body {
+	margin-top: 10rpx;
+}
+
+.record-info {
+	display: flex;
+	gap: $app-spacing-sm;
+	margin-bottom: 10rpx;
+}
+
+.record-diagnosis {
+	font-size: 30rpx;
+	color: $app-text;
+	margin-bottom: 10rpx;
+	font-weight: 500;
+}
+
+.record-content {
+	font-size: 28rpx;
+	color: $app-text-secondary;
+	line-height: 1.5;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: $app-spacing-md;
+}
+
+.add-btn {
+	font-size: 26rpx;
+	color: $app-primary;
+	font-weight: 500;
+	padding: 8rpx 16rpx;
+	background: $app-primary-bg;
+	border-radius: 20rpx;
+	transition: $app-transition;
+}
+
+.add-btn:active {
+	background: rgba(13, 148, 136, 0.15);
+}
+
+.external-item {
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	padding: $app-spacing-md;
+	margin-bottom: $app-spacing-sm;
+	transition: $app-transition;
+}
+
+.external-item:active {
+	background: #EBEDEF;
+}
+
+.external-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10rpx;
+}
+
+.external-date {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
+
+.external-actions {
+	display: flex;
+	gap: $app-spacing-md;
+}
+
+.action-btn {
+	font-size: 24rpx;
+	padding: 8rpx 20rpx;
+	border-radius: 8rpx;
+	font-weight: 500;
+	transition: $app-transition;
+}
+
+.action-btn:active {
+	opacity: 0.8;
+}
+
+.action-btn.edit {
+	color: $app-primary;
+	background: $app-primary-bg;
+}
+
+.action-btn.delete {
+	color: $app-error;
+	background: $app-error-bg;
+}
+
+.external-body {
+	margin-top: 10rpx;
+}
+
+.external-hospital {
+	font-size: 28rpx;
+	color: $app-primary;
+	display: block;
+	margin-bottom: 10rpx;
+	font-weight: 500;
+}
+
+.external-info {
+	display: flex;
+	gap: $app-spacing-sm;
+	margin-bottom: 10rpx;
+}
+
+.info-tag {
+	font-size: 24rpx;
+	color: $app-text-secondary;
+	background: $app-primary-bg;
+	padding: 6rpx 16rpx;
+	border-radius: 8rpx;
+}
+
+.external-diagnosis {
+	font-size: 30rpx;
+	color: $app-text;
+	margin-bottom: 10rpx;
+	font-weight: 500;
+}
+
+.external-content {
+	font-size: 28rpx;
+	color: $app-text-secondary;
+	line-height: 1.6;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.external-images {
+	display: flex;
+	gap: $app-spacing-sm;
+	margin-top: $app-spacing-sm;
+	flex-wrap: wrap;
+}
+
+.thumb-img {
+	width: 120rpx;
+	height: 120rpx;
+	border-radius: $app-radius-sm;
+	border: 2rpx solid $app-border;
+}
 </style>
