@@ -7,7 +7,7 @@ import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'a
 import { ElMessage } from 'element-plus'
 
 // API基础地址（根据实际部署环境修改）
-const BASE_URL = '/api'
+const BASE_URL = '/api/v1'
 
 // 创建axios实例
 const axiosInstance: AxiosInstance = axios.create({
@@ -47,12 +47,12 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // 更详细的错误处理
     let errorMessage = '网络连接失败'
-    
+
     if (error.response) {
       // 服务器返回了错误响应
       const status = error.response.status
       const data = error.response.data
-      
+
       if (status === 404) {
         errorMessage = '请求的接口不存在，请检查后端服务是否正常运行'
       } else if (status === 500) {
@@ -60,7 +60,13 @@ axiosInstance.interceptors.response.use(
       } else if (status === 403) {
         errorMessage = '没有权限访问该资源'
       } else if (status === 401) {
-        errorMessage = '未授权，请重新登录'
+        // 401 未授权：清除 token 并跳转到登录页
+        errorMessage = '登录已过期，请重新登录'
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('userInfo')
+        sessionStorage.removeItem('level')
+        // 跳转到登录页
+        window.location.href = '/login'
       } else if (data && data.msg) {
         errorMessage = data.msg
       } else {
@@ -73,14 +79,14 @@ axiosInstance.interceptors.response.use(
       // 请求配置出错
       errorMessage = error.message || '请求配置错误'
     }
-    
+
     console.error('API 请求错误:', {
       message: error.message,
       response: error.response,
       request: error.request,
       config: error.config
     })
-    
+
     ElMessage.error(errorMessage)
     return Promise.reject(error)
   }

@@ -3,8 +3,8 @@
  * 统一管理API请求
  */
 
-// API基础地址（本地开发用 localhost；真机/小程序模拟器需改为本机局域网 IP，如 http://192.168.x.x:8080/api）
-const BASE_URL = 'http://localhost:8080/api'
+// API基础地址（本地开发用 localhost；真机/小程序模拟器需改为本机局域网 IP，如 http://192.168.x.x:8080/api/v1）
+const BASE_URL = 'http://localhost:8080/api/v1'
 
 /**
  * 统一请求方法
@@ -57,14 +57,14 @@ export const doctorApi = {
    * 医生登录
    */
   login(username: string, password: string): Promise<any> {
-    return request('/doctor/login', 'POST', { username, password })
+    return request('/qmg/doctor/login', 'POST', { username, password })
   },
 
   /**
    * 根据用户名获取医生信息
    */
   getByUsername(username: string): Promise<any> {
-    return request('/doctor/getByUsername', 'POST', { username })
+    return request('/qmg/doctor/getByUsername', 'POST', { username })
   },
 
   /**
@@ -75,7 +75,7 @@ export const doctorApi = {
     password: string
     role?: string
   }): Promise<any> {
-    return request('/doctor/register', 'POST', doctor)
+    return request('/qmg/doctor/register', 'POST', doctor)
   },
 
   /**
@@ -86,7 +86,7 @@ export const doctorApi = {
     password: string
     role?: string
   }>): Promise<any> {
-    return request('/doctor/batchRegister', 'POST', { doctors })
+    return request('/qmg/doctor/batchRegister', 'POST', { doctors })
   }
 }
 
@@ -99,7 +99,7 @@ export const patientApi = {
    */
   getPatientList(doctorId?: number): Promise<any[]> {
     const body = doctorId != null ? { scope: 'mine', currentDoctorId: doctorId } : {}
-    return request('/patient/list', 'POST', body)
+    return request('/qmg/patient/list', 'POST', body)
   },
 
   /**
@@ -108,14 +108,14 @@ export const patientApi = {
   getPatientById(id: number, doctorId?: number): Promise<any> {
     const body: any = { id }
     if (doctorId != null) body.currentDoctorId = doctorId
-    return request('/patient/getById', 'POST', body)
+    return request('/qmg/patient/getById', 'POST', body)
   },
 
   /**
    * 根据住院号获取患者
    */
   getPatientByAdmissionNumber(admissionNumber: string): Promise<any> {
-    return request('/patient/getByAdmissionNumber', 'POST', { admissionNumber })
+    return request('/qmg/patient/getByAdmissionNumber', 'POST', { admissionNumber })
   },
 
   /**
@@ -127,7 +127,7 @@ export const patientApi = {
       body.scope = 'mine'
       body.currentDoctorId = doctorId
     }
-    return request('/patient/search', 'POST', body)
+    return request('/qmg/patient/search', 'POST', body)
   },
 
   /**
@@ -140,7 +140,7 @@ export const patientApi = {
     phone: string
   }, doctorId?: number): Promise<any> {
     const body = doctorId != null ? { ...patient, currentDoctorId: doctorId } : patient
-    return request('/patient/add', 'POST', body)
+    return request('/qmg/patient/add', 'POST', body)
   },
 
   /**
@@ -153,14 +153,14 @@ export const patientApi = {
     admissionNumber: string
     phone: string
   }): Promise<any> {
-    return request('/patient/update', 'POST', patient)
+    return request('/qmg/patient/update', 'POST', patient)
   },
 
   /**
    * 删除患者
    */
   deletePatient(id: number): Promise<any> {
-    return request('/patient/delete', 'POST', { id })
+    return request('/qmg/patient/delete', 'POST', { id })
   }
 }
 
@@ -179,7 +179,7 @@ export const questionnaireApi = {
     doctorId?: number
     doctorUsername?: string
   }): Promise<any> {
-    return request('/questionnaire/save', 'POST', record)
+    return request('/qmg/questionnaire/save', 'POST', record)
   },
 
   /**
@@ -194,14 +194,14 @@ export const questionnaireApi = {
     doctorId?: number
     doctorUsername?: string
   }): Promise<any> {
-    return request('/questionnaire/update', 'POST', record)
+    return request('/qmg/questionnaire/update', 'POST', record)
   },
 
   /**
    * 根据ID获取问卷结果
    */
   getRecordById(id: number): Promise<any> {
-    return request('/questionnaire/getById', 'POST', { id })
+    return request('/qmg/questionnaire/getById', 'POST', { id })
   },
 
   /**
@@ -210,7 +210,7 @@ export const questionnaireApi = {
   getRecordsByPatientId(patientId: number, currentDoctorId?: number): Promise<any[]> {
     const body: any = { patientId, scope: 'mine' }
     if (currentDoctorId != null) body.currentDoctorId = currentDoctorId
-    return request('/questionnaire/getByPatientId', 'POST', body)
+    return request('/qmg/questionnaire/getByPatientId', 'POST', body)
   },
 
   /**
@@ -224,14 +224,14 @@ export const questionnaireApi = {
   ): Promise<any[]> {
     const body: any = { patientId, startDate, endDate, scope: 'mine' }
     if (currentDoctorId != null) body.currentDoctorId = currentDoctorId
-    return request('/questionnaire/getByPatientId', 'POST', body)
+    return request('/qmg/questionnaire/getByPatientId', 'POST', body)
   },
 
   /**
    * 获取所有问卷结果
    */
   getAllRecords(): Promise<any[]> {
-    return request('/questionnaire/list', 'POST')
+    return request('/qmg/questionnaire/list', 'POST')
   },
 
   /**
@@ -250,7 +250,7 @@ export const questionnaireApi = {
   }> {
     const body: any = { page, pageSize, scope: 'mine' }
     if (currentDoctorId != null) body.currentDoctorId = currentDoctorId
-    return request('/questionnaire/list', 'POST', body)
+    return request('/qmg/questionnaire/list', 'POST', body)
   },
 
   /**
@@ -272,20 +272,20 @@ export const questionnaireApi = {
   }> {
     const body: any = { patientName, startDate, endDate, page, pageSize, scope: 'mine' }
     if (currentDoctorId != null) body.currentDoctorId = currentDoctorId
-    return request('/questionnaire/list', 'POST', body)
+    return request('/qmg/questionnaire/list', 'POST', body)
   },
 
   /**
    * 更新问卷结果
    */
   updateRecord(record: any): Promise<any> {
-    return request('/questionnaire/update', 'POST', record)
+    return request('/qmg/questionnaire/update', 'POST', record)
   },
 
   /**
    * 删除问卷结果
    */
   deleteRecord(id: number): Promise<any> {
-    return request('/questionnaire/delete', 'POST', { id })
+    return request('/qmg/questionnaire/delete', 'POST', { id })
   }
 }

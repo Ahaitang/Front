@@ -328,9 +328,9 @@ const downloadTemplate = () => {
   const headers = ['工号', '用户名', '密码']
   const data = [
     headers,
-    ['EMP000001', 'doctor1', '123456'],
-    ['EMP000002', 'doctor2', '123456'],
-    ['EMP000003', 'doctor3', '123456']
+    ['EMP000001', 'doctor1', '请设置密码'],
+    ['EMP000002', 'doctor2', '请设置密码'],
+    ['EMP000003', 'doctor3', '请设置密码']
   ]
   
   // 创建工作表

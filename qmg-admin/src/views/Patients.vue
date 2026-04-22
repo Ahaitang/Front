@@ -9,6 +9,10 @@
               <el-icon><Upload /></el-icon>
               批量导入
             </el-button>
+            <el-button type="warning" @click="handleExport">
+              <el-icon><DocumentCopy /></el-icon>
+              导出数据
+            </el-button>
             <el-button type="primary" @click="handleAdd">
               <el-icon><Plus /></el-icon>
               新增患者
@@ -178,7 +182,8 @@ import { useRouter } from 'vue-router'
 import { patientApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, View, Search, Upload, Download } from '@element-plus/icons-vue'
+import { Plus, View, Search, Upload, Download, DocumentCopy } from '@element-plus/icons-vue'
+import { exportToExcel } from '@/utils/export'
 import type { UploadFile, UploadFiles } from 'element-plus'
 
 const router = useRouter()
@@ -445,6 +450,21 @@ const downloadTemplate = () => {
   a.click()
   URL.revokeObjectURL(url)
   ElMessage.success('模板下载成功')
+}
+
+const handleExport = () => {
+  if (patientList.value.length === 0) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const exportData = patientList.value.map(item => ({
+    'ID': item.id,
+    '姓名': item.name,
+    '性别': item.gender === 'male' ? '男' : '女',
+    '住院号': item.admissionNumber,
+    '联系电话': item.phone
+  }))
+  exportToExcel(exportData, '患者列表')
 }
 
 const handleSubmit = async () => {

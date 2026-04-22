@@ -8,8 +8,8 @@ const router = useRouter()
 
 const form = ref({
   username: '',
-  password: '',
-  role: 'admin' // 默认管理员
+  password: ''
+  // role 移除：角色由后端根据用户身份自动判断，前端不可选择
 })
 
 const loading = ref(false)
@@ -28,18 +28,25 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    // 调用真实登录接口
+    // 调用真实登录接口（不传递role，由后端判断）
     const res = await login({
       username: form.value.username,
-      password: form.value.password,
-      role: form.value.role
+      password: form.value.password
     })
 
     // 响应拦截器已解包 data，res 直接是 { token, user, role }
     if (res && res.token) {
       localStorage.setItem('admin_token', res.token)
       localStorage.setItem('admin_user', JSON.stringify(res.user || {}))
-      localStorage.setItem('admin_role', res.role || form.value.role)
+      // role 必须由后端返回，不允许使用前端默认值
+      if (res.role) {
+        localStorage.setItem('admin_role', res.role)
+      } else {
+        // 如果后端未返回role，清除登录状态并提示错误
+        localStorage.clear()
+        ElMessage.error('登录失败：后端未返回角色信息')
+        return
+      }
       ElMessage.success('登录成功')
       router.push('/dashboard')
     } else {
@@ -84,18 +91,7 @@ const handleLogin = async () => {
           />
         </el-form-item>
 
-        <el-form-item>
-          <el-radio-group v-model="form.role" class="role-radio-group">
-            <el-radio-button
-              v-for="item in roleOptions"
-              :key="item.value"
-              :value="item.value"
-            >
-              <el-icon style="margin-right: 4px"><component :is="item.icon" /></el-icon>
-              {{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
-        </el-form-item>
+        <!-- 角色选择已移除：由后端根据用户身份自动判断 -->
 
         <el-form-item>
           <el-button
@@ -111,8 +107,7 @@ const handleLogin = async () => {
       </el-form>
 
       <div class="login-tip">
-        <p>管理员：admin / 123456</p>
-        <p>医生：手机号 / 123456</p>
+        <p>请联系管理员获取登录账号</p>
       </div>
     </div>
   </div>

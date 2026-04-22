@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Download, UploadFilled } from '@element-plus/icons-vue'
+import { User, Download, UploadFilled, DocumentCopy } from '@element-plus/icons-vue'
 import {
   getPatientList,
   savePatient,
@@ -10,6 +10,7 @@ import {
   updatePatientPassword,
   getAllDoctors
 } from '@/api'
+import { exportToExcel } from '@/utils/export'
 import type { Patient, Doctor } from '@/api'
 
 const router = useRouter()
@@ -262,6 +263,26 @@ const openImportDialog = () => {
   importResult.value = null
   importDialogVisible.value = true
 }
+
+// 导出数据
+const handleExport = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const exportData = tableData.value.map(item => ({
+    'ID': item.id,
+    '姓名': item.name,
+    '性别': item.gender,
+    '年龄': item.age,
+    '手机号': item.phone,
+    '主治医生': item.doctorName || '-',
+    '实名状态': item.isRealAuth ? '已实名' : '未实名',
+    '随访状态': item.hasFollowUp ? '待随访' : '正常',
+    '更新时间': formatDate(item.updateTime)
+  }))
+  exportToExcel(exportData, '患者列表')
+}
 </script>
 
 <template>
@@ -313,6 +334,10 @@ const openImportDialog = () => {
           <el-button @click="handleReset">重置</el-button>
           <el-button type="success" @click="addPatient">新增患者</el-button>
           <el-button type="warning" @click="openImportDialog">批量导入</el-button>
+          <el-button type="info" @click="handleExport">
+            <el-icon><DocumentCopy /></el-icon>
+            导出数据
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -488,7 +513,7 @@ const openImportDialog = () => {
             <li>请先下载模板，按照模板格式填写数据</li>
             <li>带 * 的字段为必填项</li>
             <li>医生手机号必须为系统中已存在的医生</li>
-            <li>默认密码为 123456</li>
+            <li>密码将由系统自动生成</li>
           </ul>
         </el-alert>
       </div>

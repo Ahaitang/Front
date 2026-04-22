@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
 const instance: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: 'http://localhost:8080/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -53,6 +54,7 @@ instance.interceptors.response.use(
         return result.data
       } else {
         // 业务错误
+        ElMessage.error(result.message || '请求失败')
         return Promise.reject(new Error(result.message || '请求失败'))
       }
     }
@@ -60,8 +62,18 @@ instance.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
+      // 401 未授权：清除所有认证相关数据并跳转到登录页
+      ElMessage.error('登录已过期，请重新登录')
       localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_role')
+      localStorage.removeItem('admin_user')
       window.location.href = '/login'
+    } else if (error.response?.status === 403) {
+      ElMessage.error('没有权限访问该资源')
+    } else if (error.response?.status === 500) {
+      ElMessage.error('服务器内部错误')
+    } else {
+      ElMessage.error(error.response?.data?.message || '请求失败')
     }
     return Promise.reject(error.response?.data || error)
   }

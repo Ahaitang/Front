@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Calendar, Document, Clock, CircleCheck, CircleClose } from '@element-plus/icons-vue'
+import { Calendar, Document, Clock, CircleCheck, CircleClose, DocumentCopy } from '@element-plus/icons-vue'
 import {
   getFollowUpList,
   saveFollowUp as saveFollowUpApi,
@@ -10,6 +10,7 @@ import {
   getAllDoctors
 } from '@/api'
 import { getPatientList } from '@/api'
+import { exportToExcel } from '@/utils/export'
 import type { FollowUp, Doctor, Patient } from '@/api'
 
 const searchForm = ref({
@@ -272,6 +273,28 @@ const handleDoctorSelect = (doctorId: number) => {
 const formatDate = (date: string) => {
   return date || '-'
 }
+
+// 导出数据
+const handleExport = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const exportData = tableData.value.map(item => ({
+    'ID': item.id,
+    '患者姓名': item.patientName,
+    '患者性别': item.patientGender,
+    '患者年龄': item.patientAge,
+    '随访医生': item.doctorName,
+    '随访日期': item.date,
+    '随访项目': item.project,
+    '随访类型': item.type,
+    '状态': getStatusText(item.status),
+    '备注': item.content || '-',
+    '创建时间': formatDate(item.createTime)
+  }))
+  exportToExcel(exportData, '随访列表')
+}
 </script>
 
 <template>
@@ -354,6 +377,10 @@ const formatDate = (date: string) => {
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
           <el-button type="success" @click="addFollowUp">新建随访</el-button>
+          <el-button type="info" @click="handleExport">
+            <el-icon><DocumentCopy /></el-icon>
+            导出数据
+          </el-button>
         </el-form-item>
       </el-form>
     </div>

@@ -516,7 +516,7 @@ const formatDate = (date: string) => {
           <ul class="tips-list">
             <li>请先下载模板，按照模板格式填写数据</li>
             <li>带 * 的字段为必填项</li>
-            <li>默认密码为 123456</li>
+            <li>密码将由系统自动生成</li>
           </ul>
         </el-alert>
       </div>
