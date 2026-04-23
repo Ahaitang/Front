@@ -8,10 +8,12 @@ import {
   savePatient,
   deletePatient as deletePatientApi,
   updatePatientPassword,
-  getAllDoctors
+  getAllDoctors,
+  getCommonDictByType,
+  DICT_TYPES
 } from '@/api'
 import { exportToExcel } from '@/utils/export'
-import type { Patient, Doctor } from '@/api'
+import type { Patient, Doctor, CommonDict } from '@/api'
 
 const router = useRouter()
 
@@ -24,6 +26,7 @@ const searchForm = ref({
 
 const tableData = ref<Patient[]>([])
 const doctors = ref<Doctor[]>([])
+const genderOptions = ref<CommonDict[]>([])
 const loading = ref(false)
 const total = ref(0)
 const pagination = ref({
@@ -38,7 +41,7 @@ const saveLoading = ref(false)
 
 // 修改密码相关
 const passwordDialogVisible = ref(false)
-const passwordForm = ref({ id: 0, password: '' })
+const passwordForm = ref({ id: 0, password: '', confirmPassword: '' })
 const passwordLoading = ref(false)
 
 // 导入相关
@@ -46,6 +49,15 @@ const importDialogVisible = ref(false)
 const importLoading = ref(false)
 const importResult = ref<{ total: number; success: number; failed: number; errors: string[] } | null>(null)
 const fileList = ref<any[]>([])
+
+// 加载字典
+const loadDicts = async () => {
+  try {
+    genderOptions.value = await getCommonDictByType(DICT_TYPES.GENDER)
+  } catch (e) {
+    console.error('加载字典失败:', e)
+  }
+}
 
 // 加载数据
 const loadData = async () => {
@@ -77,7 +89,21 @@ const loadDoctors = async () => {
   }
 }
 
+// 年龄计算函数
+const calculateAge = (birthDate: string | undefined) => {
+  if (!birthDate) return null
+  const today = new Date()
+  const birth = new Date(birthDate)
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age
+}
+
 onMounted(() => {
+  loadDicts()
   loadData()
   loadDoctors()
 })
@@ -123,8 +149,8 @@ const editPatient = (row: Patient) => {
 const addPatient = () => {
   currentPatient.value = {
     name: '',
-    gender: '男',
-    age: 0,
+    gender: genderOptions.value[0]?.name || '男',
+    birthDate: undefined,
     phone: '',
     doctorId: undefined,
     doctorName: '',
@@ -170,7 +196,14 @@ const savePatientSubmit = async () => {
         currentPatient.value.doctorName = doc.name
       }
     }
-    await savePatient(currentPatient.value)
+    // 清除不应提交的字段
+    const submitData = {
+      ...currentPatient.value,
+      createTime: undefined,
+      updateTime: undefined,
+      age: undefined
+    }
+    await savePatient(submitData)
     ElMessage.success(dialogType.value === 'add' ? '添加成功' : '保存成功')
     dialogVisible.value = false
     loadData()
@@ -309,8 +342,12 @@ const handleExport = () => {
         </el-form-item>
         <el-form-item label="性别">
           <el-select v-model="searchForm.gender" clearable placeholder="全部" style="width: 100px">
-            <el-option label="男" value="男" />
-            <el-option label="女" value="女" />
+            <el-option
+              v-for="gender in genderOptions"
+              :key="gender.id"
+              :label="gender.name"
+              :value="gender.name"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="实名状态">
@@ -345,12 +382,11 @@ const handleExport = () => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="70" />
         <el-table-column label="患者信息" min-width="140">
           <template #default="{ row }">
-            <div class="patient-info">
+            <div class="info-cell">
               <span class="name">{{ row.name }}</span>
-              <span class="meta">{{ row.gender }} | {{ row.age }}岁</span>
+              <span class="meta">{{ row.gender }} | {{ calculateAge(row.birthDate) || '-' }}岁</span>
             </div>
           </template>
         </el-table-column>
@@ -414,11 +450,6 @@ const handleExport = () => {
         <el-form :model="currentPatient" label-width="100px" :disabled="dialogType === 'view'">
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="ID" v-if="currentPatient.id">
-                <el-input :model-value="currentPatient.id" disabled />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
               <el-form-item label="姓名" required>
                 <el-input v-model="currentPatient.name" />
               </el-form-item>
@@ -428,14 +459,24 @@ const handleExport = () => {
             <el-col :span="12">
               <el-form-item label="性别">
                 <el-select v-model="currentPatient.gender" style="width: 100%">
-                  <el-option label="男" value="男" />
-                  <el-option label="女" value="女" />
+                  <el-option
+                    v-for="gender in genderOptions"
+                    :key="gender.id"
+                    :label="gender.name"
+                    :value="gender.name"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="年龄">
-                <el-input-number v-model="currentPatient.age" :min="0" :max="150" style="width: 100%" />
+              <el-form-item label="出生日期">
+                <el-date-picker
+                  v-model="currentPatient.birthDate"
+                  type="date"
+                  value-format="YYYY-MM-DD"
+                  placeholder="选择出生日期"
+                  style="width: 100%"
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -484,14 +525,19 @@ const handleExport = () => {
     <!-- 修改密码对话框 -->
     <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px">
       <el-form label-width="80px">
-        <el-form-item label="患者ID">
-          <el-input :model-value="passwordForm.id" disabled />
-        </el-form-item>
         <el-form-item label="新密码" required>
           <el-input
             v-model="passwordForm.password"
             type="password"
             placeholder="请输入新密码（至少6位）"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" required>
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
             show-password
           />
         </el-form-item>
