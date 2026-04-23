@@ -24,13 +24,16 @@ const recentFollowUps = ref<FollowUp[]>([])
 const recentMedications = ref<Medication[]>([])
 
 const patientGenderStats = computed(() => {
-  const male = patients.value.filter(p => p.gender === '男').length
-  const female = patients.value.filter(p => p.gender === '女').length
+  const male = patients.value.filter(p => p.gender === '男' || p.gender === 'male' || p.gender === 'M').length
+  const female = patients.value.filter(p => p.gender === '女' || p.gender === 'female' || p.gender === 'F').length
   return [
     { name: '男性', value: male, color: '#3B82F6' },
     { name: '女性', value: female, color: '#EC4899' }
   ]
 })
+
+// 使用患者列表实际数量计算，确保百分比准确
+const genderTotalCount = computed(() => patients.value.length)
 
 const completedFollowUps = computed(() => {
   return recentFollowUps.value.filter(f => f.status === 1).length
@@ -170,7 +173,7 @@ onMounted(() => {
               <span class="gender-count">{{ item.value }} 人</span>
             </div>
             <el-progress
-              :percentage="stats.totalPatients > 0 ? Math.round((item.value / stats.totalPatients) * 100) : 0"
+              :percentage="genderTotalCount > 0 ? Math.round((item.value / genderTotalCount) * 100) : 0"
               :stroke-width="12"
               :color="item.color"
               :show-text="false"
@@ -178,7 +181,7 @@ onMounted(() => {
           </div>
           <div class="gender-total">
             <span>总计</span>
-            <span class="total-value">{{ stats.totalPatients }} 人</span>
+            <span class="total-value">{{ genderTotalCount }} 人</span>
           </div>
         </div>
       </div>
