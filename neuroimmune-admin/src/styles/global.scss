@@ -327,3 +327,53 @@
     }
   }
 }
+
+/* 页面标题样式 */
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1F2937;
+
+  .el-icon {
+    color: #0D9488;
+  }
+}
+
+/* 信息列样式（姓名+元信息） - 替代 patient-info/doctor-info/admin-info */
+.info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .name {
+    font-weight: 600;
+    color: #1F2937;
+  }
+
+  .meta {
+    font-size: 12px;
+    color: #6B7280;
+  }
+}
+
+/* 通用文字样式 */
+.text-muted {
+  color: #9CA3AF;
+}
+
+.text-secondary {
+  color: #6B7280;
+}
+
+/* 值高亮样式 */
+.value-highlight {
+  font-weight: 600;
+  color: #0D9488;
+}
