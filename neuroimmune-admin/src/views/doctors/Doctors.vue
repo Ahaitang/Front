@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UserFilled, Download, UploadFilled } from '@element-plus/icons-vue'
 import {
@@ -7,9 +7,19 @@ import {
   saveDoctor as saveDoctorApi,
   deleteDoctor as deleteDoctorApi,
   updateDoctorPassword,
-  getPatientList
+  getPatientList,
+  getDoctorRoles,
+  updateDoctorRoles,
+  getCommonDictByType,
+  DICT_TYPES
 } from '@/api'
-import type { Doctor, Patient } from '@/api'
+import type { Doctor, Patient, CommonDict } from '@/api'
+
+// 判断当前用户是否是管理员
+const currentUserIsAdmin = computed(() => {
+  const role = localStorage.getItem('admin_role')
+  return role === 'admin'
+})
 
 const searchForm = ref({
   keyword: '',
@@ -33,7 +43,7 @@ const saveLoading = ref(false)
 
 // 修改密码相关
 const passwordDialogVisible = ref(false)
-const passwordForm = ref({ id: 0, password: '' })
+const passwordForm = ref({ id: 0, password: '', confirmPassword: '' })
 const passwordLoading = ref(false)
 
 // 患者列表对话框
@@ -47,8 +57,29 @@ const importLoading = ref(false)
 const importResult = ref<{ total: number; success: number; failed: number; errors: string[] } | null>(null)
 const fileList = ref<any[]>([])
 
-// 科室选项
-const departmentOptions = ['神经内科', '神经外科', '神经免疫科', '康复科', 'ICU']
+// 角色编辑对话框
+const roleDialogVisible = ref(false)
+const roleForm = ref({ id: 0, name: '', roles: [] as string[], level: undefined as number | undefined })
+const roleLoading = ref(false)
+const currentUserLevel = ref<number | undefined>(undefined)
+
+// 角色选项（动态加载）
+const roleOptions = ref<CommonDict[]>([])
+
+// 字典选项（动态加载）
+const departmentOptions = ref<CommonDict[]>([])
+const titleOptions = ref<CommonDict[]>([])
+
+// 加载字典
+const loadDicts = async () => {
+  try {
+    departmentOptions.value = await getCommonDictByType(DICT_TYPES.DEPARTMENT)
+    titleOptions.value = await getCommonDictByType(DICT_TYPES.TITLE)
+    roleOptions.value = await getCommonDictByType(DICT_TYPES.ROLE)
+  } catch (e) {
+    console.error('加载字典失败:', e)
+  }
+}
 
 // 加载数据
 const loadData = async () => {
@@ -86,6 +117,7 @@ const getPatientCount = (doctorId: number) => {
 }
 
 onMounted(() => {
+  loadDicts()
   loadData()
   loadPatients()
 })
@@ -129,8 +161,8 @@ const editDoctor = (row: Doctor) => {
 const addDoctor = () => {
   currentDoctor.value = {
     name: '',
-    title: '主治医师',
-    department: '神经内科',
+    title: titleOptions.value[0]?.name || '',
+    department: departmentOptions.value[0]?.name || '',
     hospital: '',
     phone: ''
   }
@@ -197,7 +229,7 @@ const viewPatients = async (row: Doctor) => {
 }
 
 const openPasswordDialog = (row: Doctor) => {
-  passwordForm.value = { id: row.id, password: '' }
+  passwordForm.value = { id: row.id, password: '', confirmPassword: '' }
   passwordDialogVisible.value = true
 }
 
@@ -208,6 +240,10 @@ const handleUpdatePassword = async () => {
   }
   if (passwordForm.value.password.length < 6) {
     ElMessage.warning('密码长度不能少于6位')
+    return
+  }
+  if (passwordForm.value.password !== passwordForm.value.confirmPassword) {
+    ElMessage.warning('两次输入的密码不一致')
     return
   }
   passwordLoading.value = true
@@ -269,6 +305,75 @@ const openImportDialog = () => {
   importDialogVisible.value = true
 }
 
+// 打开角色编辑对话框
+const openRoleDialog = async (row: Doctor) => {
+  // 获取当前用户信息
+  const userStr = localStorage.getItem('admin_user')
+  if (userStr) {
+    const user = JSON.parse(userStr)
+    currentUserLevel.value = user.level
+  }
+  // 从后端获取角色列表
+  try {
+    const roles = await getDoctorRoles(row.id)
+    roleForm.value = {
+      id: row.id,
+      name: row.name,
+      roles: roles || [],
+      level: row.level
+    }
+  } catch (e) {
+    // 如果获取失败，使用本地数据
+    roleForm.value = {
+      id: row.id,
+      name: row.name,
+      roles: row.roles || (row.role ? row.role.split(',') : ['doctor']),
+      level: row.level
+    }
+  }
+  roleDialogVisible.value = true
+}
+
+// 保存角色设置
+const handleSaveRole = async () => {
+  if (roleForm.value.roles.length === 0) {
+    ElMessage.warning('请至少选择一个角色')
+    return
+  }
+  roleLoading.value = true
+  try {
+    await updateDoctorRoles(roleForm.value.id, roleForm.value.roles, roleForm.value.level)
+    ElMessage.success('角色设置成功')
+    roleDialogVisible.value = false
+    loadData()
+  } catch (e: any) {
+    ElMessage.error(e.message || '角色设置失败')
+  } finally {
+    roleLoading.value = false
+  }
+}
+
+// 获取角色标签显示文本
+const getRoleLabel = (roleCode: string) => {
+  const role = roleOptions.value.find(r => r.code === roleCode)
+  return role ? role.name : roleCode
+}
+
+// 获取角色的标签类型
+const getRoleTagType = (roleCode: string) => {
+  if (roleCode === 'admin') return 'danger'
+  if (roleCode === 'doctor') return 'primary'
+  return 'info'
+}
+
+// 格式化角色显示
+const formatRole = (role: string | undefined) => {
+  if (!role) return '医生'
+  if (role.includes('admin') && role.includes('doctor')) return '医生+管理员'
+  if (role.includes('admin')) return '管理员'
+  return '医生'
+}
+
 const formatDate = (date: string) => {
   return date || '-'
 }
@@ -305,9 +410,9 @@ const formatDate = (date: string) => {
           >
             <el-option
               v-for="dept in departmentOptions"
-              :key="dept"
-              :label="dept"
-              :value="dept"
+              :key="dept.id"
+              :label="dept.name"
+              :value="dept.name"
             />
           </el-select>
         </el-form-item>
@@ -323,10 +428,9 @@ const formatDate = (date: string) => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="70" />
         <el-table-column label="医生信息" min-width="140">
           <template #default="{ row }">
-            <div class="doctor-info">
+            <div class="info-cell">
               <span class="name">{{ row.name }}</span>
               <span class="meta">{{ row.department }}</span>
             </div>
@@ -351,10 +455,11 @@ const formatDate = (date: string) => {
             <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="viewDoctor(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="editDoctor(row)">编辑</el-button>
+            <el-button v-if="currentUserIsAdmin" type="success" link size="small" @click="openRoleDialog(row)">角色</el-button>
             <el-button type="warning" link size="small" @click="openPasswordDialog(row)">改密</el-button>
             <el-button type="danger" link size="small" @click="deleteDoctor(row)">删除</el-button>
           </template>
@@ -385,11 +490,6 @@ const formatDate = (date: string) => {
         <el-form :model="currentDoctor" label-width="100px" :disabled="dialogType === 'view'">
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="ID" v-if="currentDoctor.id">
-                <el-input :model-value="currentDoctor.id" disabled />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
               <el-form-item label="姓名" required>
                 <el-input v-model="currentDoctor.name" />
               </el-form-item>
@@ -399,11 +499,12 @@ const formatDate = (date: string) => {
             <el-col :span="12">
               <el-form-item label="职称">
                 <el-select v-model="currentDoctor.title" style="width: 100%">
-                  <el-option label="主任医师" value="主任医师" />
-                  <el-option label="副主任医师" value="副主任医师" />
-                  <el-option label="主治医师" value="主治医师" />
-                  <el-option label="住院医师" value="住院医师" />
-                  <el-option label="规培医师" value="规培医师" />
+                  <el-option
+                    v-for="title in titleOptions"
+                    :key="title.id"
+                    :label="title.name"
+                    :value="title.name"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -412,9 +513,9 @@ const formatDate = (date: string) => {
                 <el-select v-model="currentDoctor.department" style="width: 100%">
                   <el-option
                     v-for="dept in departmentOptions"
-                    :key="dept"
-                    :label="dept"
-                    :value="dept"
+                    :key="dept.id"
+                    :label="dept.name"
+                    :value="dept.name"
                   />
                 </el-select>
               </el-form-item>
@@ -488,14 +589,19 @@ const formatDate = (date: string) => {
     <!-- 修改密码对话框 -->
     <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px">
       <el-form label-width="80px">
-        <el-form-item label="医生ID">
-          <el-input :model-value="passwordForm.id" disabled />
-        </el-form-item>
         <el-form-item label="新密码" required>
           <el-input
             v-model="passwordForm.password"
             type="password"
             placeholder="请输入新密码（至少6位）"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" required>
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
             show-password
           />
         </el-form-item>
@@ -564,6 +670,38 @@ const formatDate = (date: string) => {
       <template #footer>
         <el-button @click="importDialogVisible = false">关闭</el-button>
         <el-button type="primary" :loading="importLoading" @click="handleImport">开始导入</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 角色编辑对话框 -->
+    <el-dialog v-model="roleDialogVisible" title="角色设置" width="450px">
+      <el-form label-width="80px">
+        <el-form-item label="医生姓名">
+          <el-input :model-value="roleForm.name" disabled />
+        </el-form-item>
+        <el-form-item label="角色" required>
+          <el-select v-model="roleForm.roles" multiple style="width: 100%" placeholder="请选择角色">
+            <el-option
+              v-for="opt in roleOptions"
+              :key="opt.id"
+              :label="opt.name"
+              :value="opt.code"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="管理等级" v-if="roleForm.roles?.includes('admin')">
+          <el-input-number
+            v-model="roleForm.level"
+            :min="1"
+            :max="10"
+            placeholder="1为最高等级"
+          />
+          <div class="level-tip">数字越小等级越高，1为最高等级</div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="roleLoading" @click="handleSaveRole">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -644,5 +782,11 @@ const formatDate = (date: string) => {
       line-height: 1.6;
     }
   }
+}
+
+.level-tip {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 8px;
 }
 </style>
