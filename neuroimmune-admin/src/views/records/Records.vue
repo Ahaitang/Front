@@ -2,8 +2,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Picture, Folder } from '@element-plus/icons-vue'
-import { getRecordList, saveRecord, deleteRecord as deleteRecordApi, getPatientList, uploadFile, ocrParseMedical } from '@/api'
-import type { MedicalRecord, Patient } from '@/api'
+import { getRecordList, saveRecord, cancelRecord, getPatientList, uploadFile, ocrParseMedical, getCommonDictByType, DICT_TYPES } from '@/api'
+import type { MedicalRecord, Patient, CommonDict } from '@/api'
 
 const searchForm = ref({
   keyword: '',
@@ -15,6 +15,7 @@ const searchForm = ref({
 
 const tableData = ref<MedicalRecord[]>([])
 const patients = ref<Patient[]>([])
+const recordTypeOptions = ref<CommonDict[]>([])
 const loading = ref(false)
 const total = ref(0)
 const pagination = ref({
@@ -33,8 +34,25 @@ const imagePreviewVisible = ref(false)
 const previewImageUrl = ref('')
 const ocrLoading = ref(false)
 
-// 病历类型选项
-const recordTypes = ['门诊病历', '住院病历', '外院病历']
+// 加载字典
+const loadDicts = async () => {
+  try {
+    recordTypeOptions.value = await getCommonDictByType(DICT_TYPES.RECORD_TYPE)
+  } catch (e) {
+    console.error('加载字典失败:', e)
+  }
+}
+
+// 状态相关
+const getStatusType = (status: number) => {
+  const map: Record<number, string> = { 0: 'warning', 1: 'success', 2: 'info' }
+  return map[status] || 'info'
+}
+
+const getStatusText = (status: number) => {
+  const map: Record<number, string> = { 0: '进行中', 1: '已完成', 2: '已取消' }
+  return map[status] || '进行中'
+}
 
 // 加载数据
 const loadData = async () => {
@@ -42,8 +60,8 @@ const loadData = async () => {
   try {
     const params: any = {
       ...pagination.value,
-      keyword: searchForm.value.keyword,
-      type: searchForm.value.type,
+      keyword: searchForm.value.keyword || '',
+      type: searchForm.value.type || '',
       startDate: searchForm.value.dateRange?.[0] || '',
       endDate: searchForm.value.dateRange?.[1] || ''
     }
@@ -70,6 +88,7 @@ const loadPatients = async () => {
 }
 
 onMounted(() => {
+  loadDicts()
   loadData()
   loadPatients()
 })
@@ -135,18 +154,18 @@ const editRecord = (row: MedicalRecord) => {
   dialogVisible.value = true
 }
 
-const deleteRecord = (row: MedicalRecord) => {
-  ElMessageBox.confirm('确定要删除该病历记录吗？', '提示', {
+const cancelRecordRecord = (row: MedicalRecord) => {
+  ElMessageBox.confirm('确定要取消该病历记录吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
-      await deleteRecordApi(row.id)
-      ElMessage.success('删除成功')
+      await cancelRecord(row.id)
+      ElMessage.success('已取消')
       loadData()
     } catch (e) {
-      ElMessage.error('删除失败')
+      ElMessage.error('操作失败')
     }
   }).catch(() => {})
 }
@@ -271,9 +290,12 @@ const hasImages = computed(() => imageList.value.length > 0)
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="searchForm.type" clearable placeholder="全部" style="width: 120px">
-            <el-option label="门诊病历" value="门诊病历" />
-            <el-option label="住院病历" value="住院病历" />
-            <el-option label="外院病历" value="外院病历" />
+            <el-option
+              v-for="t in recordTypeOptions"
+              :key="t.id"
+              :label="t.name"
+              :value="t.name"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="日期">
@@ -297,7 +319,6 @@ const hasImages = computed(() => imageList.value.length > 0)
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="patientName" label="患者" min-width="100" />
         <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
@@ -317,6 +338,11 @@ const hasImages = computed(() => imageList.value.length > 0)
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160">
           <template #default="{ row }">
             <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
@@ -326,7 +352,7 @@ const hasImages = computed(() => imageList.value.length > 0)
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="viewRecord(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="editRecord(row)">编辑</el-button>
-            <el-button type="danger" link size="small" @click="deleteRecord(row)">删除</el-button>
+            <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelRecordRecord(row)">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -375,15 +401,17 @@ const hasImages = computed(() => imageList.value.length > 0)
             <el-col :span="12">
               <el-form-item label="病历类型">
                 <el-select v-model="currentRecord.type" style="width: 100%">
-                  <el-option v-for="t in recordTypes" :key="t" :label="t" :value="t" />
+                  <el-option
+                    v-for="t in recordTypeOptions"
+                    :key="t.id"
+                    :label="t.name"
+                    :value="t.name"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="20">
-            <el-col :span="12" v-if="dialogType === 'view'">
-              <el-form-item label="ID">{{ currentRecord.id }}</el-form-item>
-            </el-col>
             <el-col :span="12" v-if="dialogType === 'view'">
               <el-form-item label="患者">{{ currentRecord.patientName }}</el-form-item>
             </el-col>
@@ -537,9 +565,5 @@ const hasImages = computed(() => imageList.value.length > 0)
     background: rgba(0, 0, 0, 0.5);
     border-radius: 0 0 0 6px;
   }
-}
-
-.text-muted {
-  color: #9CA3AF;
 }
 </style>
