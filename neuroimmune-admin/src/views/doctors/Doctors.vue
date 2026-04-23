@@ -353,27 +353,6 @@ const handleSaveRole = async () => {
   }
 }
 
-// 获取角色标签显示文本
-const getRoleLabel = (roleCode: string) => {
-  const role = roleOptions.value.find(r => r.code === roleCode)
-  return role ? role.name : roleCode
-}
-
-// 获取角色的标签类型
-const getRoleTagType = (roleCode: string) => {
-  if (roleCode === 'admin') return 'danger'
-  if (roleCode === 'doctor') return 'primary'
-  return 'info'
-}
-
-// 格式化角色显示
-const formatRole = (role: string | undefined) => {
-  if (!role) return '医生'
-  if (role.includes('admin') && role.includes('doctor')) return '医生+管理员'
-  if (role.includes('admin')) return '管理员'
-  return '医生'
-}
-
 const formatDate = (date: string) => {
   return date || '-'
 }

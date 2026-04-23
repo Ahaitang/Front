@@ -14,11 +14,6 @@ const form = ref({
 
 const loading = ref(false)
 
-const roleOptions = [
-  { value: 'admin', label: '管理员', icon: 'User' },
-  { value: 'doctor', label: '医生', icon: 'Avatar' }
-]
-
 const handleLogin = async () => {
   if (!form.value.username || !form.value.password) {
     ElMessage.warning('请输入用户名和密码')
@@ -29,7 +24,7 @@ const handleLogin = async () => {
 
   try {
     // 调用真实登录接口（不传递role，由后端判断）
-    const res = await login({
+    const res: any = await login({
       username: form.value.username,
       password: form.value.password
     })

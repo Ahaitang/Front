@@ -65,7 +65,10 @@ const loadData = async () => {
   try {
     const params = {
       ...pagination.value,
-      ...searchForm.value
+      keyword: searchForm.value.keyword,
+      gender: searchForm.value.gender,
+      isRealAuth: searchForm.value.isRealAuth === 'true' ? true : searchForm.value.isRealAuth === 'false' ? false : undefined,
+      doctorId: searchForm.value.doctorId ? Number(searchForm.value.doctorId) : undefined
     }
     const res = await getPatientList(params)
     if (res) {
@@ -225,7 +228,7 @@ const viewPatientDetail = (row: Patient) => {
 
 // 修改密码
 const openPasswordDialog = (row: Patient) => {
-  passwordForm.value = { id: row.id, password: '' }
+  passwordForm.value = { id: row.id, password: '', confirmPassword: '' }
   passwordDialogVisible.value = true
 }
 
@@ -312,7 +315,7 @@ const handleExport = () => {
     '主治医生': item.doctorName || '-',
     '实名状态': item.isRealAuth ? '已实名' : '未实名',
     '随访状态': item.hasFollowUp ? '待随访' : '正常',
-    '更新时间': formatDate(item.updateTime)
+    '更新时间': formatDate(item.updateTime || '')
   }))
   exportToExcel(exportData, '患者列表')
 }

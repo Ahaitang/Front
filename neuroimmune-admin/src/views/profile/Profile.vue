@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
 import { updateDoctorProfile, updateDoctorPassword, updateAdminPassword } from '@/api'
-
-const router = useRouter()
 
 // 用户信息
 const userInfo = ref<any>({})
@@ -131,9 +128,6 @@ onMounted(() => {
         <div class="content-card">
           <div class="card-title">个人信息</div>
           <el-form :model="profileForm" label-width="100px">
-            <el-form-item label="ID">
-              <el-input :model-value="userId" disabled />
-            </el-form-item>
             <el-form-item label="姓名" required>
               <el-input v-model="profileForm.name" placeholder="请输入姓名" />
             </el-form-item>

@@ -9,18 +9,25 @@ import {
   getFollowUpList,
   getMedicationList,
   saveRecord,
-  deleteRecord,
+  cancelRecord,
   saveFollowUp,
-  deleteFollowUp,
+  cancelFollowUp,
   saveMedication,
-  deleteMedication,
-  getAllDoctors
+  cancelMedication,
+  getAllDoctors,
+  getCommonDictByType,
+  DICT_TYPES
 } from '@/api'
-import type { Patient, MedicalRecord, FollowUp, Medication, Doctor } from '@/api'
+import type { Patient, MedicalRecord, FollowUp, Medication, Doctor, CommonDict } from '@/api'
 
 const route = useRoute()
 const router = useRouter()
-const patientId = computed(() => route.params.id as string)
+const patientId = computed(() => {
+  const id = route.params.id
+  if (typeof id === 'string') return id
+  if (id && id.length > 0) return id[0]!
+  return ''
+})
 
 // 患者信息
 const patient = ref<Patient | null>(null)
@@ -53,18 +60,58 @@ const medicationDialogType = ref<'add' | 'edit'>('add')
 const doctors = ref<Doctor[]>([])
 const saveLoading = ref(false)
 
-// 病历类型选项
-const recordTypes = ['门诊病历', '住院病历', '外院病历']
+// 字典选项
+const recordTypeOptions = ref<CommonDict[]>([])
+const followUpTypeOptions = ref<CommonDict[]>([])
+const unitOptions = ref<CommonDict[]>([])
+const frequencyOptions = ref<CommonDict[]>([])
+const routeOptions = ref<CommonDict[]>([])
 
-// 随访类型选项
-const followUpTypes = ['定期随访', '复诊随访', '用药随访', '评估随访', '紧急随访']
+// 加载字典
+const loadDicts = async () => {
+  try {
+    const [recordTypes, followUpTypes, units, frequencies, routes] = await Promise.all([
+      getCommonDictByType(DICT_TYPES.RECORD_TYPE),
+      getCommonDictByType(DICT_TYPES.FOLLOW_UP_TYPE),
+      getCommonDictByType(DICT_TYPES.MEDICATION_UNIT),
+      getCommonDictByType(DICT_TYPES.FREQUENCY),
+      getCommonDictByType(DICT_TYPES.ROUTE)
+    ])
+    recordTypeOptions.value = recordTypes
+    followUpTypeOptions.value = followUpTypes
+    unitOptions.value = units
+    frequencyOptions.value = frequencies
+    routeOptions.value = routes
+  } catch (e) {
+    console.error('加载字典失败:', e)
+  }
+}
+
+// 状态相关 - 使用整数
+const getStatusType = (status: number) => {
+  const map: Record<number, string> = { 0: 'warning', 1: 'success', 2: 'info' }
+  return map[status] || 'info'
+}
+
+const getStatusText = (status: number) => {
+  const map: Record<number, string> = { 0: '进行中', 1: '已完成', 2: '已取消' }
+  return map[status] || '进行中'
+}
+
+const getUnitLabel = (unit: string) => {
+  const found = unitOptions.value.find(u => u.name === unit || u.code === unit)
+  return found ? found.name : unit || '-'
+}
 
 // 加载患者信息
 const loadPatient = async () => {
   loading.value = true
   try {
-    const res = await getPatientById(patientId.value)
-    patient.value = res
+    const id = patientId.value
+    if (id) {
+      const res = await getPatientById(id)
+      patient.value = res
+    }
   } catch (e) {
     ElMessage.error('加载患者信息失败')
   } finally {
@@ -122,6 +169,7 @@ const loadDoctors = async () => {
 }
 
 onMounted(() => {
+  loadDicts()
   loadPatient()
   loadRecords()
   loadFollowUps()
@@ -142,7 +190,8 @@ const openAddRecordDialog = () => {
     patientId: Number(patientId.value),
     patientName: patient.value?.name || '',
     type: '门诊病历',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    status: 0
   }
   recordDialogType.value = 'add'
   recordDialogVisible.value = true
@@ -172,18 +221,18 @@ const saveRecordSubmit = async () => {
   }
 }
 
-const deleteRecordConfirm = (row: MedicalRecord) => {
-  ElMessageBox.confirm('确定要删除该病历记录吗？', '提示', {
+const cancelRecordConfirm = (row: MedicalRecord) => {
+  ElMessageBox.confirm('确定要取消该病历记录吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
-      await deleteRecord(row.id)
-      ElMessage.success('删除成功')
+      await cancelRecord(row.id)
+      ElMessage.success('已取消')
       loadRecords()
     } catch (e) {
-      ElMessage.error('删除失败')
+      ElMessage.error('操作失败')
     }
   }).catch(() => {})
 }
@@ -194,10 +243,10 @@ const openAddFollowUpDialog = () => {
     patientId: Number(patientId.value),
     patientName: patient.value?.name || '',
     patientGender: patient.value?.gender || '男',
-    patientAge: patient.value?.age || 0,
+    patientAge: calculateAge(patient.value?.birthDate) || 0,
     date: new Date().toISOString().split('T')[0],
     type: '定期随访',
-    status: 'pending'
+    status: 0
   }
   followUpDialogType.value = 'add'
   followUpDialogVisible.value = true
@@ -227,18 +276,18 @@ const saveFollowUpSubmit = async () => {
   }
 }
 
-const deleteFollowUpConfirm = (row: FollowUp) => {
-  ElMessageBox.confirm('确定要删除该随访记录吗？', '提示', {
+const cancelFollowUpConfirm = (row: FollowUp) => {
+  ElMessageBox.confirm('确定要取消该随访记录吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
-      await deleteFollowUp(row.id)
-      ElMessage.success('删除成功')
+      await cancelFollowUp(row.id)
+      ElMessage.success('已取消')
       loadFollowUps()
     } catch (e) {
-      ElMessage.error('删除失败')
+      ElMessage.error('操作失败')
     }
   }).catch(() => {})
 }
@@ -249,9 +298,11 @@ const openAddMedicationDialog = () => {
     patientId: Number(patientId.value),
     patientName: patient.value?.name || '',
     date: new Date().toISOString().split('T')[0],
-    unit: 'mg',
+    dosageValue: undefined,
+    dosageUnit: 'mg',
     frequency: '每日一次',
-    route: '口服'
+    route: '口服',
+    status: 0
   }
   medicationDialogType.value = 'add'
   medicationDialogVisible.value = true
@@ -281,18 +332,18 @@ const saveMedicationSubmit = async () => {
   }
 }
 
-const deleteMedicationConfirm = (row: Medication) => {
-  ElMessageBox.confirm('确定要删除该用药记录吗？', '提示', {
+const cancelMedicationConfirm = (row: Medication) => {
+  ElMessageBox.confirm('确定要取消该用药记录吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
-      await deleteMedication(row.id)
-      ElMessage.success('删除成功')
+      await cancelMedication(row.id)
+      ElMessage.success('已取消')
       loadMedications()
     } catch (e) {
-      ElMessage.error('删除失败')
+      ElMessage.error('操作失败')
     }
   }).catch(() => {})
 }
@@ -321,26 +372,20 @@ const goBack = () => {
   router.push('/patients')
 }
 
-// 状态相关
-const getStatusType = (status: string) => {
-  const map: Record<string, string> = {
-    pending: 'warning',
-    completed: 'success',
-    cancelled: 'danger'
-  }
-  return map[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const map: Record<string, string> = {
-    pending: '待随访',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return map[status] || status
-}
-
 const formatDate = (date: string) => date || '-'
+
+// 年龄计算函数
+const calculateAge = (birthDate: string | undefined) => {
+  if (!birthDate) return null
+  const today = new Date()
+  const birth = new Date(birthDate)
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age
+}
 </script>
 
 <template>
@@ -365,7 +410,7 @@ const formatDate = (date: string) => date || '-'
             <h3>{{ patient.name }}</h3>
             <div class="patient-meta">
               <span>{{ patient.gender }}</span>
-              <span>{{ patient.age }}岁</span>
+              <span>{{ calculateAge(patient.birthDate) || '-' }}岁</span>
               <span>{{ patient.phone }}</span>
             </div>
           </div>
@@ -380,16 +425,12 @@ const formatDate = (date: string) => date || '-'
         </div>
         <div class="patient-detail">
           <div class="detail-item">
-            <span class="label">ID:</span>
-            <span class="value">{{ patient.id }}</span>
-          </div>
-          <div class="detail-item">
             <span class="label">主治医生:</span>
             <span class="value">{{ patient.doctorName || '-' }}</span>
           </div>
           <div class="detail-item">
             <span class="label">创建时间:</span>
-            <span class="value">{{ formatDate(patient.createTime) }}</span>
+            <span class="value">{{ formatDate(patient.createTime || '') }}</span>
           </div>
         </div>
       </template>
@@ -414,10 +455,15 @@ const formatDate = (date: string) => date || '-'
             <el-table-column prop="department" label="科室" width="100" />
             <el-table-column prop="doctorName" label="医生" width="100" />
             <el-table-column prop="date" label="就诊日期" width="110" />
+            <el-table-column prop="status" label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link size="small" @click="openEditRecordDialog(row)">编辑</el-button>
-                <el-button type="danger" link size="small" @click="deleteRecordConfirm(row)">删除</el-button>
+                <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelRecordConfirm(row)">取消</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -439,16 +485,14 @@ const formatDate = (date: string) => date || '-'
             <el-table-column prop="doctorName" label="随访医生" width="100" />
             <el-table-column prop="status" label="状态" width="90">
               <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)" size="small" effect="light">
-                  {{ getStatusText(row.status) }}
-                </el-tag>
+                <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="content" label="备注" min-width="120" show-overflow-tooltip />
             <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link size="small" @click="openEditFollowUpDialog(row)">编辑</el-button>
-                <el-button type="danger" link size="small" @click="deleteFollowUpConfirm(row)">删除</el-button>
+                <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelFollowUpConfirm(row)">取消</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -463,7 +507,7 @@ const formatDate = (date: string) => date || '-'
             <el-table-column prop="medicationName" label="药品名称" min-width="140" />
             <el-table-column label="剂量" width="100">
               <template #default="{ row }">
-                <span class="dosage-value">{{ row.dosage }}{{ row.unit }}</span>
+                <span class="dosage-value">{{ row.dosageValue }}{{ getUnitLabel(row.dosageUnit) }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="frequency" label="频率" width="100" />
@@ -475,10 +519,15 @@ const formatDate = (date: string) => date || '-'
             <el-table-column prop="duration" label="疗程" width="80" />
             <el-table-column prop="doctorName" label="开药医生" width="100" />
             <el-table-column prop="date" label="开药日期" width="110" />
+            <el-table-column prop="status" label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link size="small" @click="openEditMedicationDialog(row)">编辑</el-button>
-                <el-button type="danger" link size="small" @click="deleteMedicationConfirm(row)">删除</el-button>
+                <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelMedicationConfirm(row)">取消</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -493,7 +542,12 @@ const formatDate = (date: string) => date || '-'
           <el-col :span="12">
             <el-form-item label="病历类型">
               <el-select v-model="recordForm.type" style="width: 100%">
-                <el-option v-for="t in recordTypes" :key="t" :label="t" :value="t" />
+                <el-option
+                  v-for="t in recordTypeOptions"
+                  :key="t.id"
+                  :label="t.name"
+                  :value="t.name"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -547,7 +601,12 @@ const formatDate = (date: string) => date || '-'
           <el-col :span="12">
             <el-form-item label="随访类型">
               <el-select v-model="followUpForm.type" style="width: 100%">
-                <el-option v-for="t in followUpTypes" :key="t" :label="t" :value="t" />
+                <el-option
+                  v-for="t in followUpTypeOptions"
+                  :key="t.id"
+                  :label="t.name"
+                  :value="t.name"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -563,9 +622,9 @@ const formatDate = (date: string) => date || '-'
           <el-col :span="12">
             <el-form-item label="状态">
               <el-select v-model="followUpForm.status" style="width: 100%">
-                <el-option label="待随访" value="pending" />
-                <el-option label="已完成" value="completed" />
-                <el-option label="已取消" value="cancelled" />
+                <el-option label="进行中" :value="0" />
+                <el-option label="已完成" :value="1" />
+                <el-option label="已取消" :value="2" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -601,17 +660,18 @@ const formatDate = (date: string) => date || '-'
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="剂量">
-              <el-input v-model="medicationForm.dosage" placeholder="剂量" />
+              <el-input-number v-model="medicationForm.dosageValue" :min="0" :precision="2" placeholder="剂量" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="单位">
-              <el-select v-model="medicationForm.unit" style="width: 100%">
-                <el-option label="mg" value="mg" />
-                <el-option label="g" value="g" />
-                <el-option label="ml" value="ml" />
-                <el-option label="片" value="片" />
-                <el-option label="粒" value="粒" />
+              <el-select v-model="medicationForm.dosageUnit" style="width: 100%">
+                <el-option
+                  v-for="u in unitOptions"
+                  :key="u.id"
+                  :label="u.name"
+                  :value="u.name"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -620,21 +680,24 @@ const formatDate = (date: string) => date || '-'
           <el-col :span="12">
             <el-form-item label="用药频率">
               <el-select v-model="medicationForm.frequency" style="width: 100%">
-                <el-option label="每日一次" value="每日一次" />
-                <el-option label="每日两次" value="每日两次" />
-                <el-option label="每日三次" value="每日三次" />
-                <el-option label="每周一次" value="每周一次" />
-                <el-option label="必要时" value="必要时" />
+                <el-option
+                  v-for="f in frequencyOptions"
+                  :key="f.id"
+                  :label="f.name"
+                  :value="f.name"
+                />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="用药途径">
               <el-select v-model="medicationForm.route" style="width: 100%">
-                <el-option label="口服" value="口服" />
-                <el-option label="注射" value="注射" />
-                <el-option label="外用" value="外用" />
-                <el-option label="静脉滴注" value="静脉滴注" />
+                <el-option
+                  v-for="r in routeOptions"
+                  :key="r.id"
+                  :label="r.name"
+                  :value="r.name"
+                />
               </el-select>
             </el-form-item>
           </el-col>
