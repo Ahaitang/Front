@@ -6,12 +6,14 @@ import {
   getFollowUpList,
   saveFollowUp as saveFollowUpApi,
   updateFollowUpStatus,
-  deleteFollowUp as deleteFollowUpApi,
-  getAllDoctors
+  cancelFollowUp as cancelFollowUpApi,
+  getAllDoctors,
+  getCommonDictByType,
+  DICT_TYPES
 } from '@/api'
 import { getPatientList } from '@/api'
 import { exportToExcel } from '@/utils/export'
-import type { FollowUp, Doctor, Patient } from '@/api'
+import type { FollowUp, Doctor, Patient, CommonDict } from '@/api'
 
 const searchForm = ref({
   keyword: '',
@@ -32,11 +34,11 @@ const pagination = ref({
   pageSize: 10
 })
 
-// 统计数据
+// 统计数据 - 使用整数状态
 const statusStats = computed(() => {
-  const pending = tableData.value.filter(f => f.status === 'pending').length
-  const completed = tableData.value.filter(f => f.status === 'completed').length
-  const cancelled = tableData.value.filter(f => f.status === 'cancelled').length
+  const pending = tableData.value.filter(f => f.status === 0).length
+  const completed = tableData.value.filter(f => f.status === 1).length
+  const cancelled = tableData.value.filter(f => f.status === 2).length
   return { pending, completed, cancelled, total: tableData.value.length }
 })
 
@@ -46,24 +48,26 @@ const currentFollowUp = ref<Partial<FollowUp>>({})
 const saveLoading = ref(false)
 
 // 随访类型选项
-const followUpTypes = ['定期随访', '复诊随访', '用药随访', '评估随访', '紧急随访']
+const followUpTypeOptions = ref<CommonDict[]>([])
 
-const getStatusType = (status: string) => {
-  const map: Record<string, string> = {
-    pending: 'warning',
-    completed: 'success',
-    cancelled: 'danger'
+// 加载字典
+const loadDicts = async () => {
+  try {
+    followUpTypeOptions.value = await getCommonDictByType(DICT_TYPES.FOLLOW_UP_TYPE)
+  } catch (e) {
+    console.error('加载字典失败:', e)
   }
+}
+
+// 状态相关 - 使用整数
+const getStatusType = (status: number) => {
+  const map: Record<number, string> = { 0: 'warning', 1: 'success', 2: 'info' }
   return map[status] || 'info'
 }
 
-const getStatusText = (status: string) => {
-  const map: Record<string, string> = {
-    pending: '待随访',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return map[status] || status
+const getStatusText = (status: number) => {
+  const map: Record<number, string> = { 0: '进行中', 1: '已完成', 2: '已取消' }
+  return map[status] || '进行中'
 }
 
 // 加载数据
@@ -72,11 +76,14 @@ const loadData = async () => {
   try {
     const params: any = {
       ...pagination.value,
-      keyword: searchForm.value.keyword,
-      status: searchForm.value.status,
-      type: searchForm.value.type,
+      keyword: searchForm.value.keyword || '',
+      type: searchForm.value.type || '',
       startDate: searchForm.value.dateRange?.[0] || '',
       endDate: searchForm.value.dateRange?.[1] || ''
+    }
+    // 只在有值时添加 status 参数
+    if (searchForm.value.status) {
+      params.status = searchForm.value.status
     }
     const res = await getFollowUpList(params)
     if (res) {
@@ -111,6 +118,7 @@ const loadDoctors = async () => {
 }
 
 onMounted(() => {
+  loadDicts()
   loadData()
   loadPatients()
   loadDoctors()
@@ -167,8 +175,7 @@ const addFollowUp = () => {
     date: new Date().toISOString().split('T')[0],
     project: '',
     type: '定期随访',
-    status: 'pending',
-    statusText: '待随访',
+    status: 0,
     content: ''
   }
   dialogType.value = 'add'
@@ -182,7 +189,7 @@ const completeFollowUp = (row: FollowUp) => {
     type: 'info'
   }).then(async () => {
     try {
-      await updateFollowUpStatus(row.id, 'completed')
+      await updateFollowUpStatus(row.id, 1)
       ElMessage.success('随访已完成')
       loadData()
     } catch (e) {
@@ -191,34 +198,18 @@ const completeFollowUp = (row: FollowUp) => {
   }).catch(() => {})
 }
 
-const cancelFollowUp = (row: FollowUp) => {
+const cancelFollowUpRecord = (row: FollowUp) => {
   ElMessageBox.confirm('确定要取消该随访吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
-      await updateFollowUpStatus(row.id, 'cancelled')
+      await cancelFollowUpApi(row.id)
       ElMessage.success('随访已取消')
       loadData()
     } catch (e) {
       ElMessage.error('操作失败')
-    }
-  }).catch(() => {})
-}
-
-const deleteFollowUp = (row: FollowUp) => {
-  ElMessageBox.confirm(`确定要删除该随访记录吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      await deleteFollowUpApi(row.id)
-      ElMessage.success('删除成功')
-      loadData()
-    } catch (e) {
-      ElMessage.error('删除失败')
     }
   }).catch(() => {})
 }
@@ -281,7 +272,6 @@ const handleExport = () => {
     return
   }
   const exportData = tableData.value.map(item => ({
-    'ID': item.id,
     '患者姓名': item.patientName,
     '患者性别': item.patientGender,
     '患者年龄': item.patientAge,
@@ -321,7 +311,7 @@ const handleExport = () => {
           <el-icon :size="24"><Clock /></el-icon>
         </div>
         <div class="stat-value">{{ statusStats.pending }}</div>
-        <div class="stat-label">待随访</div>
+        <div class="stat-label">进行中</div>
       </div>
       <div class="stat-card success">
         <div class="stat-icon">
@@ -353,14 +343,19 @@ const handleExport = () => {
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" clearable placeholder="全部状态" style="width: 120px">
-            <el-option label="待随访" value="pending" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="已取消" value="cancelled" />
+            <el-option label="进行中" value="0" />
+            <el-option label="已完成" value="1" />
+            <el-option label="已取消" value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="searchForm.type" clearable placeholder="全部类型" style="width: 120px">
-            <el-option v-for="t in followUpTypes" :key="t" :label="t" :value="t" />
+            <el-option
+              v-for="t in followUpTypeOptions"
+              :key="t.id"
+              :label="t.name"
+              :value="t.name"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="日期范围">
@@ -388,7 +383,6 @@ const handleExport = () => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="70" />
         <el-table-column label="患者信息" min-width="140">
           <template #default="{ row }">
             <div class="patient-info">
@@ -427,20 +421,19 @@ const handleExport = () => {
             <el-button type="primary" link size="small" @click="viewFollowUp(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="editFollowUp(row)">编辑</el-button>
             <el-button
-              v-if="row.status === 'pending'"
+              v-if="row.status === 0"
               type="success"
               link
               size="small"
               @click="completeFollowUp(row)"
             >完成</el-button>
             <el-button
-              v-if="row.status === 'pending'"
+              v-if="row.status === 0"
               type="warning"
               link
               size="small"
-              @click="cancelFollowUp(row)"
+              @click="cancelFollowUpRecord(row)"
             >取消</el-button>
-            <el-button type="danger" link size="small" @click="deleteFollowUp(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -467,19 +460,12 @@ const handleExport = () => {
     >
       <template v-if="currentFollowUp">
         <el-form :model="currentFollowUp" label-width="100px" :disabled="dialogType === 'view'">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="ID" v-if="currentFollowUp.id">
-                <el-input :model-value="currentFollowUp.id" disabled />
-              </el-form-item>
-            </el-col>
+          <el-row :gutter="20" v-if="dialogType === 'view'">
             <el-col :span="12">
               <el-form-item label="状态">
-                <el-select v-model="currentFollowUp.status" style="width: 100%">
-                  <el-option label="待随访" value="pending" />
-                  <el-option label="已完成" value="completed" />
-                  <el-option label="已取消" value="cancelled" />
-                </el-select>
+                <el-tag :type="getStatusType(currentFollowUp.status || 0)" size="small">
+                  {{ getStatusText(currentFollowUp.status || 0) }}
+                </el-tag>
               </el-form-item>
             </el-col>
           </el-row>
@@ -534,7 +520,12 @@ const handleExport = () => {
             <el-col :span="12">
               <el-form-item label="随访类型">
                 <el-select v-model="currentFollowUp.type" style="width: 100%">
-                  <el-option v-for="t in followUpTypes" :key="t" :label="t" :value="t" />
+                  <el-option
+                    v-for="t in followUpTypeOptions"
+                    :key="t.id"
+                    :label="t.name"
+                    :value="t.name"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -562,8 +553,3 @@ const handleExport = () => {
   </div>
 </template>
 
-<style lang="scss" scoped>
-.text-muted {
-  color: #9CA3AF;
-}
-</style>
