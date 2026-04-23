@@ -405,16 +405,15 @@ const handleExport = () => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column label="患者信息" min-width="140">
+        <el-table-column prop="name" label="姓名" min-width="100" />
+        <el-table-column prop="gender" label="性别" width="80" />
+        <el-table-column label="年龄" width="80">
           <template #default="{ row }">
-            <div class="info-cell">
-              <span class="name">{{ row.name }}</span>
-              <span class="meta">{{ row.gender }} | {{ calculateAge(row.birthDate) || '-' }}岁</span>
-            </div>
+            {{ calculateAge(row.birthDate) || '-' }}
           </template>
         </el-table-column>
         <el-table-column prop="phone" label="手机号" min-width="120" />
-        <el-table-column prop="doctorName" label="主治医生" min-width="100">
+        <el-table-column label="主治医生" min-width="100">
           <template #default="{ row }">
             <span :class="row.doctorName ? '' : 'text-muted'">{{ row.doctorName || '-' }}</span>
           </template>
@@ -438,10 +437,9 @@ const handleExport = () => {
             <span class="text-secondary">{{ formatDate(row.updateTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button type="success" link size="small" @click="viewPatientDetail(row)">详情</el-button>
-            <el-button type="primary" link size="small" @click="viewPatient(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="editPatient(row)">编辑</el-button>
             <el-button type="warning" link size="small" @click="openPasswordDialog(row)">改密</el-button>
             <el-button type="danger" link size="small" @click="deletePatient(row)">删除</el-button>
