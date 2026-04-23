@@ -10,7 +10,8 @@ import {
   updatePatientPassword,
   getAllDoctors,
   getCommonDictByType,
-  DICT_TYPES
+  DICT_TYPES,
+  bindPatientDoctor
 } from '@/api'
 import { exportToExcel } from '@/utils/export'
 import type { Patient, Doctor, CommonDict } from '@/api'
@@ -37,6 +38,7 @@ const pagination = ref({
 const dialogVisible = ref(false)
 const dialogType = ref<'view' | 'edit' | 'add'>('view')
 const currentPatient = ref<Partial<Patient>>({})
+const selectedDoctorId = ref<number | undefined>(undefined)  // 医生选择（不存储在 Patient 中）
 const saveLoading = ref(false)
 
 // 修改密码相关
@@ -155,11 +157,10 @@ const addPatient = () => {
     gender: genderOptions.value[0]?.name || '男',
     birthDate: undefined,
     phone: '',
-    doctorId: undefined,
-    doctorName: '',
     hasFollowUp: false,
     isRealAuth: false
   }
+  selectedDoctorId.value = undefined
   dialogType.value = 'add'
   dialogVisible.value = true
 }
@@ -192,21 +193,21 @@ const savePatientSubmit = async () => {
 
   saveLoading.value = true
   try {
-    // 选择医生时更新医生姓名
-    if (currentPatient.value.doctorId) {
-      const doc = doctors.value.find(d => d.id === currentPatient.value.doctorId)
-      if (doc) {
-        currentPatient.value.doctorName = doc.name
-      }
-    }
     // 清除不应提交的字段
     const submitData = {
       ...currentPatient.value,
       createTime: undefined,
       updateTime: undefined,
-      age: undefined
+      age: undefined,
+      doctorName: undefined
     }
     await savePatient(submitData)
+
+    // 如果选择了医生，绑定医患关系
+    if (selectedDoctorId.value && currentPatient.value.id) {
+      await bindPatientDoctor(currentPatient.value.id, selectedDoctorId.value, 'admin', '后台编辑')
+    }
+
     ElMessage.success(dialogType.value === 'add' ? '添加成功' : '保存成功')
     dialogVisible.value = false
     loadData()
@@ -509,7 +510,7 @@ const handleExport = () => {
             </el-col>
             <el-col :span="12">
               <el-form-item label="主治医生">
-                <el-select v-model="currentPatient.doctorId" style="width: 100%" clearable>
+                <el-select v-model="selectedDoctorId" style="width: 100%" clearable>
                   <el-option
                     v-for="doc in doctors"
                     :key="doc.id"

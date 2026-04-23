@@ -42,6 +42,16 @@ export const updatePatientPassword = (id: string | number, password: string) => 
   return request.put(`/neuroimmune/patients/${id}/password`, { password })
 }
 
+// 患者绑定医生
+export const bindPatientDoctor = (patientId: number, doctorId: number, bindMethod?: string, remark?: string) => {
+  const params = new URLSearchParams()
+  params.append('patientId', patientId.toString())
+  params.append('doctorId', doctorId.toString())
+  if (bindMethod) params.append('bindMethod', bindMethod)
+  if (remark) params.append('remark', remark)
+  return request.post(`/neuroimmune/relation/bind?${params.toString()}`)
+}
+
 // 医生相关
 export const getDoctorList = (params: PageRequest) => {
   return request.get<PageResult<Doctor>>('/neuroimmune/doctors', params)
@@ -210,8 +220,7 @@ export interface Patient {
   idCard?: string
   hasFollowUp: boolean
   isRealAuth: boolean
-  doctorId?: number
-  doctorName?: string
+  doctorName?: string    // 通过 relation 表获取
   diseaseType?: string
   createTime?: string    // 仅显示，不参与保存
   updateTime?: string    // 仅显示，不参与保存
