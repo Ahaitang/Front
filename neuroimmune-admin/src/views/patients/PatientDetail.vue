@@ -410,7 +410,7 @@ const calculateAge = (birthDate: string | undefined) => {
             <h3>{{ patient.name }}</h3>
             <div class="patient-meta">
               <span>{{ patient.gender }}</span>
-              <span>{{ calculateAge(patient.birthDate) || '-' }}岁</span>
+              <span>{{ calculateAge(patient.birthDate) ?? '-' }}岁</span>
               <span>{{ patient.phone }}</span>
             </div>
           </div>
