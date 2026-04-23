@@ -409,7 +409,7 @@ const handleExport = () => {
         <el-table-column prop="gender" label="性别" width="80" />
         <el-table-column label="年龄" width="80">
           <template #default="{ row }">
-            {{ calculateAge(row.birthDate) || '-' }}
+            {{ calculateAge(row.birthDate) ?? '-' }}
           </template>
         </el-table-column>
         <el-table-column prop="phone" label="手机号" min-width="120" />
