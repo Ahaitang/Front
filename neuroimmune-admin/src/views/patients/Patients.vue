@@ -255,7 +255,7 @@ const handleUpdatePassword = async () => {
 
 // 下载模板
 const downloadTemplate = () => {
-  window.open('/api/import/patient/template', '_blank')
+  window.open('/api/v1/neuroimmune/import/patient/template', '_blank')
 }
 
 // 文件变化
@@ -277,7 +277,7 @@ const handleImport = async () => {
   importResult.value = null
 
   try {
-    const res = await fetch('/api/import/patient', {
+    const res = await fetch('/api/v1/neuroimmune/import/patient', {
       method: 'POST',
       body: formData
     }).then(r => r.json())
