@@ -254,8 +254,19 @@ const handleUpdatePassword = async () => {
 }
 
 // 下载模板
-const downloadTemplate = () => {
-  window.open('/api/v1/neuroimmune/import/patient/template', '_blank')
+const downloadTemplate = async () => {
+  try {
+    const response = await fetch('/api/v1/neuroimmune/import/patient/template')
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'patient_template.xlsx'
+    a.click()
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    ElMessage.error('下载模板失败')
+  }
 }
 
 // 文件变化
