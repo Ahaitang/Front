@@ -257,15 +257,24 @@ const handleUpdatePassword = async () => {
 const downloadTemplate = async () => {
   try {
     const response = await fetch('/api/v1/neuroimmune/import/patient/template')
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     const blob = await response.blob()
+    if (blob.size === 0) {
+      throw new Error('Empty file')
+    }
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = 'patient_template.xlsx'
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
   } catch (e) {
-    ElMessage.error('下载模板失败')
+    console.error('Download error:', e)
+    ElMessage.error('下载模板失败: ' + (e as Error).message)
   }
 }
 
