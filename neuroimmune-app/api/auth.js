@@ -1,5 +1,5 @@
 // 认证相关 API
-import { post, get } from './request'
+import { post, get, put } from './request'
 
 // 统一登录接口
 export const login = (data) => {
@@ -28,17 +28,17 @@ export const getAdminInfo = (id) => {
 
 // 修改管理员密码
 export const updateAdminPassword = (id, password) => {
-  return post(`/admin/${id}/password`, { password })
+  return put(`/neuroimmune/admin/${id}/password`, { password })
 }
 
 // 修改患者密码
 export const updatePatientPassword = (id, password) => {
-  return post(`/patients/${id}/password`, { password })
+  return put(`/neuroimmune/patients/${id}/password`, { password })
 }
 
 // 修改医生密码
 export const updateDoctorPassword = (id, password) => {
-  return post(`/doctors/${id}/password`, { password })
+  return put(`/neuroimmune/doctors/${id}/password`, { password })
 }
 
 export default {

@@ -8,7 +8,7 @@ export const getPatientList = (params = {}) => {
 
 // 获取患者详情
 export const getPatientById = (id) => {
-  return get(`/patients/${id}`)
+  return get(`/neuroimmune/patients/${id}`)
 }
 
 // 新增患者
@@ -18,12 +18,12 @@ export const createPatient = (data) => {
 
 // 更新患者
 export const updatePatient = (id, data) => {
-  return put(`/patients/${id}`, data)
+  return put(`/neuroimmune/patients/${id}`, data)
 }
 
 // 删除患者
 export const deletePatient = (id) => {
-  return del(`/patients/${id}`)
+  return del(`/neuroimmune/patients/${id}`)
 }
 
 // 获取医生的患者列表
@@ -33,7 +33,7 @@ export const getMyPatients = (params = {}) => {
 
 // 更新患者密码
 export const updatePatientPassword = (id, password) => {
-  return put(`/patients/${id}/password`, { password })
+  return put(`/neuroimmune/patients/${id}/password`, { password })
 }
 
 export default {

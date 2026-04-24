@@ -8,7 +8,7 @@ export const getMedicationList = (params = {}) => {
 
 // 获取用药详情
 export const getMedicationById = (id) => {
-  return get(`/medications/${id}`)
+  return get(`/neuroimmune/medications/${id}`)
 }
 
 // 新增用药
@@ -18,12 +18,12 @@ export const createMedication = (data) => {
 
 // 更新用药
 export const updateMedication = (id, data) => {
-  return put(`/medications/${id}`, data)
+  return put(`/neuroimmune/medications/${id}`, data)
 }
 
 // 删除用药
 export const deleteMedication = (id) => {
-  return del(`/medications/${id}`)
+  return del(`/neuroimmune/medications/${id}`)
 }
 
 export default {

@@ -8,7 +8,7 @@ export const getFollowUpList = (params = {}) => {
 
 // 获取随访详情
 export const getFollowUpById = (id) => {
-  return get(`/followups/${id}`)
+  return get(`/neuroimmune/followups/${id}`)
 }
 
 // 新增随访
@@ -18,17 +18,17 @@ export const createFollowUp = (data) => {
 
 // 更新随访
 export const updateFollowUp = (id, data) => {
-  return put(`/followups/${id}`, data)
+  return put(`/neuroimmune/followups/${id}`, data)
 }
 
 // 更新随访状态
 export const updateFollowUpStatus = (id, status) => {
-  return put(`/followups/${id}/status?status=${status}`)
+  return put(`/neuroimmune/followups/${id}/status?status=${status}`)
 }
 
 // 删除随访
 export const deleteFollowUp = (id) => {
-  return del(`/followups/${id}`)
+  return del(`/neuroimmune/followups/${id}`)
 }
 
 export default {

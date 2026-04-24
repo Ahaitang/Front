@@ -23,35 +23,35 @@ export const unbindRelation = (id) => {
  * 解除患者当前绑定
  */
 export const unbindPatient = (patientId) => {
-	return request.post(`/relation/unbind-patient/${patientId}`)
+	return request.post(`/neuroimmune/relation/unbind-patient/${patientId}`)
 }
 
 /**
  * 获取患者当前绑定的医生
  */
 export const getPatientDoctor = (patientId) => {
-	return request.get(`/relation/patient/${patientId}/doctor`)
+	return request.get(`/neuroimmune/relation/patient/${patientId}/doctor`)
 }
 
 /**
  * 获取医生的绑定患者列表
  */
 export const getDoctorPatients = (doctorId) => {
-	return request.get(`/relation/doctor/${doctorId}/patients`)
+	return request.get(`/neuroimmune/relation/doctor/${doctorId}/patients`)
 }
 
 /**
  * 获取医生的患者详情列表（含患者完整信息）
  */
 export const getDoctorPatientDetails = (doctorId) => {
-	return request.get(`/relation/doctor/${doctorId}/patient-details`)
+	return request.get(`/neuroimmune/relation/doctor/${doctorId}/patient-details`)
 }
 
 /**
  * 获取患者的绑定历史
  */
 export const getBindHistory = (patientId) => {
-	return request.get(`/relation/patient/${patientId}/history`)
+	return request.get(`/neuroimmune/relation/patient/${patientId}/history`)
 }
 
 /**
@@ -65,7 +65,7 @@ export const getRelationList = (params = {}) => {
  * 统计医生的患者数量
  */
 export const countDoctorPatients = (doctorId) => {
-	return request.get(`/relation/doctor/${doctorId}/count`)
+	return request.get(`/neuroimmune/relation/doctor/${doctorId}/count`)
 }
 
 /**
@@ -79,5 +79,5 @@ export const getDoctorList = () => {
  * 获取绑定详情
  */
 export const getRelationById = (id) => {
-	return request.get(`/relation/${id}`)
+	return request.get(`/neuroimmune/relation/${id}`)
 }
