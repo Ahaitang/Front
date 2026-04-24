@@ -66,7 +66,7 @@
 				</view>
 			</view>
 
-			<!-- 资料内容 -->
+			<!-- 料内容 -->
 			<view class="section">
 				<view class="section-header">
 					<text class="section-title">资料内容</text>
@@ -233,11 +233,8 @@ export default {
 				if (urls.length > 0) {
 					const res = await parseMedicalRecord(urls)
 					if (res && res.content) {
-						if (this.form.content) {
-							this.form.content += '\n\n' + res.content
-						} else {
-							this.form.content = res.content
-						}
+						// 直接覆盖，不追加
+						this.form.content = res.content
 						uni.showToast({ title: '解析成功', icon: 'success' })
 					} else if (res && !res.success) {
 						uni.showToast({ title: res.errorMsg || '识别失败', icon: 'none' })

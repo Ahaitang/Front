@@ -27,6 +27,7 @@ const request = (options) => {
       method: options.method || 'GET',
       data: options.data,
       header,
+      timeout: 60000, // OCR识别需要较长时间
       success: (res) => {
         if (res.statusCode === 200) {
           const data = res.data
