@@ -383,12 +383,11 @@ const handleExport = () => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column label="患者信息" min-width="140">
+        <el-table-column prop="patientName" label="患者姓名" min-width="100" />
+        <el-table-column prop="patientGender" label="性别" width="70" />
+        <el-table-column prop="patientAge" label="年龄" width="70">
           <template #default="{ row }">
-            <div class="patient-info">
-              <span class="name">{{ row.patientName }}</span>
-              <span class="meta">{{ row.patientGender }} | {{ row.patientAge }}岁</span>
-            </div>
+            {{ row.patientAge }}岁
           </template>
         </el-table-column>
         <el-table-column prop="doctorName" label="随访医生" min-width="100" />
@@ -416,9 +415,8 @@ const handleExport = () => {
             <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="viewFollowUp(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="editFollowUp(row)">编辑</el-button>
             <el-button
               v-if="row.status === 0"

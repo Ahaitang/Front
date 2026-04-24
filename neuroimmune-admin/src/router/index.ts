@@ -39,6 +39,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '医生管理', icon: 'UserFilled', roles: ['admin'] }
       },
       {
+        path: 'doctors/:id',
+        name: 'DoctorDetail',
+        component: () => import('@/views/doctors/DoctorDetail.vue'),
+        meta: { title: '医生详情', hidden: true, roles: ['admin'] }
+      },
+      {
+        path: 'admins',
+        name: 'Admins',
+        component: () => import('@/views/admin/Admins.vue'),
+        meta: { title: '管理员管理', icon: 'UserFilled', roles: ['admin'] }
+      },
+      {
         path: 'followups',
         name: 'FollowUps',
         component: () => import('@/views/followups/FollowUps.vue'),
@@ -55,6 +67,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Records',
         component: () => import('@/views/records/Records.vue'),
         meta: { title: '病历记录', icon: 'Document', roles: ['admin', 'doctor'] }
+      },
+      {
+        path: 'dict',
+        name: 'DictManage',
+        component: () => import('@/views/dict/DictManage.vue'),
+        meta: { title: '字典管理', icon: 'Setting', roles: ['admin'] }
       },
       {
         path: 'profile',

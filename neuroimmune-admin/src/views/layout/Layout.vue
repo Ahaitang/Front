@@ -18,12 +18,14 @@ const menuItems = computed(() => {
     { path: '/dashboard', title: '仪表盘', icon: 'DataBoard' },
     { path: '/patients', title: '患者管理', icon: 'User' },
     { path: '/doctors', title: '医生管理', icon: 'UserFilled', adminOnly: true },
+    { path: '/admins', title: '管理员管理', icon: 'UserFilled', adminOnly: true },
     { path: '/followups', title: '随访记录', icon: 'Calendar' },
     { path: '/medications', title: '用药记录', icon: 'FirstAidKit' },
-    { path: '/records', title: '病历记录', icon: 'Document' }
+    { path: '/records', title: '病历记录', icon: 'Document' },
+    { path: '/dict', title: '字典管理', icon: 'Setting', adminOnly: true }
   ]
 
-  // 医生角色隐藏医生管理菜单
+  // 医生角色隐藏管理员专属菜单
   if (userRole.value === 'doctor') {
     return allMenus.filter(item => !item.adminOnly)
   }

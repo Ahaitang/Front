@@ -52,6 +52,13 @@ export const bindPatientDoctor = (patientId: number, doctorId: number, bindMetho
   return request.post(`/neuroimmune/relation/bind?${params.toString()}`)
 }
 
+export const unbindPatientDoctor = (patientId: number, doctorId: number) => {
+  const params = new URLSearchParams()
+  params.append('patientId', patientId.toString())
+  params.append('doctorId', doctorId.toString())
+  return request.post(`/neuroimmune/relation/unbind-by-ids?${params.toString()}`)
+}
+
 // 医生相关
 export const getDoctorList = (params: PageRequest) => {
   return request.get<PageResult<Doctor>>('/neuroimmune/doctors', params)
@@ -103,9 +110,9 @@ export const getDoctorRoles = (id: string | number) => {
   return request.get<string[]>(`/neuroimmune/doctors/${id}/roles`)
 }
 
-// 更新医生角色列表（多选）
-export const updateDoctorRoles = (id: string | number, roles: string[], _level?: number) => {
-  return request.put(`/neuroimmune/doctors/${id}/roles`, roles)
+// 更新医生角色列表（多选）和管理等级
+export const updateDoctorRoles = (id: string | number, roles: string[], level?: number) => {
+  return request.put(`/neuroimmune/doctors/${id}/roles`, { roles, level })
 }
 
 export const updateAdminPassword = (id: string | number, password: string) => {
@@ -188,7 +195,7 @@ export const cancelRecord = (id: string | number) => {
 export const uploadFile = async (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  const response = await fetch('http://localhost:8080/api/neuroimmune/file/upload', {
+  const response = await fetch('/api/v1/neuroimmune/file/upload', {
     method: 'POST',
     body: formData,
     headers: {
@@ -220,6 +227,7 @@ export interface Patient {
   idCard?: string
   hasFollowUp: boolean
   isRealAuth: boolean
+  doctorId?: number      // 通过 relation 表获取
   doctorName?: string    // 通过 relation 表获取
   diseaseType?: string
   createTime?: string    // 仅显示，不参与保存

@@ -255,20 +255,9 @@ const formatDate = (date: string) => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column label="管理员信息" min-width="140">
-          <template #default="{ row }">
-            <div class="info-cell">
-              <span class="name">{{ row.name }}</span>
-              <span class="meta">{{ row.department }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="title" label="职称" min-width="110">
-          <template #default="{ row }">
-            <el-tag type="primary" effect="plain" size="small">{{ row.title }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="hospital" label="医院" min-width="140" />
+        <el-table-column prop="name" label="姓名" min-width="100" />
+        <el-table-column prop="department" label="科室" min-width="100" />
+        <el-table-column prop="hospital" label="医院" min-width="120" />
         <el-table-column prop="phone" label="手机号" min-width="120" />
         <el-table-column label="角色" min-width="120">
           <template #default="{ row }">
@@ -293,7 +282,7 @@ const formatDate = (date: string) => {
             </template>
           </template>
         </el-table-column>
-        <el-table-column label="等级" min-width="80">
+        <el-table-column label="等级" width="80">
           <template #default="{ row }">
             <el-tag v-if="row.level" type="warning" size="small">Lv.{{ row.level }}</el-tag>
             <span v-else class="text-secondary">-</span>
@@ -304,7 +293,7 @@ const formatDate = (date: string) => {
             <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="openRoleDialog(row)">角色设置</el-button>
             <el-button type="warning" link size="small" @click="openPasswordDialog(row)">修改密码</el-button>
@@ -343,7 +332,7 @@ const formatDate = (date: string) => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="管理等级" v-if="roleForm.roles?.includes('admin')">
+        <el-form-item label="管理等级">
           <el-input-number
             v-model="roleForm.level"
             :min="1"

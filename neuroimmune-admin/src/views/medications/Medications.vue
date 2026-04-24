@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { FirstAidKit } from '@element-plus/icons-vue'
+import { FirstAidKit, DocumentCopy } from '@element-plus/icons-vue'
 import {
   getMedicationList,
   saveMedication,
@@ -11,6 +11,7 @@ import {
   getCommonDictByType,
   DICT_TYPES
 } from '@/api'
+import { exportToExcel } from '@/utils/export'
 import type { Medication, Patient, Doctor, CommonDict } from '@/api'
 
 const searchForm = ref({
@@ -210,6 +211,28 @@ const handleDoctorSelect = (doctorId: number) => {
 }
 
 const formatDate = (date: string) => date || '-'
+
+// 导出数据
+const handleExport = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const exportData = tableData.value.map(item => ({
+    '患者姓名': item.patientName,
+    '药品名称': item.medicationName,
+    '剂量': `${item.dosageValue || ''}${getUnitLabel(item.dosageUnit)}`,
+    '用药频率': item.frequency,
+    '用药途径': item.route,
+    '疗程': item.duration || '-',
+    '开药医生': item.doctorName,
+    '开药日期': item.date,
+    '状态': getStatusText(item.status),
+    '备注': item.notes || '-',
+    '创建时间': formatDate(item.createTime)
+  }))
+  exportToExcel(exportData, '用药记录')
+}
 </script>
 
 <template>
@@ -233,6 +256,10 @@ const formatDate = (date: string) => date || '-'
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
           <el-button type="success" @click="addMedication">新增用药</el-button>
+          <el-button type="info" @click="handleExport">
+            <el-icon><DocumentCopy /></el-icon>
+            导出数据
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -253,14 +280,18 @@ const formatDate = (date: string) => date || '-'
         </el-table-column>
         <el-table-column prop="doctorName" label="开药医生" min-width="100" />
         <el-table-column prop="date" label="开药日期" width="110" />
+        <el-table-column prop="notes" label="备注" min-width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="text-muted">{{ row.notes || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="viewMedication(row)">详情</el-button>
             <el-button type="primary" link size="small" @click="editMedication(row)">编辑</el-button>
             <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelMedicationRecord(row)">取消</el-button>
           </template>

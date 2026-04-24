@@ -1,0 +1,775 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowLeft, Plus, UserFilled } from '@element-plus/icons-vue'
+import {
+  getDoctorById,
+  getPatientList,
+  getFollowUpList,
+  getMedicationList,
+  saveFollowUp,
+  cancelFollowUp,
+  saveMedication,
+  cancelMedication,
+  getAllDoctors,
+  getCommonDictByType,
+  DICT_TYPES,
+  savePatient,
+  getCommonDictByType as getGenderDict
+} from '@/api'
+import type { Doctor, Patient, FollowUp, Medication, CommonDict } from '@/api'
+
+const route = useRoute()
+const router = useRouter()
+const doctorId = computed(() => {
+  const id = route.params.id
+  if (typeof id === 'string') return id
+  if (id && id.length > 0) return id[0]!
+  return ''
+})
+
+// 医生信息
+const doctor = ref<Doctor | null>(null)
+const loading = ref(false)
+
+// Tab相关
+const activeTab = ref('patients')
+
+// 患者相关
+const patients = ref<Patient[]>([])
+const patientsLoading = ref(false)
+
+// 随访相关
+const followUps = ref<FollowUp[]>([])
+const followUpsLoading = ref(false)
+const followUpDialogVisible = ref(false)
+const followUpForm = ref<Partial<FollowUp>>({})
+const followUpDialogType = ref<'add' | 'edit'>('add')
+
+// 用药相关
+const medications = ref<Medication[]>([])
+const medicationsLoading = ref(false)
+const medicationDialogVisible = ref(false)
+const medicationForm = ref<Partial<Medication>>({})
+const medicationDialogType = ref<'add' | 'edit'>('add')
+
+const doctors = ref<Doctor[]>([])
+const saveLoading = ref(false)
+
+// 字典选项
+const followUpTypeOptions = ref<CommonDict[]>([])
+const unitOptions = ref<CommonDict[]>([])
+const frequencyOptions = ref<CommonDict[]>([])
+const routeOptions = ref<CommonDict[]>([])
+
+// 加载字典
+const loadDicts = async () => {
+  try {
+    const [followUpTypes, units, frequencies, routes] = await Promise.all([
+      getCommonDictByType(DICT_TYPES.FOLLOW_UP_TYPE),
+      getCommonDictByType(DICT_TYPES.MEDICATION_UNIT),
+      getCommonDictByType(DICT_TYPES.FREQUENCY),
+      getCommonDictByType(DICT_TYPES.ROUTE)
+    ])
+    followUpTypeOptions.value = followUpTypes
+    unitOptions.value = units
+    frequencyOptions.value = frequencies
+    routeOptions.value = routes
+  } catch (e) {
+    console.error('加载字典失败:', e)
+  }
+}
+
+// 状态相关
+const getStatusType = (status: number) => {
+  const map: Record<number, string> = { 0: 'warning', 1: 'success', 2: 'info' }
+  return map[status] || 'info'
+}
+
+const getStatusText = (status: number) => {
+  const map: Record<number, string> = { 0: '进行中', 1: '已完成', 2: '已取消' }
+  return map[status] || '进行中'
+}
+
+const getUnitLabel = (unit: string) => {
+  const found = unitOptions.value.find(u => u.name === unit || u.code === unit)
+  return found ? found.name : unit || '-'
+}
+
+// 加载医生信息
+const loadDoctor = async () => {
+  loading.value = true
+  try {
+    const id = doctorId.value
+    if (id) {
+      const res = await getDoctorById(id)
+      doctor.value = res
+    }
+  } catch (e) {
+    ElMessage.error('加载医生信息失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载患者列表
+const loadPatients = async () => {
+  patientsLoading.value = true
+  try {
+    const res = await getPatientList({ pageNum: 1, pageSize: 100, doctorId: Number(doctorId.value) })
+    patients.value = res?.list || []
+  } catch (e) {
+    console.error('加载患者失败:', e)
+  } finally {
+    patientsLoading.value = false
+  }
+}
+
+// 加载随访记录
+const loadFollowUps = async () => {
+  followUpsLoading.value = true
+  try {
+    const res = await getFollowUpList({ pageNum: 1, pageSize: 100, doctorId: Number(doctorId.value) })
+    followUps.value = res?.list || []
+  } catch (e) {
+    console.error('加载随访失败:', e)
+  } finally {
+    followUpsLoading.value = false
+  }
+}
+
+// 加载用药记录
+const loadMedications = async () => {
+  medicationsLoading.value = true
+  try {
+    const res = await getMedicationList({ pageNum: 1, pageSize: 100, doctorId: Number(doctorId.value) })
+    medications.value = res?.list || []
+  } catch (e) {
+    console.error('加载用药记录失败:', e)
+  } finally {
+    medicationsLoading.value = false
+  }
+}
+
+// 加载医生列表
+const loadDoctors = async () => {
+  try {
+    const res = await getAllDoctors()
+    doctors.value = res || []
+  } catch (e) {
+    console.error('加载医生列表失败:', e)
+  }
+}
+
+onMounted(() => {
+  loadDicts()
+  loadDoctor()
+  loadPatients()
+  loadDoctors()
+})
+
+// Tab切换
+const handleTabChange = (tab: string) => {
+  if (tab === 'followups' && followUps.value.length === 0) loadFollowUps()
+  if (tab === 'medications' && medications.value.length === 0) loadMedications()
+}
+
+// 查看患者详情
+const viewPatientDetail = (row: Patient) => {
+  router.push(`/patients/${row.id}`)
+}
+
+// ========== 患者编辑相关 ==========
+const patientDialogVisible = ref(false)
+const patientForm = ref<Partial<Patient>>({})
+
+const editPatient = (row: Patient) => {
+  patientForm.value = { ...row }
+  patientDialogVisible.value = true
+}
+
+const savePatientSubmit = async () => {
+  if (!patientForm.value.name) {
+    ElMessage.warning('请输入姓名')
+    return
+  }
+  if (!patientForm.value.phone) {
+    ElMessage.warning('请输入手机号')
+    return
+  }
+  saveLoading.value = true
+  try {
+    await savePatient(patientForm.value)
+    ElMessage.success('保存成功')
+    patientDialogVisible.value = false
+    loadPatients()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+// ========== 随访相关操作 ==========
+const openAddFollowUpDialog = () => {
+  followUpForm.value = {
+    doctorId: Number(doctorId.value),
+    doctorName: doctor.value?.name || '',
+    date: new Date().toISOString().split('T')[0],
+    type: '定期随访',
+    status: 0
+  }
+  followUpDialogType.value = 'add'
+  followUpDialogVisible.value = true
+}
+
+const openEditFollowUpDialog = (row: FollowUp) => {
+  followUpForm.value = { ...row }
+  followUpDialogType.value = 'edit'
+  followUpDialogVisible.value = true
+}
+
+const saveFollowUpSubmit = async () => {
+  if (!followUpForm.value.project) {
+    ElMessage.warning('请输入随访项目')
+    return
+  }
+  if (!followUpForm.value.patientId) {
+    ElMessage.warning('请选择患者')
+    return
+  }
+  saveLoading.value = true
+  try {
+    await saveFollowUp(followUpForm.value)
+    ElMessage.success(followUpDialogType.value === 'add' ? '添加成功' : '保存成功')
+    followUpDialogVisible.value = false
+    loadFollowUps()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+const cancelFollowUpConfirm = (row: FollowUp) => {
+  ElMessageBox.confirm('确定要取消该随访记录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      await cancelFollowUp(row.id)
+      ElMessage.success('已取消')
+      loadFollowUps()
+    } catch (e) {
+      ElMessage.error('操作失败')
+    }
+  }).catch(() => {})
+}
+
+// ========== 用药相关操作 ==========
+const openAddMedicationDialog = () => {
+  medicationForm.value = {
+    doctorId: Number(doctorId.value),
+    doctorName: doctor.value?.name || '',
+    date: new Date().toISOString().split('T')[0],
+    dosageValue: undefined,
+    dosageUnit: 'mg',
+    frequency: '每日一次',
+    route: '口服',
+    status: 0
+  }
+  medicationDialogType.value = 'add'
+  medicationDialogVisible.value = true
+}
+
+const openEditMedicationDialog = (row: Medication) => {
+  medicationForm.value = { ...row }
+  medicationDialogType.value = 'edit'
+  medicationDialogVisible.value = true
+}
+
+const saveMedicationSubmit = async () => {
+  if (!medicationForm.value.medicationName) {
+    ElMessage.warning('请输入药品名称')
+    return
+  }
+  if (!medicationForm.value.patientId) {
+    ElMessage.warning('请选择患者')
+    return
+  }
+  saveLoading.value = true
+  try {
+    await saveMedication(medicationForm.value)
+    ElMessage.success(medicationDialogType.value === 'add' ? '添加成功' : '保存成功')
+    medicationDialogVisible.value = false
+    loadMedications()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+const cancelMedicationConfirm = (row: Medication) => {
+  ElMessageBox.confirm('确定要取消该用药记录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      await cancelMedication(row.id)
+      ElMessage.success('已取消')
+      loadMedications()
+    } catch (e) {
+      ElMessage.error('操作失败')
+    }
+  }).catch(() => {})
+}
+
+// 选择患者
+const handlePatientSelect = (patientId: number) => {
+  const patient = patients.value.find(p => p.id === patientId)
+  if (patient) {
+    if (followUpForm.value) {
+      followUpForm.value.patientId = patientId
+      followUpForm.value.patientName = patient.name
+      followUpForm.value.patientGender = patient.gender
+      followUpForm.value.patientAge = patient.age
+    }
+  }
+}
+
+const handleMedicationPatientSelect = (patientId: number) => {
+  const patient = patients.value.find(p => p.id === patientId)
+  if (patient && medicationForm.value) {
+    medicationForm.value.patientId = patientId
+    medicationForm.value.patientName = patient.name
+  }
+}
+
+// 返回
+const goBack = () => {
+  router.push('/doctors')
+}
+
+const formatDate = (date: string) => date || '-'
+
+// 年龄计算
+const calculateAge = (birthDate: string | undefined) => {
+  if (!birthDate) return null
+  const today = new Date()
+  const birth = new Date(birthDate)
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age
+}
+</script>
+
+<template>
+  <div class="page-container">
+    <!-- 返回按钮 -->
+    <div class="page-header">
+      <el-button @click="goBack" :icon="ArrowLeft">返回医生列表</el-button>
+      <div class="page-title" v-if="doctor">
+        <el-icon><UserFilled /></el-icon>
+        医生详情 - {{ doctor.name }}
+      </div>
+    </div>
+
+    <!-- 医生基本信息 -->
+    <div class="doctor-card" v-loading="loading">
+      <template v-if="doctor">
+        <div class="doctor-header">
+          <div class="doctor-avatar">
+            <el-avatar :size="72" :style="{ background: '#3B82F6' }">{{ doctor.name?.charAt(0) }}</el-avatar>
+          </div>
+          <div class="doctor-info">
+            <h3>{{ doctor.name }}</h3>
+            <div class="doctor-meta">
+              <span>{{ doctor.title }}</span>
+              <span>{{ doctor.department }}</span>
+              <span>{{ doctor.phone }}</span>
+            </div>
+          </div>
+          <div class="doctor-tags">
+            <el-tag type="primary" effect="plain">{{ doctor.department }}</el-tag>
+            <el-tag type="info" effect="light">{{ doctor.hospital || '本院' }}</el-tag>
+          </div>
+        </div>
+        <div class="doctor-detail">
+          <div class="detail-item">
+            <span class="label">患者数量:</span>
+            <span class="value">{{ patients.length }} 人</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">创建时间:</span>
+            <span class="value">{{ formatDate(doctor.createTime || '') }}</span>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Tab切换 -->
+    <div class="content-card">
+      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+        <!-- 患者列表 -->
+        <el-tab-pane label="患者列表" name="patients">
+          <el-table :data="patients" stripe v-loading="patientsLoading">
+            <el-table-column prop="name" label="姓名" min-width="100" />
+            <el-table-column prop="gender" label="性别" width="80" />
+            <el-table-column label="年龄" width="80">
+              <template #default="{ row }">
+                {{ calculateAge(row.birthDate) ?? '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="phone" label="手机号" min-width="120" />
+            <el-table-column prop="isRealAuth" label="实名状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="row.isRealAuth ? 'success' : 'warning'" size="small" effect="light">
+                  {{ row.isRealAuth ? '已实名' : '未实名' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="hasFollowUp" label="随访状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="row.hasFollowUp ? 'warning' : 'info'" size="small" effect="light">
+                  {{ row.hasFollowUp ? '待随访' : '正常' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="updateTime" label="更新时间" width="160">
+              <template #default="{ row }">
+                <span class="text-secondary">{{ formatDate(row.updateTime) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button type="success" link size="small" @click="viewPatientDetail(row)">详情</el-button>
+                <el-button type="primary" link size="small" @click="editPatient(row)">修改</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+
+        <!-- 随访记录 -->
+        <el-tab-pane label="随访记录" name="followups">
+          <div class="tab-header">
+            <el-button type="primary" :icon="Plus" @click="openAddFollowUpDialog">新增随访</el-button>
+          </div>
+          <el-table :data="followUps" stripe v-loading="followUpsLoading">
+            <el-table-column prop="date" label="随访日期" width="110" />
+            <el-table-column prop="patientName" label="患者" min-width="100" />
+            <el-table-column prop="project" label="随访项目" min-width="140" />
+            <el-table-column prop="type" label="类型" width="100">
+              <template #default="{ row }">
+                <el-tag type="info" size="small" effect="plain">{{ row.type }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="content" label="备注" min-width="120" show-overflow-tooltip />
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link size="small" @click="openEditFollowUpDialog(row)">编辑</el-button>
+                <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelFollowUpConfirm(row)">取消</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+
+        <!-- 用药记录 -->
+        <el-tab-pane label="用药记录" name="medications">
+          <div class="tab-header">
+            <el-button type="primary" :icon="Plus" @click="openAddMedicationDialog">新增用药</el-button>
+          </div>
+          <el-table :data="medications" stripe v-loading="medicationsLoading">
+            <el-table-column prop="patientName" label="患者" min-width="100" />
+            <el-table-column prop="medicationName" label="药品名称" min-width="140" />
+            <el-table-column label="剂量" width="100">
+              <template #default="{ row }">
+                <span class="dosage-value">{{ row.dosageValue }}{{ getUnitLabel(row.dosageUnit) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="frequency" label="频率" width="100" />
+            <el-table-column prop="route" label="途径" width="80">
+              <template #default="{ row }">
+                <el-tag type="info" size="small" effect="plain">{{ row.route }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="duration" label="疗程" width="80" />
+            <el-table-column prop="date" label="开药日期" width="110" />
+            <el-table-column prop="status" label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link size="small" @click="openEditMedicationDialog(row)">编辑</el-button>
+                <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelMedicationConfirm(row)">取消</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+
+    <!-- 随访编辑对话框 -->
+    <el-dialog v-model="followUpDialogVisible" :title="followUpDialogType === 'add' ? '新增随访' : '编辑随访'" width="600px">
+      <el-form :model="followUpForm" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="患者" required>
+              <el-select v-model="followUpForm.patientId" placeholder="选择患者" style="width: 100%" @change="handlePatientSelect">
+                <el-option v-for="p in patients" :key="p.id" :label="p.name" :value="p.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="随访日期">
+              <el-date-picker v-model="followUpForm.date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="随访类型">
+              <el-select v-model="followUpForm.type" style="width: 100%">
+                <el-option
+                  v-for="t in followUpTypeOptions"
+                  :key="t.id"
+                  :label="t.name"
+                  :value="t.name"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态">
+              <el-select v-model="followUpForm.status" style="width: 100%">
+                <el-option label="进行中" :value="0" />
+                <el-option label="已完成" :value="1" />
+                <el-option label="已取消" :value="2" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="随访项目" required>
+          <el-input v-model="followUpForm.project" placeholder="请输入随访项目" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="followUpForm.content" type="textarea" :rows="3" placeholder="请输入备注信息" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="followUpDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saveLoading" @click="saveFollowUpSubmit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 用药编辑对话框 -->
+    <el-dialog v-model="medicationDialogVisible" :title="medicationDialogType === 'add' ? '新增用药' : '编辑用药'" width="600px">
+      <el-form :model="medicationForm" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="患者" required>
+              <el-select v-model="medicationForm.patientId" placeholder="选择患者" style="width: 100%" @change="handleMedicationPatientSelect">
+                <el-option v-for="p in patients" :key="p.id" :label="p.name" :value="p.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="药品名称" required>
+              <el-input v-model="medicationForm.medicationName" placeholder="请输入药品名称" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="开药日期">
+              <el-date-picker v-model="medicationForm.date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="剂量">
+              <el-input-number v-model="medicationForm.dosageValue" :min="0" :precision="2" placeholder="剂量" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="单位">
+              <el-select v-model="medicationForm.dosageUnit" style="width: 100%">
+                <el-option
+                  v-for="u in unitOptions"
+                  :key="u.id"
+                  :label="u.name"
+                  :value="u.name"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="用药频率">
+              <el-select v-model="medicationForm.frequency" style="width: 100%">
+                <el-option
+                  v-for="f in frequencyOptions"
+                  :key="f.id"
+                  :label="f.name"
+                  :value="f.name"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="用药途径">
+              <el-select v-model="medicationForm.route" style="width: 100%">
+                <el-option
+                  v-for="r in routeOptions"
+                  :key="r.id"
+                  :label="r.name"
+                  :value="r.name"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="疗程">
+              <el-input v-model="medicationForm.duration" placeholder="如：7天" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="备注">
+          <el-input v-model="medicationForm.notes" type="textarea" :rows="2" placeholder="备注信息" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="medicationDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saveLoading" @click="saveMedicationSubmit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 患者编辑对话框 -->
+    <el-dialog v-model="patientDialogVisible" title="编辑患者" width="500px">
+      <el-form :model="patientForm" label-width="100px">
+        <el-form-item label="姓名" required>
+          <el-input v-model="patientForm.name" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="性别">
+              <el-select v-model="patientForm.gender" style="width: 100%">
+                <el-option label="男" value="男" />
+                <el-option label="女" value="女" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="出生日期">
+              <el-date-picker v-model="patientForm.birthDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="手机号" required>
+          <el-input v-model="patientForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="实名认证">
+              <el-switch v-model="patientForm.isRealAuth" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="待随访">
+              <el-switch v-model="patientForm.hasFollowUp" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="patientDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saveLoading" @click="savePatientSubmit">保存</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.doctor-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  .doctor-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 20px;
+
+    .doctor-info {
+      flex: 1;
+
+      h3 {
+        font-size: 22px;
+        font-weight: 600;
+        color: #1F2937;
+        margin-bottom: 10px;
+      }
+
+      .doctor-meta {
+        display: flex;
+        gap: 20px;
+        color: #6B7280;
+        font-size: 14px;
+      }
+    }
+
+    .doctor-tags {
+      display: flex;
+      gap: 10px;
+    }
+  }
+
+  .doctor-detail {
+    display: flex;
+    gap: 48px;
+    padding-top: 20px;
+    border-top: 1px solid #E5E7EB;
+
+    .detail-item {
+      .label {
+        color: #6B7280;
+        margin-right: 8px;
+      }
+
+      .value {
+        color: #1F2937;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.tab-header {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dosage-value {
+  font-weight: 600;
+  color: #0D9488;
+}
+</style>

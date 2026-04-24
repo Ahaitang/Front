@@ -39,6 +39,7 @@ const dialogVisible = ref(false)
 const dialogType = ref<'view' | 'edit' | 'add'>('view')
 const currentPatient = ref<Partial<Patient>>({})
 const selectedDoctorId = ref<number | undefined>(undefined)  // 医生选择（不存储在 Patient 中）
+const confirmPassword = ref('')
 const saveLoading = ref(false)
 
 // 修改密码相关
@@ -141,12 +142,14 @@ const handleSizeChange = (size: number) => {
 
 const viewPatient = (row: Patient) => {
   currentPatient.value = { ...row }
+  selectedDoctorId.value = row.doctorId ?? undefined
   dialogType.value = 'view'
   dialogVisible.value = true
 }
 
 const editPatient = (row: Patient) => {
   currentPatient.value = { ...row }
+  selectedDoctorId.value = row.doctorId ?? undefined
   dialogType.value = 'edit'
   dialogVisible.value = true
 }
@@ -157,9 +160,11 @@ const addPatient = () => {
     gender: genderOptions.value[0]?.name || '男',
     birthDate: undefined,
     phone: '',
+    password: '',
     hasFollowUp: false,
     isRealAuth: false
   }
+  confirmPassword.value = ''
   selectedDoctorId.value = undefined
   dialogType.value = 'add'
   dialogVisible.value = true
@@ -190,6 +195,20 @@ const savePatientSubmit = async () => {
     ElMessage.warning('请输入手机号')
     return
   }
+  if (dialogType.value === 'add') {
+    if (!currentPatient.value.password) {
+      ElMessage.warning('请输入密码')
+      return
+    }
+    if (currentPatient.value.password.length < 6) {
+      ElMessage.warning('密码长度不能少于6位')
+      return
+    }
+    if (currentPatient.value.password !== confirmPassword.value) {
+      ElMessage.warning('两次输入的密码不一致')
+      return
+    }
+  }
 
   saveLoading.value = true
   try {
@@ -199,20 +218,23 @@ const savePatientSubmit = async () => {
       createTime: undefined,
       updateTime: undefined,
       age: undefined,
+      doctorId: undefined,
       doctorName: undefined
     }
-    await savePatient(submitData)
+    const newPatientId = await savePatient(submitData)
 
     // 如果选择了医生，绑定医患关系
-    if (selectedDoctorId.value && currentPatient.value.id) {
-      await bindPatientDoctor(currentPatient.value.id, selectedDoctorId.value, 'admin', '后台编辑')
+    // 新增时用返回的 ID，编辑时用原有的 ID
+    const patientId = newPatientId || currentPatient.value.id
+    if (selectedDoctorId.value && patientId) {
+      await bindPatientDoctor(patientId, selectedDoctorId.value, 'admin', '后台编辑')
     }
 
     ElMessage.success(dialogType.value === 'add' ? '添加成功' : '保存成功')
     dialogVisible.value = false
     loadData()
-  } catch (e) {
-    ElMessage.error('保存失败')
+  } catch (e: any) {
+    ElMessage.error(e.message || '保存失败')
   } finally {
     saveLoading.value = false
   }
@@ -298,10 +320,15 @@ const handleImport = async () => {
   importResult.value = null
 
   try {
-    const res = await fetch('/api/v1/neuroimmune/import/patient', {
+    const token = localStorage.getItem('admin_token')
+    const response = await fetch('/api/v1/neuroimmune/import/patient', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: formData
-    }).then(r => r.json())
+    })
+    const res = await response.json()
     importResult.value = res.data || res
     if (res.success > 0 || (res.data && res.data.success > 0)) {
       ElMessage.success(`成功导入 ${res.success || res.data?.success} 条数据`)
@@ -533,6 +560,28 @@ const handleExport = () => {
               </el-form-item>
             </el-col>
           </el-row>
+          <el-row v-if="dialogType === 'add'" :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="密码" required>
+                <el-input
+                  v-model="currentPatient.password"
+                  type="password"
+                  placeholder="请输入密码（至少6位）"
+                  show-password
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="确认密码" required>
+                <el-input
+                  v-model="confirmPassword"
+                  type="password"
+                  placeholder="请再次输入密码"
+                  show-password
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
           <el-form-item label="创建时间" v-if="currentPatient.createTime">
             <el-input :model-value="formatDate(currentPatient.createTime)" disabled />
           </el-form-item>
@@ -580,8 +629,9 @@ const handleExport = () => {
           <ul class="tips-list">
             <li>请先下载模板，按照模板格式填写数据</li>
             <li>带 * 的字段为必填项</li>
+            <li>出生日期格式：yyyy-MM-dd（如 1990-01-01）</li>
+            <li>密码为必填项</li>
             <li>医生手机号必须为系统中已存在的医生</li>
-            <li>密码将由系统自动生成</li>
           </ul>
         </el-alert>
       </div>

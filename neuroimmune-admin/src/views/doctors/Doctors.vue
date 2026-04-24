@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UserFilled, Download, UploadFilled } from '@element-plus/icons-vue'
 import {
@@ -15,6 +16,8 @@ import {
 } from '@/api'
 import type { Doctor, Patient, CommonDict } from '@/api'
 
+const router = useRouter()
+
 // 判断当前用户是否是管理员
 const currentUserIsAdmin = computed(() => {
   const role = localStorage.getItem('admin_role')
@@ -27,7 +30,6 @@ const searchForm = ref({
 })
 
 const tableData = ref<Doctor[]>([])
-const patients = ref<Patient[]>([])
 const loading = ref(false)
 const total = ref(0)
 const pagination = ref({
@@ -39,6 +41,7 @@ const pagination = ref({
 const dialogVisible = ref(false)
 const dialogType = ref<'view' | 'edit' | 'add'>('view')
 const currentDoctor = ref<Partial<Doctor>>({})
+const confirmPassword = ref('')
 const saveLoading = ref(false)
 
 // 修改密码相关
@@ -101,25 +104,9 @@ const loadData = async () => {
   }
 }
 
-// 加载所有患者（用于统计医生的患者数量）
-const loadPatients = async () => {
-  try {
-    const res = await getPatientList({ pageNum: 1, pageSize: 1000 })
-    patients.value = res?.list || []
-  } catch (e) {
-    console.error('加载患者列表失败:', e)
-  }
-}
-
-// 获取医生的患者数量
-const getPatientCount = (doctorId: number) => {
-  return patients.value.filter(p => p.doctorId === doctorId).length
-}
-
 onMounted(() => {
   loadDicts()
   loadData()
-  loadPatients()
 })
 
 const handleSearch = () => {
@@ -147,9 +134,7 @@ const handleSizeChange = (size: number) => {
 }
 
 const viewDoctor = (row: Doctor) => {
-  currentDoctor.value = { ...row }
-  dialogType.value = 'view'
-  dialogVisible.value = true
+  router.push(`/doctors/${row.id}`)
 }
 
 const editDoctor = (row: Doctor) => {
@@ -164,16 +149,17 @@ const addDoctor = () => {
     title: titleOptions.value[0]?.name || '',
     department: departmentOptions.value[0]?.name || '',
     hospital: '',
-    phone: ''
+    phone: '',
+    password: ''
   }
+  confirmPassword.value = ''
   dialogType.value = 'add'
   dialogVisible.value = true
 }
 
 const deleteDoctor = (row: Doctor) => {
-  const patientCount = getPatientCount(row.id)
-  if (patientCount > 0) {
-    ElMessage.warning(`该医生下有 ${patientCount} 名患者，无法删除`)
+  if (row.patientCount > 0) {
+    ElMessage.warning(`该医生下有 ${row.patientCount} 名患者，无法删除`)
     return
   }
   ElMessageBox.confirm(`确定要删除医生 "${row.name}" 吗？`, '提示', {
@@ -199,6 +185,20 @@ const saveDoctor = async () => {
   if (!currentDoctor.value.phone) {
     ElMessage.warning('请输入手机号')
     return
+  }
+  if (dialogType.value === 'add') {
+    if (!currentDoctor.value.password) {
+      ElMessage.warning('请输入密码')
+      return
+    }
+    if (currentDoctor.value.password.length < 6) {
+      ElMessage.warning('密码长度不能少于6位')
+      return
+    }
+    if (currentDoctor.value.password !== confirmPassword.value) {
+      ElMessage.warning('两次输入的密码不一致')
+      return
+    }
   }
 
   saveLoading.value = true
@@ -302,10 +302,15 @@ const handleImport = async () => {
   importResult.value = null
 
   try {
-    const res = await fetch('/api/v1/neuroimmune/import/doctor', {
+    const token = localStorage.getItem('admin_token')
+    const response = await fetch('/api/v1/neuroimmune/import/doctor', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: formData
-    }).then(r => r.json())
+    })
+    const res = await response.json()
     importResult.value = res.data || res
     if (res.success > 0 || (res.data && res.data.success > 0)) {
       ElMessage.success(`成功导入 ${res.success || res.data?.success} 条数据`)
@@ -427,25 +432,19 @@ const formatDate = (date: string) => {
     <!-- 数据表格 -->
     <div class="content-card">
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column label="医生信息" min-width="140">
+        <el-table-column prop="name" label="姓名" min-width="100" />
+        <el-table-column prop="department" label="科室" min-width="100" />
+        <el-table-column prop="title" label="职称" min-width="100">
           <template #default="{ row }">
-            <div class="info-cell">
-              <span class="name">{{ row.name }}</span>
-              <span class="meta">{{ row.department }}</span>
-            </div>
+            <el-tag type="primary" effect="plain" size="small">{{ row.title || '-' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="职称" min-width="110">
-          <template #default="{ row }">
-            <el-tag type="primary" effect="plain" size="small">{{ row.title }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="hospital" label="医院" min-width="140" />
+        <el-table-column prop="hospital" label="医院" min-width="120" />
         <el-table-column prop="phone" label="手机号" min-width="120" />
-        <el-table-column label="患者数量" min-width="90">
+        <el-table-column label="患者数量" width="90">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="viewPatients(row)">
-              <span class="patient-count">{{ getPatientCount(row.id) }}</span> 人
+              {{ row.patientCount || 0 }} 人
             </el-button>
           </template>
         </el-table-column>
@@ -454,11 +453,11 @@ const formatDate = (date: string) => {
             <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="viewDoctor(row)">查看</el-button>
+            <el-button type="success" link size="small" @click="viewDoctor(row)">详情</el-button>
             <el-button type="primary" link size="small" @click="editDoctor(row)">编辑</el-button>
-            <el-button v-if="currentUserIsAdmin" type="success" link size="small" @click="openRoleDialog(row)">角色</el-button>
+            <el-button v-if="currentUserIsAdmin" type="primary" link size="small" @click="openRoleDialog(row)">角色</el-button>
             <el-button type="warning" link size="small" @click="openPasswordDialog(row)">改密</el-button>
             <el-button type="danger" link size="small" @click="deleteDoctor(row)">删除</el-button>
           </template>
@@ -532,10 +531,32 @@ const formatDate = (date: string) => {
               </el-form-item>
             </el-col>
           </el-row>
+          <el-row :gutter="20" v-if="dialogType === 'add'">
+            <el-col :span="12">
+              <el-form-item label="密码" required>
+                <el-input
+                  v-model="currentDoctor.password"
+                  type="password"
+                  placeholder="请输入密码（至少6位）"
+                  show-password
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="确认密码" required>
+                <el-input
+                  v-model="confirmPassword"
+                  type="password"
+                  placeholder="请再次输入密码"
+                  show-password
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
           <el-row :gutter="20" v-if="dialogType !== 'add'">
             <el-col :span="12">
               <el-form-item label="患者数量">
-                <el-input :model-value="getPatientCount(currentDoctor.id!) + ' 人'" disabled />
+                <el-input :model-value="(currentDoctor.patientCount || 0) + ' 人'" disabled />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -621,7 +642,7 @@ const formatDate = (date: string) => {
           <ul class="tips-list">
             <li>请先下载模板，按照模板格式填写数据</li>
             <li>带 * 的字段为必填项</li>
-            <li>密码将由系统自动生成</li>
+            <li>密码为必填项</li>
           </ul>
         </el-alert>
       </div>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete, Picture, Folder } from '@element-plus/icons-vue'
+import { Plus, Delete, Picture, Folder, DocumentCopy } from '@element-plus/icons-vue'
 import { getRecordList, saveRecord, cancelRecord, getPatientList, uploadFile, ocrParseMedical, getCommonDictByType, DICT_TYPES } from '@/api'
+import { exportToExcel } from '@/utils/export'
 import type { MedicalRecord, Patient, CommonDict } from '@/api'
 
 const searchForm = ref({
@@ -241,12 +242,8 @@ const handleOcrParse = async () => {
   try {
     const res = await ocrParseMedical(imageList.value)
     if (res && res.success && res.content) {
-      // 将识别内容追加到病历内容
-      if (currentRecord.value.content) {
-        currentRecord.value.content += '\n\n' + res.content
-      } else {
-        currentRecord.value.content = res.content
-      }
+      // 将识别内容覆盖病历内容
+      currentRecord.value.content = res.content
       ElMessage.success('识别成功')
     } else {
       ElMessage.warning(res.errorMsg || '识别失败，请手动输入')
@@ -260,6 +257,27 @@ const handleOcrParse = async () => {
 
 const formatDate = (date: string) => {
   return date || '-'
+}
+
+// 导出数据
+const handleExport = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const exportData = tableData.value.map(item => ({
+    '患者姓名': item.patientName,
+    '病历类型': item.type,
+    '诊断结果': item.diagnosis,
+    '医院': item.hospital || '-',
+    '科室': item.department || '-',
+    '医生': item.doctorName || '-',
+    '就诊日期': item.date,
+    '状态': getStatusText(item.status),
+    '病历内容': item.content || '-',
+    '创建时间': formatDate(item.createTime)
+  }))
+  exportToExcel(exportData, '病历记录')
 }
 
 // 判断是否有图片
@@ -312,6 +330,10 @@ const hasImages = computed(() => imageList.value.length > 0)
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
           <el-button type="success" @click="addRecord">新增病历</el-button>
+          <el-button type="info" @click="handleExport">
+            <el-icon><DocumentCopy /></el-icon>
+            导出数据
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
