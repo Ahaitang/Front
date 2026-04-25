@@ -1,186 +1,260 @@
 {
-	"easycom": {
-		"autoscan": true,
-		"custom": {
-			"^custom-(.*)": "@/components/custom-$1/custom-$1.vue"
-		}
-	},
-	"pages": [
-		{
-			"path": "pages/login/login",
-			"style": {
-				"navigationBarTitleText": "登录",
-				"enablePullDownRefresh": false
-			}
-		},
-		{
-			"path": "pages/index/index",
-			"style": {
-				"navigationBarTitleText": "即时随访",
-				"enablePullDownRefresh": false
-			}
-		},
-		{
-			"path": "pages/schedule/schedule",
-			"style": {
-				"navigationBarTitleText": "每日安排",
-				"enablePullDownRefresh": false
-			}
-		},
-		{
-			"path": "pages/patient-center/patient-center",
-			"style": {
-				"navigationBarTitleText": "我的",
-				"enablePullDownRefresh": false
-			}
-		}
-	],
-	"subPackages": [
-		{
-			"root": "pages/patient",
-			"pages": [
-				{
-					"path": "visit-history/visit-history",
-					"style": { "navigationBarTitleText": "历次就诊" }
-				},
-				{
-					"path": "add-visit/add-visit",
-					"style": { "navigationBarTitleText": "添加就诊记录" }
-				},
-				{
-					"path": "disease-episode/disease-episode",
-					"style": { "navigationBarTitleText": "疾病发作记录" }
-				},
-				{
-					"path": "add-episode/add-episode",
-					"style": { "navigationBarTitleText": "记录疾病发作" }
-				},
-				{
-					"path": "follow-plan/follow-plan",
-					"style": { "navigationBarTitleText": "随访计划" }
-				},
-				{
-					"path": "add-follow/add-follow",
-					"style": { "navigationBarTitleText": "添加随访计划" }
-				},
-				{
-					"path": "medication-advice/medication-advice",
-					"style": { "navigationBarTitleText": "用药建议" }
-				},
-				{
-					"path": "my-info/my-info",
-					"style": { "navigationBarTitleText": "个人信息" }
-				},
-				{
-					"path": "patient-info/patient-info",
-					"style": { "navigationBarTitleText": "患者信息" }
-				},
-				{
-					"path": "medical-record/medical-record",
-					"style": { "navigationBarTitleText": "我的病历" }
-				},
-				{
-					"path": "doctor-advice/doctor-advice",
-					"style": { "navigationBarTitleText": "医生建议" }
-				},
-				{
-					"path": "real-auth/real-auth",
-					"style": { "navigationBarTitleText": "实名认证" }
-				},
-				{
-					"path": "upload-external/upload-external",
-					"style": { "navigationBarTitleText": "外院资料上传" }
-				},
-				{
-					"path": "external-supplement/external-supplement",
-					"style": { "navigationBarTitleText": "外院补充资料" }
-				},
-				{
-					"path": "ocr-demo/ocr-demo",
-					"style": { "navigationBarTitleText": "图像识别" }
-				}
-			]
-		},
-		{
-			"root": "pages/doctor",
-			"pages": [
-				{
-					"path": "index/index",
-					"style": { "navigationBarTitleText": "医生工作台" }
-				},
-				{
-					"path": "follow-plan/follow-plan",
-					"style": { "navigationBarTitleText": "随访计划" }
-				},
-				{
-					"path": "patient-info/patient-info",
-					"style": { "navigationBarTitleText": "患者信息" }
-				},
-				{
-					"path": "medication-list/medication-list",
-					"style": { "navigationBarTitleText": "用药建议" }
-				},
-				{
-					"path": "medical-record/medical-record",
-					"style": { "navigationBarTitleText": "病历查看" }
-				},
-				{
-					"path": "upload-record/upload-record",
-					"style": { "navigationBarTitleText": "上传病历" }
-				},
-				{
-					"path": "add-clinic/add-clinic",
-					"style": { "navigationBarTitleText": "添加门诊安排" }
-				},
-				{
-					"path": "add-follow/add-follow",
-					"style": { "navigationBarTitleText": "添加随访和检查" }
-				},
-				{
-					"path": "add-medication/add-medication",
-					"style": { "navigationBarTitleText": "添加用药建议" }
-				},
-				{
-					"path": "edit-record/edit-record",
-					"style": { "navigationBarTitleText": "编辑病历" }
-				}
-			]
-		}
-	],
-	"globalStyle": {
-		"pageOrientation": "portrait",
-		"navigationBarTitleText": "神经免疫随访",
-		"navigationBarTextStyle": "black",
-		"navigationBarBackgroundColor": "#ffffff",
-		"backgroundColor": "#FAFAF9",
-		"backgroundColorTop": "#FAFAF9",
-		"backgroundColorBottom": "#FAFAF9"
-	},
-	"tabBar": {
-		"custom": true,
-		"color": "#9CA3AF",
-		"selectedColor": "#0D9488",
-		"borderStyle": "white",
-		"backgroundColor": "#ffffff",
-		"list": [
-			{
-				"pagePath": "pages/index/index",
-				"iconPath": "static/component.png",
-				"selectedIconPath": "static/componentHL.png",
-				"text": "首页"
-			},
-			{
-				"pagePath": "pages/schedule/schedule",
-				"iconPath": "static/template.png",
-				"selectedIconPath": "static/templateHL.png",
-				"text": "每日安排"
-			},
-			{
-				"pagePath": "pages/patient-center/patient-center",
-				"iconPath": "static/extui.png",
-				"selectedIconPath": "static/extuiHL.png",
-				"text": "个人中心"
-			}
-		]
-	}
+    "easycom": {
+        "autoscan": true,
+        "custom": {
+            "^custom-(.*)": "@/components/custom-$1/custom-$1.vue"
+        }
+    },
+    "pages": [
+        {
+            "path": "pages/login/login",
+            "style": {
+                "navigationBarTitleText": "登录",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/index/index",
+            "style": {
+                "navigationBarTitleText": "即时随访",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/schedule/schedule",
+            "style": {
+                "navigationBarTitleText": "每日安排",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/patient-center/patient-center",
+            "style": {
+                "navigationBarTitleText": "我的",
+                "enablePullDownRefresh": false
+            }
+        }
+    ],
+    "subPackages": [
+        {
+            "root": "pages/patient",
+            "pages": [
+                {
+                    "path": "visit-history/visit-history",
+                    "style": {
+                        "navigationBarTitleText": "历次就诊"
+                    }
+                },
+                {
+                    "path": "add-visit/add-visit",
+                    "style": {
+                        "navigationBarTitleText": "添加就诊记录"
+                    }
+                },
+                {
+                    "path": "disease-episode/disease-episode",
+                    "style": {
+                        "navigationBarTitleText": "疾病发作记录"
+                    }
+                },
+                {
+                    "path": "add-episode/add-episode",
+                    "style": {
+                        "navigationBarTitleText": "记录疾病发作"
+                    }
+                },
+                {
+                    "path": "episode-detail/episode-detail",
+                    "style": {
+                        "navigationBarTitleText": "发作记录详情"
+                    }
+                },
+                {
+                    "path": "follow-plan/follow-plan",
+                    "style": {
+                        "navigationBarTitleText": "随访计划"
+                    }
+                },
+                {
+                    "path": "add-follow/add-follow",
+                    "style": {
+                        "navigationBarTitleText": "添加随访计划"
+                    }
+                },
+                {
+                    "path": "medication-advice/medication-advice",
+                    "style": {
+                        "navigationBarTitleText": "用药建议"
+                    }
+                },
+                {
+                    "path": "my-info/my-info",
+                    "style": {
+                        "navigationBarTitleText": "个人信息"
+                    }
+                },
+                {
+                    "path": "patient-info/patient-info",
+                    "style": {
+                        "navigationBarTitleText": "患者信息"
+                    }
+                },
+                {
+                    "path": "medical-record/medical-record",
+                    "style": {
+                        "navigationBarTitleText": "我的病历"
+                    }
+                },
+                {
+                    "path": "real-auth/real-auth",
+                    "style": {
+                        "navigationBarTitleText": "实名认证"
+                    }
+                },
+                {
+                    "path": "ocr-demo/ocr-demo",
+                    "style": {
+                        "navigationBarTitleText": "图像识别"
+                    }
+                },
+                {
+                    "path": "upload-external/upload-external",
+                    "style": {
+                        "navigationBarTitleText": "上传病历"
+                    }
+                }
+            ]
+        },
+        {
+            "root": "pages/doctor",
+            "pages": [
+                {
+                    "path": "index/index",
+                    "style": {
+                        "navigationBarTitleText": "医生工作台"
+                    }
+                },
+                {
+                    "path": "follow-plan/follow-plan",
+                    "style": {
+                        "navigationBarTitleText": "随访计划"
+                    }
+                },
+                {
+                    "path": "patient-info/patient-info",
+                    "style": {
+                        "navigationBarTitleText": "患者信息"
+                    }
+                },
+                {
+                    "path": "medication-list/medication-list",
+                    "style": {
+                        "navigationBarTitleText": "用药建议"
+                    }
+                },
+                {
+                    "path": "medical-record/medical-record",
+                    "style": {
+                        "navigationBarTitleText": "病历查看"
+                    }
+                },
+                {
+                    "path": "upload-record/upload-record",
+                    "style": {
+                        "navigationBarTitleText": "上传病历"
+                    }
+                },
+                {
+                    "path": "add-clinic/add-clinic",
+                    "style": {
+                        "navigationBarTitleText": "添加门诊安排"
+                    }
+                },
+                {
+                    "path": "add-follow/add-follow",
+                    "style": {
+                        "navigationBarTitleText": "添加随访和检查"
+                    }
+                },
+                {
+                    "path": "add-medication/add-medication",
+                    "style": {
+                        "navigationBarTitleText": "添加用药建议"
+                    }
+                },
+                {
+                    "path": "edit-record/edit-record",
+                    "style": {
+                        "navigationBarTitleText": "编辑病历"
+                    }
+                },
+                {
+                    "path": "my-info/my-info",
+                    "style": {
+                        "navigationBarTitleText": "个人信息"
+                    }
+                },
+                {
+                    "path": "episode-list/episode-list",
+                    "style": {
+                        "navigationBarTitleText": "发作记录"
+                    }
+                },
+                {
+                    "path": "patient-list/patient-list",
+                    "style": {
+                        "navigationBarTitleText": "患者列表"
+                    }
+                },
+                {
+                    "path": "add-patient/add-patient",
+                    "style": {
+                        "navigationBarTitleText": "添加患者"
+                    }
+                },
+                {
+                    "path": "add-episode/add-episode",
+                    "style": {
+                        "navigationBarTitleText": "添加疾病发作"
+                    }
+                }
+            ]
+        }
+    ],
+    "globalStyle": {
+        "pageOrientation": "portrait",
+        "navigationBarTitleText": "神经免疫随访",
+        "navigationBarTextStyle": "black",
+        "navigationBarBackgroundColor": "#ffffff",
+        "backgroundColor": "#FAFAF9",
+        "backgroundColorTop": "#FAFAF9",
+        "backgroundColorBottom": "#FAFAF9"
+    },
+    "tabBar": {
+        "custom": true,
+        "color": "#9CA3AF",
+        "selectedColor": "#0D9488",
+        "borderStyle": "white",
+        "backgroundColor": "#ffffff",
+        "list": [
+            {
+                "pagePath": "pages/index/index",
+                "iconPath": "static/component.png",
+                "selectedIconPath": "static/componentHL.png",
+                "text": "首页"
+            },
+            {
+                "pagePath": "pages/schedule/schedule",
+                "iconPath": "static/template.png",
+                "selectedIconPath": "static/templateHL.png",
+                "text": "每日安排"
+            },
+            {
+                "pagePath": "pages/patient-center/patient-center",
+                "iconPath": "static/extui.png",
+                "selectedIconPath": "static/extuiHL.png",
+                "text": "个人中心"
+            }
+        ]
+    }
 }
