@@ -14,27 +14,12 @@ const instance: AxiosInstance = axios.create({
 instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('admin_token')
-    const role = localStorage.getItem('admin_role')
-    const userStr = localStorage.getItem('admin_user')
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
 
-    // 添加角色和用户ID到请求头
-    if (role) {
-      config.headers['X-User-Role'] = role
-    }
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr)
-        if (user.id && Number.isFinite(user.id)) {
-          config.headers['X-User-Id'] = String(user.id)
-        }
-      } catch (e) {
-        console.warn('解析用户信息失败:', e)
-      }
-    }
+    // 注意：后端已改为使用 SecurityContext 获取用户信息，前端不再需要发送 X-User-Role 和 X-User-Id
 
     return config
   },

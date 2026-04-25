@@ -7,8 +7,9 @@ export const getDoctorList = (params = {}) => {
 }
 
 // 获取所有医生
+// API 合并：使用 ?all=true 替代 /doctors/all
 export const getAllDoctors = () => {
-  return get('/neuroimmune/doctors/all')
+  return get('/neuroimmune/doctors', { all: true })
 }
 
 // 获取医生详情

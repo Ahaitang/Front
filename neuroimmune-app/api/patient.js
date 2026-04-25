@@ -27,8 +27,9 @@ export const deletePatient = (id) => {
 }
 
 // 获取医生的患者列表
+// API 合并：使用 ?mine=true 替代 /patients/my
 export const getMyPatients = (params = {}) => {
-  return get('/neuroimmune/patients/my', params)
+  return get('/neuroimmune/patients', { ...params, mine: true })
 }
 
 // 更新患者密码

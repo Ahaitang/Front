@@ -5,21 +5,12 @@ import config from './config'
 const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
-    const role = uni.getStorageSync('role')
-    const userInfo = uni.getStorageSync('userInfo')
     const header = {
       'Content-Type': 'application/json',
       ...options.header
     }
     if (token) {
       header['Authorization'] = `Bearer ${token}`
-    }
-    // 添加角色和用户ID头，用于后端权限控制
-    if (role) {
-      header['X-User-Role'] = role
-    }
-    if (userInfo && userInfo.id) {
-      header['X-User-Id'] = userInfo.id
     }
 
     uni.request({
@@ -83,17 +74,13 @@ export const del = (url, data) => {
 export const uploadFile = (filePath) => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
-    const role = uni.getStorageSync('role')
-    const userInfo = uni.getStorageSync('userInfo')
 
     uni.uploadFile({
       url: config.BASE_URL + '/neuroimmune/file/upload',
       filePath: filePath,
       name: 'file',
       header: {
-        'Authorization': token ? `Bearer ${token}` : '',
-        'X-User-Role': role || '',
-        'X-User-Id': userInfo ? userInfo.id : ''
+        'Authorization': token ? `Bearer ${token}` : ''
       },
       success: (res) => {
         if (res.statusCode === 200) {

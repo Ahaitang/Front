@@ -64,8 +64,10 @@ export const getDoctorList = (params: PageRequest) => {
   return request.get<PageResult<Doctor>>('/neuroimmune/doctors', params)
 }
 
+// 获取所有医生（用于下拉选择）
+// API 合并：使用 ?all=true 替代 /doctors/all
 export const getAllDoctors = () => {
-  return request.get<Doctor[]>('/neuroimmune/doctors/all')
+  return request.get<Doctor[]>('/neuroimmune/doctors', { all: true })
 }
 
 export const getDoctorById = (id: string | number) => {
