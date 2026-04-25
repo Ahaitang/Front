@@ -21,19 +21,20 @@
 		<!-- 搜索栏 -->
 		<view class="search-bar">
 			<text class="app-icon uniui-search"></text>
-			<input class="search-input" type="text" placeholder="搜索患者姓名" v-model="keyword" />
+			<input class="search-input" type="text" placeholder="搜索患者姓名" v-model="keyword" @confirm="doSearch" />
+			<text class="search-btn" @click="doSearch">搜索</text>
 		</view>
 
-		<!-- 筛选标签 -->
+		<!-- 篮选标签 -->
 		<view class="filter-tags">
-			<view class="tag" :class="{ active: filterStatus === 'all' }" @click="filterStatus = 'all'">全部</view>
-			<view class="tag" :class="{ active: filterStatus === 'pending' }" @click="filterStatus = 'pending'">待随访</view>
-			<view class="tag" :class="{ active: filterStatus === 'completed' }" @click="filterStatus = 'completed'">已完成</view>
+			<view class="tag" :class="{ active: filterStatus === 'all' }" @click="changeFilter('all')">全部</view>
+			<view class="tag" :class="{ active: filterStatus === 'pending' }" @click="changeFilter('pending')">待随访</view>
+			<view class="tag" :class="{ active: filterStatus === 'completed' }" @click="changeFilter('completed')">已完成</view>
 		</view>
 
 		<!-- 随访列表 -->
-		<view class="follow-list">
-			<!-- 待随访 -->
+		<scroll-view class="follow-scroll" scroll-y @scrolltolower="loadMore" lower-threshold="100">
+			<!-- 待随访列表 -->
 			<template v-if="filterStatus === 'all' || filterStatus === 'pending'">
 				<view class="section-title" v-if="filteredPendingList.length && filterStatus === 'all'">
 					<view class="title-dot pending"></view>
@@ -76,7 +77,7 @@
 				</view>
 			</template>
 
-			<!-- 已完成 -->
+			<!-- 已完成列表 -->
 			<template v-if="filterStatus === 'all' || filterStatus === 'completed'">
 				<view class="section-title" v-if="filteredCompletedList.length && filterStatus === 'all'">
 					<view class="title-dot completed"></view>
@@ -105,11 +106,22 @@
 				</view>
 			</template>
 
+			<!-- 加载状态 -->
+			<view class="load-status" v-if="displayList.length">
+				<text class="loading-text" v-if="loading">加载中...</text>
+				<text class="no-more-text" v-else-if="noMore">没有更多了</text>
+			</view>
+
 			<!-- 空状态 -->
-			<view class="empty-state" v-if="!filteredPendingList.length && !filteredCompletedList.length">
+			<view class="empty-state" v-if="!filteredPendingList.length && !filteredCompletedList.length && !loading">
 				<text class="app-icon empty-icon uniui-calendar"></text>
 				<text class="empty-text">暂无随访记录</text>
 			</view>
+		</scroll-view>
+
+		<!-- 添加按钮 -->
+		<view class="add-btn" @click="navTo('/pages/doctor/add-follow/add-follow')">
+			<text class="app-icon uniui-plus-filled"></text>
 		</view>
 	</view>
 </template>
@@ -123,66 +135,140 @@ export default {
 			keyword: '',
 			filterStatus: 'all',
 			pendingList: [],
-			completedList: []
-		};
+			completedList: [],
+			pageNum: 1,
+			pageSize: 20,
+			loading: false,
+			noMore: false
+		}
 	},
 	computed: {
 		filteredPendingList() {
-			if (!this.keyword) return this.pendingList;
-			const k = this.keyword.toLowerCase();
-			return this.pendingList.filter(item => item.patientName.toLowerCase().includes(k));
+			let list = this.pendingList
+			if (this.keyword) {
+				const k = this.keyword.toLowerCase()
+				list = list.filter(item => item.patientName.toLowerCase().includes(k))
+			}
+			return list
 		},
 		filteredCompletedList() {
-			if (!this.keyword) return this.completedList;
-			const k = this.keyword.toLowerCase();
-			return this.completedList.filter(item => item.patientName.toLowerCase().includes(k));
+			let list = this.completedList
+			if (this.keyword) {
+				const k = this.keyword.toLowerCase()
+				list = list.filter(item => item.patientName.toLowerCase().includes(k))
+			}
+			return list
 		},
 		totalCount() {
-			return this.pendingList.length + this.completedList.length;
+			return this.filteredPendingList.length + this.filteredCompletedList.length
+		},
+		displayList() {
+			if (this.filterStatus === 'pending') return this.filteredPendingList
+			if (this.filterStatus === 'completed') return this.filteredCompletedList
+			return [...this.filteredPendingList, ...this.filteredCompletedList]
 		}
 	},
 	onShow() {
-		this.loadData();
+		this.loadData()
 	},
 	methods: {
 		async loadData() {
+			if (this.loading) return
+
+			this.loading = true
 			try {
-				const res = await getFollowUpList({ pageNum: 1, pageSize: 100 });
+				const params = {
+					pageNum: this.pageNum,
+					pageSize: this.pageSize
+				}
+
+				const res = await getFollowUpList(params)
 				if (res && res.list) {
-					this.pendingList = res.list
+					const newPending = res.list
 						.filter(f => f.status === 'pending' || f.status === '待随访')
+						.filter(f => f.isValid !== false) // 过滤无效记录
 						.map(f => ({
 							id: f.id,
 							patientId: f.patientId,
 							patientName: f.patientName || '患者',
-							date: f.followDate || f.date,
+							date: this.formatDate(f.followDate || f.date),
 							project: f.project || '随访',
 							content: f.content || '',
 							phone: f.patientPhone || ''
-						}));
-					this.completedList = res.list
+						}))
+
+					const newCompleted = res.list
 						.filter(f => f.status === 'completed' || f.status === '已完成')
+						.filter(f => f.isValid !== false) // 过滤无效记录
 						.map(f => ({
 							id: f.id,
 							patientId: f.patientId,
 							patientName: f.patientName || '患者',
-							date: f.followDate || f.date,
+							date: this.formatDate(f.followDate || f.date),
 							project: f.project || '随访'
-						}));
+						}))
+
+					if (this.pageNum === 1) {
+						this.pendingList = newPending
+						this.completedList = newCompleted
+					} else {
+						this.pendingList = [...this.pendingList, ...newPending]
+						this.completedList = [...this.completedList, ...newCompleted]
+					}
+
+					this.noMore = res.list.length < this.pageSize
+				} else {
+					if (this.pageNum === 1) {
+						this.pendingList = []
+						this.completedList = []
+					}
+					this.noMore = true
 				}
 			} catch (e) {
-				console.error('加载随访列表失败:', e);
+				console.error('加载随访列表失败:', e)
+				if (this.pageNum === 1) {
+					this.pendingList = []
+					this.completedList = []
+				}
+				this.noMore = true
+			} finally {
+				this.loading = false
 			}
 		},
+		formatDate(dateStr) {
+			if (!dateStr) return ''
+			const d = new Date(dateStr)
+			const y = d.getFullYear()
+			const m = String(d.getMonth() + 1).padStart(2, '0')
+			const day = String(d.getDate()).padStart(2, '0')
+			return `${y}-${m}-${day}`
+		},
+		doSearch() {
+			// 搜索时重置列表
+			this.pageNum = 1
+			this.noMore = false
+			this.loadData()
+		},
+		loadMore() {
+			if (this.noMore || this.loading) return
+			this.pageNum++
+			this.loadData()
+		},
+		changeFilter(status) {
+			this.filterStatus = status
+		},
 		goPatient(id) {
-			uni.navigateTo({ url: '/pages/doctor/patient-info/patient-info?id=' + (id || '1') });
+			uni.navigateTo({ url: '/pages/doctor/patient-info/patient-info?id=' + (id || '') })
 		},
 		callPatient(phone) {
-			if (phone) uni.makePhoneCall({ phoneNumber: phone });
-			else uni.showToast({ title: '暂无电话', icon: 'none' });
+			if (phone) uni.makePhoneCall({ phoneNumber: phone })
+			else uni.showToast({ title: '暂无电话', icon: 'none' })
+		},
+		navTo(url) {
+			uni.navigateTo({ url })
 		}
 	}
-};
+}
 </script>
 
 <style lang="scss" scoped>
@@ -191,7 +277,9 @@ export default {
 .container {
 	min-height: 100vh;
 	background: $app-bg;
-	padding: 24rpx 24rpx 60rpx;
+	padding: 24rpx 24rpx 140rpx;
+	display: flex;
+	flex-direction: column;
 }
 
 /* 统计概览 */
@@ -261,7 +349,12 @@ export default {
 	color: $app-text;
 }
 
-/* 筛选标签 */
+.search-btn {
+	font-size: 28rpx;
+	color: $app-primary;
+}
+
+/* 篮选标签 */
 .filter-tags {
 	display: flex;
 	gap: 16rpx;
@@ -280,6 +373,12 @@ export default {
 .filter-tags .tag.active {
 	background: $app-primary;
 	color: #fff;
+}
+
+/* 随访列表滚动区 */
+.follow-scroll {
+	flex: 1;
+	min-height: 500rpx;
 }
 
 /* 列表区块标题 */
@@ -458,12 +557,28 @@ export default {
 	color: #fff;
 }
 
+/* 加载状态 */
+.load-status {
+	padding: 32rpx;
+	text-align: center;
+}
+
+.loading-text {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
+
+.no-more-text {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
+
 /* 空状态 */
 .empty-state {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 80rpx 0;
+	padding: 120rpx 0;
 }
 
 .empty-icon {
@@ -476,5 +591,25 @@ export default {
 .empty-text {
 	font-size: 28rpx;
 	color: $app-text-muted;
+}
+
+/* 添加按钮 */
+.add-btn {
+	position: fixed;
+	right: 40rpx;
+	bottom: 140rpx;
+	width: 100rpx;
+	height: 100rpx;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 8rpx 24rpx rgba(99, 102, 241, 0.4);
+}
+
+.add-btn .app-icon {
+	font-size: 48rpx !important;
+	color: #fff !important;
 }
 </style>
