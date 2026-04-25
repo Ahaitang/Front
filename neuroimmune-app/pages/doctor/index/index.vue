@@ -22,6 +22,47 @@
 			</view>
 		</view>
 
+		<!-- 工作概览 -->
+		<view class="overview-section">
+			<view class="overview-grid">
+				<view class="overview-item" @click="navTo('/pages/doctor/follow-plan/follow-plan')">
+					<view class="overview-icon pending">
+						<text class="app-icon uniui-clock"></text>
+					</view>
+					<text class="overview-num">{{ stats.pendingFollowups }}</text>
+					<text class="overview-label">待随访</text>
+				</view>
+				<view class="overview-item" @click="navTo('/pages/doctor/patient-list/patient-list')">
+					<view class="overview-icon patient">
+						<text class="app-icon uniui-contact-filled"></text>
+					</view>
+					<text class="overview-num">{{ stats.totalPatients }}</text>
+					<text class="overview-label">患者总数</text>
+				</view>
+				<view class="overview-item" @click="navTo('/pages/doctor/episode-list/episode-list')">
+					<view class="overview-icon episode">
+						<text class="app-icon uniui-pulse"></text>
+					</view>
+					<text class="overview-num">{{ stats.totalEpisodes }}</text>
+					<text class="overview-label">发作记录</text>
+				</view>
+				<view class="overview-item" @click="navTo('/pages/doctor/medical-record/medical-record')">
+					<view class="overview-icon record">
+						<text class="app-icon uniui-folder-add-filled"></text>
+					</view>
+					<text class="overview-num">{{ stats.totalMedicalRecords }}</text>
+					<text class="overview-label">病例统计</text>
+				</view>
+				<view class="overview-item" @click="navTo('/pages/doctor/medication-list/medication-list')">
+					<view class="overview-icon medication">
+						<text class="app-icon uniui-medal"></text>
+					</view>
+					<text class="overview-num">{{ stats.activeMedications }}</text>
+					<text class="overview-label">用药方案</text>
+				</view>
+			</view>
+		</view>
+
 		<!-- 患者列表 -->
 		<view class="section">
 			<view class="section-header">
@@ -48,11 +89,17 @@
 		<!-- 快捷操作 -->
 		<view class="section quick-section">
 			<view class="action-grid">
-				<view class="action-item" @click="navTo('/pages/doctor/add-clinic/add-clinic')">
-					<view class="action-icon clinic">
-						<text class="app-icon uniui-calendar-filled"></text>
+				<view class="action-item" @click="navTo('/pages/doctor/add-patient/add-patient')">
+					<view class="action-icon patient-add">
+						<text class="app-icon uniui-personadd-filled"></text>
 					</view>
-					<text class="action-text">添加门诊</text>
+					<text class="action-text">添加患者</text>
+				</view>
+				<view class="action-item" @click="navTo('/pages/doctor/add-episode/add-episode')">
+					<view class="action-icon episode">
+						<text class="app-icon uniui-pulse"></text>
+					</view>
+					<text class="action-text">添加发作</text>
 				</view>
 				<view class="action-item" @click="navTo('/pages/doctor/add-follow/add-follow')">
 					<view class="action-icon follow">
@@ -66,25 +113,27 @@
 					</view>
 					<text class="action-text">用药建议</text>
 				</view>
-				<view class="action-item" @click="navTo('/pages/doctor/follow-plan/follow-plan')">
-					<view class="action-icon plan">
-						<text class="app-icon uniui-notification-filled"></text>
-					</view>
-					<text class="action-text">随访计划</text>
-				</view>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-import { getDoctorPatientDetails, countDoctorPatients } from '@/api/relation.js'
+import { getDoctorPatientDetails } from '@/api/relation.js'
+import { getStats } from '@/api/dashboard.js'
 
 export default {
 	data() {
 		return {
 			userInfo: {},
 			allPatients: [],
+			stats: {
+				pendingFollowups: 0,
+				totalPatients: 0,
+				totalEpisodes: 0,
+				totalMedicalRecords: 0,
+				activeMedications: 0
+			},
 			diseaseTypes: [
 				{ label: 'MS', value: 'MS', count: 0 },
 				{ label: 'NMOSD', value: 'NMOSD', count: 0 },
@@ -127,6 +176,28 @@ export default {
 			const doctorId = this.userInfo.id
 			if (!doctorId) return
 
+			// 并行获取统计数据
+			this.loadStats()
+			this.loadPatients(doctorId)
+		},
+		async loadStats() {
+			try {
+				// 使用dashboard统计接口获取主要数据
+				const statsRes = await getStats()
+				console.log('dashboard stats响应:', statsRes)
+				if (statsRes) {
+					this.stats.totalPatients = statsRes.totalPatients || 0
+					this.stats.pendingFollowups = statsRes.pendingFollowUps || 0
+					this.stats.activeMedications = statsRes.totalMedications || 0
+					this.stats.totalEpisodes = statsRes.totalEpisodes || 0
+					this.stats.totalMedicalRecords = statsRes.totalMedicalRecords || 0
+					console.log('提取后的stats:', this.stats)
+				}
+			} catch (e) {
+				console.error('获取统计数据失败:', e)
+			}
+		},
+		async loadPatients(doctorId) {
 			try {
 				const patients = await getDoctorPatientDetails(doctorId)
 				if (patients && patients.length) {
@@ -140,6 +211,9 @@ export default {
 						hasFollowUp: p.hasFollowUp,
 						diseaseType: p.diseaseType || ''
 					}))
+
+					// 更新患者总数
+					this.stats.totalPatients = this.allPatients.length
 
 					// 统计各疾病类型数量
 					this.diseaseTypes.forEach(d => {
@@ -155,7 +229,7 @@ export default {
 			uni.navigateTo({ url })
 		},
 		goPatientCenter() {
-			uni.switchTab({ url: '/pages/patient-center/patient-center' })
+			uni.navigateTo({ url: '/pages/doctor/patient-list/patient-list' })
 		},
 		handleLogout() {
 			uni.showModal({
@@ -275,6 +349,61 @@ export default {
 	border-radius: 16rpx;
 }
 
+/* 工作概览 */
+.overview-section {
+	margin: -20rpx 24rpx 24rpx;
+	padding: 28rpx;
+	background: $app-card-bg;
+	border-radius: 20rpx;
+	box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.overview-grid {
+	display: flex;
+	justify-content: space-between;
+}
+
+.overview-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 20%;
+}
+
+.overview-icon {
+	width: 64rpx;
+	height: 64rpx;
+	border-radius: 14rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 12rpx;
+}
+
+.overview-icon .app-icon {
+	font-size: 32rpx !important;
+	color: #fff !important;
+}
+
+.overview-icon.pending { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+.overview-icon.patient { background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); }
+.overview-icon.episode { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); }
+.overview-icon.record { background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%); }
+.overview-icon.medication { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); }
+
+.overview-num {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: $app-text;
+	display: block;
+}
+
+.overview-label {
+	font-size: 22rpx;
+	color: $app-text-muted;
+	margin-top: 6rpx;
+}
+
 /* 通用区块 */
 .section {
 	margin: 24rpx;
@@ -334,10 +463,10 @@ export default {
 	color: #fff !important;
 }
 
-.action-icon.clinic { background: #3B82F6; }
+.action-icon.patient-add { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
+.action-icon.episode { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); }
 .action-icon.follow { background: $app-primary; }
 .action-icon.medication { background: #EC4899; }
-.action-icon.plan { background: #F59E0B; }
 
 .action-text {
 	font-size: 26rpx;
