@@ -165,6 +165,7 @@
 <script>
 import { getFollowUpList } from '@/api/followup.js'
 import { getMedicationList } from '@/api/medication.js'
+import { getPatientById } from '@/api/patient.js'
 
 export default {
 	data() {
@@ -198,6 +199,8 @@ export default {
 		this.userInfo = uni.getStorageSync('userInfo') || {}
 		this.doctorBound = !!uni.getStorageSync('doctorBound')
 		this.loadData()
+		// 从后端刷新实名状态
+		this.refreshRealAuthStatus()
 	},
 	methods: {
 		async loadData() {
@@ -219,7 +222,24 @@ export default {
 				console.error('加载患者统计数据失败:', e)
 			}
 		},
-		navTo(url) {
+			async refreshRealAuthStatus() {
+				const userInfo = uni.getStorageSync('userInfo') || {}
+				if (!userInfo.id) return
+				try {
+					const res = await getPatientById(userInfo.id)
+					if (res) {
+						// 更新实名状态（根据后端计算结果）
+						this.userInfo.isRealAuth = res.isRealAuth
+						uni.setStorageSync('userInfo', {
+							...userInfo,
+							isRealAuth: res.isRealAuth
+						})
+					}
+				} catch (e) {
+					console.error('刷新实名状态失败:', e)
+				}
+			},
+			navTo(url) {
 			uni.navigateTo({ url })
 		},
 		handleLogout() {
