@@ -24,6 +24,10 @@
 				<text class="stat-value">{{ patient.recordCount || 0 }}</text>
 				<text class="stat-label">病历记录</text>
 			</view>
+			<view class="stat-item">
+				<text class="stat-value">{{ patient.episodeCount || 0 }}</text>
+				<text class="stat-label">发作记录</text>
+			</view>
 		</view>
 		<view class="quick-actions card">
 			<view class="quick-title">快速操作</view>
@@ -48,7 +52,8 @@
 				<view class="tab" :class="{ active: activeTab === 'records' }" @click="activeTab = 'records'">病历记录</view>
 				<view class="tab" :class="{ active: activeTab === 'follow' }" @click="activeTab = 'follow'">随访记录</view>
 				<view class="tab" :class="{ active: activeTab === 'medication' }" @click="activeTab = 'medication'">用药记录</view>
-							</view>
+				<view class="tab" :class="{ active: activeTab === 'episode' }" @click="activeTab = 'episode'">发作记录</view>
+			</view>
 			<view class="tabs-content">
 				<view v-show="activeTab === 'basic'" class="tab-panel">
 					<view class="row"><text class="label">电话</text><text class="value">{{ patient.phone }}</text></view>
@@ -144,7 +149,27 @@
 						<text class="item-date">{{ item.date }}</text>
 					</view>
 				</view>
+				<view v-show="activeTab === 'episode'" class="tab-panel">
+					<text class="empty-tip" v-if="!episodeList.length">暂无发作记录</text>
+					<view class="episode-item" v-for="(item, i) in episodeList" :key="i" @click="showEpisodeDetail(item)">
+						<view class="episode-header">
+							<view class="episode-icon">
+								<text class="app-icon uniui-pulse"></text>
 							</view>
+							<view class="episode-info">
+								<text class="episode-title">{{ item.symptomType || '疾病发作' }}</text>
+								<text class="episode-date">{{ item.date }}</text>
+							</view>
+							<text class="episode-severity" :class="item.severityClass">{{ item.severityText }}</text>
+						</view>
+						<view class="episode-body">
+							<text class="episode-desc" v-if="item.symptoms">症状：{{ item.symptoms }}</text>
+							<text class="episode-desc" v-if="item.duration">持续时间：{{ item.duration }}</text>
+							<text class="episode-desc" v-if="item.treatment">处理措施：{{ item.treatment }}</text>
+						</view>
+					</view>
+				</view>
+			</view>
 		</view>
 		<view class="actions">
 			<button class="btn" @click="callPhone">打电话</button>
@@ -158,6 +183,7 @@ import { getPatientById, updatePatient } from '@/api/patient.js'
 import { getFollowUpList } from '@/api/followup.js'
 import { getMedicationList } from '@/api/medication.js'
 import { createMedicalRecord, getMedicalRecordList, updateMedicalRecord, deleteMedicalRecord } from '@/api/medicalRecord.js'
+import { getEpisodesByPatient } from '@/api/episode.js'
 
 export default {
 	data() {
@@ -188,12 +214,14 @@ export default {
 				patientType: '',
 				followUpCount: 0,
 				medicationCount: 0,
-				recordCount: 0
+				recordCount: 0,
+				episodeCount: 0
 			},
 			followList: [],
 			medicationList: [],
 			hospitalRecords: [],
-			externalRecords: []
+			externalRecords: [],
+			episodeList: []
 		};
 	},
 	computed: {
@@ -228,7 +256,8 @@ export default {
 						patientType: res.patientType || '门诊患者',
 						followUpCount: 0,
 						medicationCount: 0,
-						recordCount: 0
+						recordCount: 0,
+						episodeCount: 0
 					};
 				}
 			} catch (e) {
@@ -291,6 +320,69 @@ export default {
 			} catch (e) {
 				console.error('加载病历记录失败:', e);
 			}
+
+			// 加载发作记录
+			try {
+				const episodeRes = await getEpisodesByPatient(this.patientId);
+				if (episodeRes && episodeRes.length) {
+					this.episodeList = episodeRes.map(e => ({
+						id: e.id,
+						date: e.episodeDate ? (typeof e.episodeDate === 'string' ? e.episodeDate.split('T')[0] : e.episodeDate) : '',
+						symptomType: e.symptomType || '疾病发作',
+						symptoms: e.symptoms || '',
+						duration: e.duration || '',
+						treatment: e.treatment || '',
+						severity: e.severity || 'moderate',
+						severityText: this.getSeverityText(e.severity),
+						severityClass: this.getSeverityClass(e.severity)
+					}));
+					this.patient.episodeCount = episodeRes.length;
+				}
+			} catch (e) {
+				console.error('加载发作记录失败:', e);
+			}
+		},
+		getSeverityText(severity) {
+			const map = {
+				'mild': '轻度',
+				'moderate': '中度',
+				'severe': '重度',
+				'critical': '严重'
+			};
+			return map[severity] || '中度';
+		},
+		getSeverityClass(severity) {
+			const map = {
+				'mild': 'mild',
+				'moderate': 'moderate',
+				'severe': 'severe',
+				'critical': 'critical'
+			};
+			return map[severity] || 'moderate';
+		},
+		showEpisodeDetail(item) {
+			let content = `发作日期：${item.date || '未知'}\n`
+			content += `发作类型：${item.symptomType || '疾病发作'}\n`
+			content += `严重程度：${item.severityText}\n`
+			if (item.symptoms) content += `症状描述：${item.symptoms}\n`
+			if (item.duration) content += `持续时间：${item.duration}\n`
+			if (item.treatment) content += `处理措施：${item.treatment}\n`
+
+			uni.showModal({
+				title: '发作记录详情',
+				content: content,
+				confirmText: '复制',
+				success: (res) => {
+					if (res.confirm) {
+						uni.setClipboardData({
+							data: content,
+							success: () => {
+								uni.showToast({ title: '已复制', icon: 'success' });
+							}
+						});
+					}
+				}
+			});
 		},
 		callPhone() {
 			if (this.patient.phone) {
@@ -350,7 +442,6 @@ export default {
 				}
 			});
 		},
-		// 查看疾病发作详情
 		// 查看病历详情
 		showRecordDetail(item) {
 			let content = `就诊日期：${item.date || '未知'}\n`
@@ -590,7 +681,7 @@ export default {
 	flex: 1;
 	text-align: center;
 	padding: 20rpx 0;
-	font-size: 26rpx;
+	font-size: 24rpx;
 	color: $app-text-muted;
 }
 
@@ -860,5 +951,96 @@ export default {
 
 .record-body {
 	margin-top: 8rpx;
+}
+
+/* 发作记录样式 */
+.episode-item {
+	padding: 20rpx;
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	margin-bottom: 16rpx;
+	transition: $app-transition;
+}
+
+.episode-item:active {
+	background: #EBEDEF;
+}
+
+.episode-header {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+}
+
+.episode-icon {
+	width: 48rpx;
+	height: 48rpx;
+	border-radius: 12rpx;
+	background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.episode-icon .app-icon {
+	font-size: 24rpx !important;
+	color: #fff !important;
+}
+
+.episode-info {
+	flex: 1;
+}
+
+.episode-title {
+	font-size: 28rpx;
+	font-weight: 500;
+	color: $app-text;
+	display: block;
+}
+
+.episode-date {
+	font-size: 24rpx;
+	color: $app-text-muted;
+	margin-top: 4rpx;
+	display: block;
+}
+
+.episode-severity {
+	font-size: 22rpx;
+	padding: 6rpx 14rpx;
+	border-radius: 12rpx;
+	font-weight: 500;
+}
+
+.episode-severity.mild {
+	background: #D1FAE5;
+	color: #10B981;
+}
+
+.episode-severity.moderate {
+	background: #FEF3C7;
+	color: #F59E0B;
+}
+
+.episode-severity.severe {
+	background: #FEE2E2;
+	color: #EF4444;
+}
+
+.episode-severity.critical {
+	background: #FECACA;
+	color: #DC2626;
+}
+
+.episode-body {
+	margin-top: 12rpx;
+}
+
+.episode-desc {
+	font-size: 24rpx;
+	color: $app-text-secondary;
+	display: block;
+	margin-top: 6rpx;
+	line-height: 1.4;
 }
 </style>
