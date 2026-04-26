@@ -217,6 +217,12 @@
                     "style": {
                         "navigationBarTitleText": "添加疾病发作"
                     }
+                },
+                {
+                    "path": "record-detail/record-detail",
+                    "style": {
+                        "navigationBarTitleText": "病历详情"
+                    }
                 }
             ]
         }

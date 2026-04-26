@@ -248,7 +248,7 @@ export default {
 		},
 		viewRecord(item) {
 			uni.navigateTo({
-				url: `/pages/doctor/upload-record/upload-record?id=${item.id}`
+				url: `/pages/doctor/record-detail/record-detail?id=${item.id}`
 			})
 		},
 		viewEpisode(item) {
