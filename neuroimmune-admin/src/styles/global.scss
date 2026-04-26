@@ -1,20 +1,32 @@
-/* 全局样式变量 */
+/* 全局样式变量 - 神经免疫疾病随访系统配色方案 */
 :root {
-  --primary-color: #0D9488;
-  --primary-light: #14B8A6;
-  --primary-dark: #0F766E;
-  --bg-color: #F0F2F5;
+  /* 主色调 - Cyan */
+  --primary-color: #0891B2;
+  --primary-light: #22D3EE;
+  --primary-dark: #0E7490;
+  --primary-lighter: #ECFEFF;
+
+  /* 背景色 */
+  --bg-color: #F8FAFC;
   --card-bg: #FFFFFF;
-  --text-primary: #1F2937;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
-  --border-color: #E5E7EB;
+
+  /* 文字颜色 */
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+
+  /* 边框和阴影 */
+  --border-color: #E2E8F0;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* 圆角 */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
+
+  /* 过渡 */
   --transition: all 0.2s ease;
 }
 
@@ -22,6 +34,7 @@
 .page-container {
   padding: 24px;
   min-height: calc(100vh - 60px);
+  background: var(--bg-color);
 }
 
 /* 搜索栏样式 */
@@ -66,12 +79,13 @@
   --el-table-header-bg-color: #F8FAFC;
   --el-table-header-text-color: var(--text-secondary);
   --el-table-border-color: var(--border-color);
-  --el-table-row-hover-bg-color: #F8FAFC;
+  --el-table-row-hover-bg-color: #F1F5F9;
 
   th.el-table__cell {
     font-weight: 600;
     font-size: 13px;
     padding: 14px 0;
+    background: #F8FAFC !important;
   }
 
   td.el-table__cell {
@@ -145,7 +159,7 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 16px;
-    background: rgba(13, 148, 136, 0.1);
+    background: rgba(8, 145, 178, 0.1);
     color: var(--primary-color);
     font-size: 24px;
   }
@@ -376,4 +390,61 @@
 .value-highlight {
   font-weight: 600;
   color: var(--primary-color);
+}
+
+/* Element Plus 主题覆盖 */
+.el-button--primary {
+  --el-button-bg-color: var(--primary-color);
+  --el-button-border-color: var(--primary-color);
+  --el-button-hover-bg-color: var(--primary-light);
+  --el-button-hover-border-color: var(--primary-light);
+  --el-button-active-bg-color: var(--primary-dark);
+  --el-button-active-border-color: var(--primary-dark);
+}
+
+.el-button--primary.is-plain {
+  --el-button-bg-color: var(--primary-lighter);
+  --el-button-border-color: var(--primary-color);
+  --el-button-text-color: var(--primary-color);
+}
+
+.el-link--primary {
+  --el-link-text-color: var(--primary-color);
+  --el-link-hover-text-color: var(--primary-light);
+}
+
+/* 链接样式 */
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--primary-light);
+  }
+}
+
+/* 选中文字样式 */
+::selection {
+  background: rgba(8, 145, 178, 0.2);
+  color: var(--text-primary);
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--text-secondary);
+  }
 }
