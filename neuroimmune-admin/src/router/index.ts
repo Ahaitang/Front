@@ -69,6 +69,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '病历记录', icon: 'Document', roles: ['admin', 'doctor'] }
       },
       {
+        path: 'episodes',
+        name: 'Episodes',
+        component: () => import('@/views/episodes/Episodes.vue'),
+        meta: { title: '发作记录', icon: 'Pulse', roles: ['admin', 'doctor'] }
+      },
+      {
         path: 'dict',
         name: 'DictManage',
         component: () => import('@/views/dict/DictManage.vue'),

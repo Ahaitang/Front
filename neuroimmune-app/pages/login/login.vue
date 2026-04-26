@@ -67,12 +67,7 @@ export default {
 	onLoad() {
 		const token = uni.getStorageSync('token');
 		if (token) {
-			const role = uni.getStorageSync('role');
-			if (role === 'doctor') {
-				uni.reLaunch({ url: '/pages/doctor/index/index' });
-			} else {
-				uni.reLaunch({ url: '/pages/index/index' });
-			}
+			uni.reLaunch({ url: '/pages/index/index' });
 		}
 	},
 	methods: {

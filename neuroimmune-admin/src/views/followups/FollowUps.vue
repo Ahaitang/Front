@@ -165,6 +165,10 @@ const editFollowUp = (row: FollowUp) => {
 }
 
 const addFollowUp = () => {
+  // 生成当前日期时间格式 YYYY-MM-DD HH:mm:ss
+  const now = new Date()
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  const dateTimeStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:00`
   currentFollowUp.value = {
     patientId: undefined,
     patientName: '',
@@ -172,7 +176,7 @@ const addFollowUp = () => {
     patientAge: 0,
     doctorId: undefined,
     doctorName: '',
-    date: new Date().toISOString().split('T')[0],
+    date: dateTimeStr,
     project: '',
     type: '定期随访',
     status: 0,
@@ -230,7 +234,12 @@ const saveFollowUp = async () => {
 
   saveLoading.value = true
   try {
-    await saveFollowUpApi(currentFollowUp.value)
+    const submitData = { ...currentFollowUp.value }
+    // 如果 date 只有日期部分，补上时间
+    if (submitData.date && submitData.date.length === 10) {
+      submitData.date = submitData.date + ' 00:00:00'
+    }
+    await saveFollowUpApi(submitData)
     ElMessage.success(dialogType.value === 'add' ? '添加成功' : '保存成功')
     dialogVisible.value = false
     loadData()
@@ -506,11 +515,12 @@ const handleExport = () => {
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="随访日期">
+              <el-form-item label="随访时间">
                 <el-date-picker
                   v-model="currentFollowUp.date"
-                  type="date"
-                  value-format="YYYY-MM-DD"
+                  type="datetime"
+                  value-format="YYYY-MM-DD HH:mm:ss"
+                  format="YYYY-MM-DD HH:mm"
                   style="width: 100%"
                 />
               </el-form-item>

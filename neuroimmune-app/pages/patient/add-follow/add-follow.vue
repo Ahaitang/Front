@@ -11,15 +11,10 @@
 				</view>
 			</view>
 
-			<!-- 随访日期 -->
+			<!-- 随访时间 -->
 			<view class="form-item">
-				<text class="label">随访日期</text>
-				<picker mode="date" :value="form.date" @change="onDateChange">
-					<view class="picker-wrap">
-						<text class="picker-text" :class="{ placeholder: !form.date }">{{ form.date || '请选择日期' }}</text>
-						<text class="app-icon uniui-calendar"></text>
-					</view>
-				</picker>
+				<text class="label">随访时间</text>
+				<uni-datetime-picker type="datetime" v-model="form.date" :placeholder="'请选择随访时间'" />
 			</view>
 
 			<!-- 随访项目 -->
@@ -149,18 +144,19 @@ export default {
 	},
 	onLoad() {
 		this.initDateTimeRange();
-		// 默认今天的日期
-		const today = new Date();
-		this.form.date = this.formatDate(today);
+		// 初始化默认随访时间为当前时间
+		this.form.date = this.formatDateTime(new Date());
 		// 默认选中第一个模板的所有项目
 		this.selectTemplate('immunosuppressant');
 	},
 	methods: {
-		formatDate(date) {
+		formatDateTime(date) {
 			const y = date.getFullYear();
 			const m = String(date.getMonth() + 1).padStart(2, '0');
 			const d = String(date.getDate()).padStart(2, '0');
-			return `${y}-${m}-${d}`;
+			const h = String(date.getHours()).padStart(2, '0');
+			const min = String(date.getMinutes()).padStart(2, '0');
+			return `${y}-${m}-${d} ${h}:${min}:00`;
 		},
 		initDateTimeRange() {
 			// 初始化日期时间选择器范围
@@ -174,16 +170,13 @@ export default {
 			}
 			this.dateTimeRange = [['上午', '下午'], hours, minutes];
 		},
-		onDateChange(e) {
-			this.form.date = e.detail.value;
-		},
 		onOutpatientTimeChange(e) {
 			const val = e.detail.value;
 			const period = this.dateTimeRange[0][val[0]];
 			let hour = parseInt(this.dateTimeRange[1][val[1]]);
 			if (period === '下午' && hour < 12) hour += 12;
 			const minute = this.dateTimeRange[2][val[2]].replace('分', '');
-			this.form.outpatientTime = `${this.form.date} ${hour}:${minute}`;
+			this.form.outpatientTime = `${this.form.date ? this.form.date.substring(0, 10) : ''} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 		},
 		onColumnChange(e) {
 			// 列变化处理
@@ -223,16 +216,22 @@ export default {
 			this.loading = true;
 			const userInfo = uni.getStorageSync('userInfo') || {};
 
+			// 确保 date 格式为 YYYY-MM-DD HH:mm:ss
+			let dateStr = this.form.date;
+			if (dateStr && dateStr.length === 10) {
+				dateStr = dateStr + ' 00:00:00';
+			}
+
 			try {
 				await createFollowUp({
 					patientId: userInfo.id,
 					patientName: userInfo.name || userInfo.realName,
 					type: this.form.type,
-					date: this.form.date,
+					date: dateStr,
 					project: this.form.project,
-					status: 'pending',
+					status: 0,
 					outpatientTime: this.form.outpatientTime || null,
-					hospitalizationTime: this.form.hospitalizationTime || null,
+					hospitalizationTime: (this.form.hospitalizationTime && this.form.hospitalizationTime.length === 10 ? this.form.hospitalizationTime + ' 00:00:00' : this.form.hospitalizationTime) || null,
 					examinationItems: this.form.examinationItems,
 					hospital: this.form.hospital,
 					department: this.form.department,

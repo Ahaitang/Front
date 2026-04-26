@@ -16,12 +16,8 @@
 				</picker>
 			</view>
 			<view class="form-item">
-				<text class="label"><text class="app-icon sm muted uniui-calendar"></text> 年龄</text>
-				<input class="input" type="number" v-model="form.age" placeholder="请输入年龄" />
-			</view>
-			<view class="form-item">
-				<text class="label"><text class="app-icon sm muted uniui-calendar-filled"></text> 出生日期</text>
-				<input class="input" v-model="form.birthday" placeholder="如 1978-08-15" />
+				<text class="label"><text class="app-icon sm muted uniui-calendar"></text> 出生日期</text>
+				<uni-datetime-picker type="date" :value="form.birthDate" @change="onBirthDateChange" />
 			</view>
 			<view class="form-item">
 				<text class="label"><text class="app-icon sm muted uniui-phone-filled"></text> 手机号码</text>
@@ -31,115 +27,190 @@
 				<text class="label"><text class="app-icon sm muted uniui-auth-filled"></text> 身份证号</text>
 				<input class="input" v-model="form.idCard" placeholder="请输入身份证号" type="idcard" />
 			</view>
-			<view class="form-item">
-				<text class="label"><text class="app-icon sm muted uniui-contact-filled"></text> 紧急联系人</text>
-				<input class="input" v-model="form.emergencyContact" placeholder="选填" />
+			<view class="form-item disease-section">
+				<text class="label"><text class="app-icon sm muted uniui-medical"></text> 疾病分类（可多选）</text>
+				<view class="disease-checkboxes">
+					<view class="disease-item" v-for="d in diseaseOptions" :key="d.value" @click="toggleDisease(d.value)">
+						<view class="checkbox" :class="{ checked: form.diseaseTypes.includes(d.value) }">
+							<text class="app-icon uniui-checkmarkempty" v-if="form.diseaseTypes.includes(d.value)"></text>
+						</view>
+						<text class="disease-label">{{ d.label }}</text>
+					</view>
+				</view>
 			</view>
-			<view class="form-item">
-				<text class="label"><text class="app-icon sm muted uniui-phone"></text> 紧急联系电话</text>
-				<input class="input" type="number" v-model="form.emergencyPhone" placeholder="选填" />
-			</view>
-			<view class="form-item">
-				<text class="label"><text class="app-icon sm muted uniui-medical"></text> 疾病分类</text>
-				<picker mode="selector" :range="diseaseOptions" range-key="label" @change="onDiseaseTypeChange">
-					<view class="picker">{{ form.diseaseTypeLabel || '请选择' }}</view>
-				</picker>
-			</view>
-			<button class="btn primary" @click="save">保存</button>
-		</view>
-		<view class="card link-block" @click="navTo('/pages/patient/patient-info/patient-info')">
-			<text class="link-label"><text class="app-icon primary uniui-folder-add-filled"></text> 查看完整患者信息</text>
-			<text class="app-icon sm muted uniui-arrowright"></text>
+			<button class="btn primary" @click="save" :loading="saving">保存</button>
 		</view>
 	</view>
 </template>
 
 <script>
-	export default {
-		data() {
-			return {
-				diseaseOptions: [
-					{ label: 'MS（多发性硬化）', value: 'MS' },
-					{ label: 'NMOSD（视神经脊髓炎）', value: 'NMOSD' },
-					{ label: 'MG（重症肌无力）', value: 'MG' },
-					{ label: 'MOGAD（MOG抗体病）', value: 'MOGAD' },
-					{ label: '自身免疫性脑炎', value: '自身免疫性脑炎' },
-					{ label: 'GBS（格林-巴利综合征）', value: 'GBS' },
-					{ label: 'CIDP（慢性炎性脱髓鞘性多发性神经病）', value: 'CIDP' },
-					{ label: '其它疾病', value: '其它疾病' }
-				],
-				form: {
-					avatar: '',
-					name: '张哲瀚',
-					gender: '男',
-					age: '45',
-					birthday: '1978-08-15',
-					phone: '',
-					idCard: '',
-					emergencyContact: '',
-					emergencyPhone: '',
-					diseaseType: '',
-					diseaseTypeLabel: ''
+import { getPatientById, updatePatient } from '@/api/patient.js'
+import { uploadFile } from '@/api/request.js'
+
+export default {
+	data() {
+		return {
+			diseaseOptions: [
+				{ label: 'MS（多发性硬化）', value: 'MS' },
+				{ label: 'NMOSD（视神经脊髓炎）', value: 'NMOSD' },
+				{ label: 'MG（重症肌无力）', value: 'MG' },
+				{ label: 'MOGAD（MOG抗体病）', value: 'MOGAD' },
+				{ label: '自身免疫性脑炎', value: 'AUTO_ENCEPHALITIS' },
+				{ label: 'GBS（格林-巴利综合征）', value: 'GBS' },
+				{ label: 'CIDP（慢性炎性脱髓鞘性多发性神经病）', value: 'CIDP' },
+				{ label: '其它疾病', value: 'OTHER' }
+			],
+			form: {
+				avatar: '',
+				name: '',
+				gender: '',
+				birthDate: '',
+				phone: '',
+				idCard: '',
+				diseaseTypes: []
+			},
+			saving: false
+		};
+	},
+	onLoad() {
+		this.loadPatientInfo();
+	},
+	methods: {
+		async loadPatientInfo() {
+			const userInfo = uni.getStorageSync('userInfo') || {};
+			if (userInfo.id) {
+				try {
+					const patient = await getPatientById(userInfo.id);
+					if (patient) {
+						this.form.name = patient.name || '';
+						this.form.gender = patient.gender || '';
+						this.form.birthDate = patient.birthDate || '';
+						this.form.phone = patient.phone || '';
+						this.form.idCard = patient.idCard || '';
+						this.form.avatar = patient.avatar || '';
+						this.form.diseaseTypes = patient.diseaseTypes || [];
+						// 同步更新本地存储
+						uni.setStorageSync('userInfo', {
+							id: patient.id,
+							name: patient.name,
+							gender: patient.gender,
+							phone: patient.phone,
+							avatar: patient.avatar,
+							isRealAuth: patient.isRealAuth,
+							diseaseTypes: patient.diseaseTypes
+						});
+					}
+				} catch (e) {
+					console.error('加载患者信息失败:', e);
+					// 使用本地存储作为备份
+					this.form.name = userInfo.name || '';
+					this.form.gender = userInfo.gender || '';
+					this.form.phone = userInfo.phone || '';
+					this.form.idCard = userInfo.idCard || '';
+					this.form.avatar = userInfo.avatar || '';
+					this.form.diseaseTypes = userInfo.diseaseTypes || [];
 				}
-			};
-		},
-		onLoad() {
-			const u = uni.getStorageSync('userInfo') || {};
-			this.form.name = u.name || this.form.name;
-			this.form.gender = u.gender || this.form.gender;
-			this.form.age = u.age ? String(u.age) : this.form.age;
-			this.form.birthday = u.birthday || this.form.birthday;
-			this.form.phone = u.phone || this.form.phone;
-			this.form.idCard = u.idCard || this.form.idCard;
-			this.form.avatar = u.avatar || '';
-			this.form.emergencyContact = u.emergencyContact || '';
-			this.form.emergencyPhone = u.emergencyPhone || '';
-			this.form.diseaseType = u.diseaseType || '';
-			// 设置疾病分类显示标签
-			if (this.form.diseaseType) {
-				const found = this.diseaseOptions.find(d => d.value === this.form.diseaseType);
-				if (found) this.form.diseaseTypeLabel = found.label;
+			} else {
+				// 未登录，使用本地存储
+				this.form.name = userInfo.name || '';
+				this.form.gender = userInfo.gender || '';
+				this.form.phone = userInfo.phone || '';
+				this.form.idCard = userInfo.idCard || '';
+				this.form.avatar = userInfo.avatar || '';
+				this.form.diseaseTypes = userInfo.diseaseTypes || [];
 			}
 		},
-		methods: {
-			onGenderChange(e) {
-				this.form.gender = ['男', '女'][e.detail.value];
-			},
-			onDiseaseTypeChange(e) {
-				const selected = this.diseaseOptions[e.detail.value];
-				this.form.diseaseType = selected.value;
-				this.form.diseaseTypeLabel = selected.label;
-			},
-			chooseAvatar() {
-				uni.chooseImage({
-					count: 1,
-					success: (res) => {
-						this.form.avatar = res.tempFilePaths[0];
+		onGenderChange(e) {
+			this.form.gender = ['男', '女'][e.detail.value];
+		},
+		onBirthDateChange(e) {
+			this.form.birthDate = e;
+		},
+		toggleDisease(value) {
+			const index = this.form.diseaseTypes.indexOf(value);
+			if (index > -1) {
+				this.form.diseaseTypes.splice(index, 1);
+			} else {
+				this.form.diseaseTypes.push(value);
+			}
+		},
+		chooseAvatar() {
+			uni.chooseImage({
+				count: 1,
+				success: async (res) => {
+					const tempPath = res.tempFilePaths[0];
+					uni.showToast({ title: '上传中...', icon: 'loading' });
+					try {
+						const uploadRes = await uploadFile(tempPath);
+						this.form.avatar = uploadRes.url;
+						uni.hideToast();
+						uni.showToast({ title: '头像已更新', icon: 'success' });
+					} catch (e) {
+						uni.hideToast();
+						uni.showToast({ title: '上传失败', icon: 'none' });
+						console.error('头像上传失败:', e);
 					}
-				});
-			},
-			save() {
-				const u = uni.getStorageSync('userInfo') || {};
-				Object.assign(u, {
+				}
+			});
+		},
+		async save() {
+			if (this.saving) return;
+			this.saving = true;
+
+			const userInfo = uni.getStorageSync('userInfo') || {};
+			if (!userInfo.id) {
+				// 仅保存到本地
+				uni.setStorageSync('userInfo', {
+					...userInfo,
 					name: this.form.name,
 					gender: this.form.gender,
-					age: this.form.age,
-					birthday: this.form.birthday,
+					birthDate: this.form.birthDate,
 					phone: this.form.phone,
 					idCard: this.form.idCard,
 					avatar: this.form.avatar,
-					emergencyContact: this.form.emergencyContact,
-					emergencyPhone: this.form.emergencyPhone,
-					diseaseType: this.form.diseaseType
+					diseaseTypes: this.form.diseaseTypes
 				});
-				uni.setStorageSync('userInfo', u);
 				uni.showToast({ title: '保存成功', icon: 'success' });
-			},
-			navTo(url) {
-				uni.navigateTo({ url });
+				this.saving = false;
+				return;
 			}
+
+			try {
+				// 同步到后端
+				await updatePatient(userInfo.id, {
+					name: this.form.name,
+					gender: this.form.gender,
+					birthDate: this.form.birthDate,
+					phone: this.form.phone,
+					idCard: this.form.idCard,
+					avatar: this.form.avatar,
+					diseaseTypes: this.form.diseaseTypes
+				});
+
+				// 更新本地存储
+				uni.setStorageSync('userInfo', {
+					id: userInfo.id,
+					name: this.form.name,
+					gender: this.form.gender,
+					phone: this.form.phone,
+					avatar: this.form.avatar,
+					isRealAuth: userInfo.isRealAuth,
+					diseaseTypes: this.form.diseaseTypes
+				});
+
+				uni.showToast({ title: '保存成功', icon: 'success' });
+			} catch (e) {
+				console.error('保存失败:', e);
+				uni.showToast({ title: '保存失败', icon: 'none' });
+			}
+
+			this.saving = false;
+		},
+		navTo(url) {
+			uni.navigateTo({ url });
 		}
-	};
+	}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -153,6 +224,48 @@
 	.label { font-size: 28rpx; color: $app-text; display: flex; align-items: center; gap: 12rpx; margin-bottom: 12rpx; }
 	.input { font-size: 30rpx; height: 72rpx; background: #F3F4F6; border-radius: $app-radius-sm; padding: 0 24rpx; color: $app-text; }
 	.picker { font-size: 30rpx; height: 72rpx; line-height: 72rpx; background: #F3F4F6; border-radius: $app-radius-sm; padding: 0 24rpx; color: $app-text; }
+
+	/* 疾病多选样式 */
+	.disease-section {
+		margin-bottom: 40rpx;
+	}
+	.disease-checkboxes {
+		display: flex;
+		flex-direction: column;
+		gap: 16rpx;
+		margin-top: 12rpx;
+	}
+	.disease-item {
+		display: flex;
+		align-items: center;
+		gap: 16rpx;
+		padding: 16rpx 20rpx;
+		background: #F3F4F6;
+		border-radius: $app-radius-sm;
+	}
+	.checkbox {
+		width: 40rpx;
+		height: 40rpx;
+		border: 2rpx solid #D1D5DB;
+		border-radius: 8rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #fff;
+	}
+	.checkbox.checked {
+		background: $app-primary;
+		border-color: $app-primary;
+	}
+	.checkbox.checked .app-icon {
+		color: #fff;
+		font-size: 24rpx;
+	}
+	.disease-label {
+		font-size: 28rpx;
+		color: $app-text;
+	}
+
 	.btn { margin-top: 24rpx; height: 88rpx; line-height: 88rpx; border-radius: $app-radius-sm; font-size: 32rpx; }
 	.btn.primary { background: $app-primary; color: #fff; }
 	.btn::after { border: none; }

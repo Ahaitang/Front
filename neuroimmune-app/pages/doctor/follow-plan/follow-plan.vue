@@ -185,7 +185,7 @@ export default {
 				const res = await getFollowUpList(params)
 				if (res && res.list) {
 					const newPending = res.list
-						.filter(f => f.status === 'pending' || f.status === '待随访')
+						.filter(f => f.status === 0)
 						.filter(f => f.isValid !== false) // 过滤无效记录
 						.map(f => ({
 							id: f.id,
@@ -198,7 +198,7 @@ export default {
 						}))
 
 					const newCompleted = res.list
-						.filter(f => f.status === 'completed' || f.status === '已完成')
+						.filter(f => f.status === 1)
 						.filter(f => f.isValid !== false) // 过滤无效记录
 						.map(f => ({
 							id: f.id,

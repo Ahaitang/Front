@@ -16,6 +16,7 @@ const stats = ref({
   totalPatients: 0,
   totalDoctors: 0,
   pendingFollowUps: 0,
+  completedFollowUps: 0,
   totalMedications: 0
 })
 
@@ -34,10 +35,6 @@ const patientGenderStats = computed(() => {
 
 // 使用患者列表实际数量计算，确保百分比准确
 const genderTotalCount = computed(() => patients.value.length)
-
-const completedFollowUps = computed(() => {
-  return recentFollowUps.value.filter(f => f.status === 1).length
-})
 
 const getStatusType = (status: number) => {
   const map: Record<number, string> = {
@@ -73,6 +70,7 @@ const loadData = async () => {
         totalPatients: statsRes.totalPatients || 0,
         totalDoctors: statsRes.totalDoctors || 0,
         pendingFollowUps: statsRes.pendingFollowUps || 0,
+        completedFollowUps: statsRes.completedFollowUps || 0,
         totalMedications: statsRes.totalMedications || 0
       }
     }
@@ -199,7 +197,7 @@ onMounted(() => {
           </div>
           <div class="follow-stat-item success">
             <div class="stat-circle">
-              <span>{{ completedFollowUps }}</span>
+              <span>{{ stats.completedFollowUps }}</span>
             </div>
             <div class="stat-label">已完成</div>
           </div>

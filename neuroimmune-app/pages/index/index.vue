@@ -58,6 +58,35 @@
 						<text class="health-value">{{ doctorStats.medicationCount }}</text>
 						<text class="health-label">用药建议</text>
 					</view>
+					<view class="health-item" @click="navTo('/pages/doctor/episode-list/episode-list')">
+						<view class="health-icon-wrap doctor-episode">
+							<text class="app-icon uniui-pulse"></text>
+						</view>
+						<text class="health-value">{{ doctorStats.episodeCount }}</text>
+						<text class="health-label">发作记录</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 待处理提醒 -->
+			<view class="section" v-if="pendingDoctorFollowUps.length">
+				<view class="section-header">
+					<text class="section-title">待处理提醒</text>
+					<text class="section-more" @click="navTo('/pages/doctor/follow-plan/follow-plan')">查看全部</text>
+				</view>
+				<view class="reminder-list">
+					<view class="reminder-item doctor" v-for="(item, i) in pendingDoctorFollowUps" :key="i" @click="navTo('/pages/doctor/patient-info/patient-info?id=' + item.patientId)">
+						<view class="reminder-left">
+							<view class="reminder-icon doctor">
+								<text class="app-icon uniui-calendar-filled"></text>
+							</view>
+							<view class="reminder-content">
+								<text class="reminder-title">{{ item.patientName }} - {{ item.project }}</text>
+								<text class="reminder-meta">随访日期: {{ item.date }}</text>
+							</view>
+						</view>
+						<text class="reminder-tag doctor">待随访</text>
+					</view>
 				</view>
 			</view>
 
@@ -67,11 +96,11 @@
 					<text class="section-title">快速操作</text>
 				</view>
 				<view class="quick-grid">
-					<view class="quick-item" @click="goPatientCenter">
+					<view class="quick-item" @click="navTo('/pages/doctor/add-patient/add-patient')">
 						<view class="quick-icon doctor">
-							<text class="app-icon uniui-contact-filled"></text>
+							<text class="app-icon uniui-personadd-filled"></text>
 						</view>
-						<text class="quick-text">患者管理</text>
+						<text class="quick-text">新增患者</text>
 					</view>
 					<view class="quick-item" @click="navTo('/pages/doctor/add-follow/add-follow')">
 						<view class="quick-icon doctor">
@@ -91,6 +120,32 @@
 						</view>
 						<text class="quick-text">添加用药</text>
 					</view>
+					<view class="quick-item" @click="navTo('/pages/doctor/add-episode/add-episode')">
+						<view class="quick-icon doctor">
+							<text class="app-icon uniui-pulse"></text>
+						</view>
+						<text class="quick-text">新增发作</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 最近患者 -->
+			<view class="section" v-if="recentPatients.length">
+				<view class="section-header">
+					<text class="section-title">最近患者</text>
+					<text class="section-more" @click="goPatientCenter">查看全部</text>
+				</view>
+				<view class="patient-list">
+					<view class="patient-item" v-for="(item, i) in recentPatients" :key="i" @click="navTo('/pages/doctor/patient-info/patient-info?id=' + item.id)">
+						<view class="patient-avatar">
+							<text class="avatar-text">{{ item.name.charAt(0) }}</text>
+						</view>
+						<view class="patient-content">
+							<text class="patient-name">{{ item.name }}</text>
+							<text class="patient-meta">{{ item.gender }} | {{ item.age }}岁</text>
+						</view>
+						<text class="app-icon sm muted uniui-arrowright"></text>
+					</view>
 				</view>
 			</view>
 		</template>
@@ -104,6 +159,9 @@
 					<view class="user-meta">
 						<text class="greeting">{{ greeting }}</text>
 						<text class="username">{{ userInfo.name || '患者' }}</text>
+						<view class="disease-tags-row" v-if="diseaseTypeLabels.length">
+							<view class="mini-tag" v-for="(label, i) in diseaseTypeLabels" :key="i">{{ label }}</view>
+						</view>
 					</view>
 					<view class="header-actions">
 						<view class="action-btn" @click="navTo('/pages/patient/my-info/my-info')">
@@ -128,33 +186,33 @@
 					<text class="section-title">健康概览</text>
 				</view>
 				<view class="health-grid">
-					<view class="health-item" @click="navTo('/pages/patient/follow-plan/follow-plan')">
+					<view class="health-item stat-only">
 						<view class="health-icon-wrap warning">
 							<text class="app-icon uniui-notification-filled"></text>
 						</view>
 						<text class="health-value">{{ pendingFollowUps.length }}</text>
 						<text class="health-label">待随访</text>
 					</view>
-					<view class="health-item" @click="navTo('/pages/patient/medication-advice/medication-advice')">
+					<view class="health-item stat-only">
 						<view class="health-icon-wrap primary">
 							<text class="app-icon uniui-compose"></text>
 						</view>
-						<text class="health-value">{{ recentMedications.length }}</text>
+						<text class="health-value">{{ medicationCount }}</text>
 						<text class="health-label">用药建议</text>
 					</view>
-					<view class="health-item" @click="navTo('/pages/patient/visit-history/visit-history')">
+					<view class="health-item stat-only">
 						<view class="health-icon-wrap success">
-							<text class="app-icon uniui-calendar-filled"></text>
+							<text class="app-icon uniui-folder-add-filled"></text>
 						</view>
 						<text class="health-value">{{ visitCount }}</text>
-						<text class="health-label">就诊记录</text>
+						<text class="health-label">病历数量</text>
 					</view>
-					<view class="health-item" @click="navTo('/pages/patient/doctor-advice/doctor-advice')">
-						<view class="health-icon-wrap info">
-							<text class="app-icon uniui-chatbubble-filled"></text>
+					<view class="health-item stat-only">
+						<view class="health-icon-wrap episode">
+							<text class="app-icon uniui-pulse"></text>
 						</view>
-						<text class="health-value">{{ adviceCount }}</text>
-						<text class="health-label">医生建议</text>
+						<text class="health-value">{{ episodeCount }}</text>
+						<text class="health-label">发作次数</text>
 					</view>
 				</view>
 			</view>
@@ -207,16 +265,6 @@
 						</view>
 						<text class="app-icon sm muted uniui-arrowright"></text>
 					</view>
-					<view class="menu-item" @click="navTo('/pages/patient/doctor-advice/doctor-advice')">
-						<view class="menu-icon advice">
-							<text class="app-icon uniui-chatbubble-filled"></text>
-						</view>
-						<view class="menu-content">
-							<text class="menu-title">医生建议</text>
-							<text class="menu-desc">查看医生建议</text>
-						</view>
-						<text class="app-icon sm muted uniui-arrowright"></text>
-					</view>
 					<view class="menu-item" @click="navTo('/pages/patient/follow-plan/follow-plan')">
 						<view class="menu-icon follow">
 							<text class="app-icon uniui-calendar-filled"></text>
@@ -227,20 +275,15 @@
 						</view>
 						<text class="app-icon sm muted uniui-arrowright"></text>
 					</view>
-				</view>
-			</view>
-
-			<!-- 最近用药建议 -->
-			<view class="section" v-if="recentMedications.length">
-				<view class="section-header">
-					<text class="section-title">最近用药建议</text>
-					<text class="section-more" @click="navTo('/pages/patient/medication-advice/medication-advice')">查看全部</text>
-				</view>
-				<view class="med-list">
-					<view class="med-item" v-for="(item, i) in recentMedications" :key="i">
-						<view class="med-name">{{ item.medicationName }}</view>
-						<view class="med-dosage">{{ item.dosage }}{{ item.unit }} · {{ item.frequency }}</view>
-						<view class="med-duration" v-if="item.duration">服用时间：{{ item.duration }}</view>
+					<view class="menu-item" @click="navTo('/pages/patient/disease-episode/disease-episode')">
+						<view class="menu-icon episode">
+							<text class="app-icon uniui-pulse"></text>
+						</view>
+						<view class="menu-content">
+							<text class="menu-title">疾病发作记录</text>
+							<text class="menu-desc">查看发作记录</text>
+						</view>
+						<text class="app-icon sm muted uniui-arrowright"></text>
 					</view>
 				</view>
 			</view>
@@ -251,23 +294,17 @@
 					<text class="section-title">快速操作</text>
 				</view>
 				<view class="quick-grid">
-					<view class="quick-item" @click="navTo('/pages/patient/upload-external/upload-external')">
+					<view class="quick-item" @click="navTo('/pages/patient/add-visit/add-visit')">
 						<view class="quick-icon">
-							<text class="app-icon uniui-cloud-upload-filled"></text>
-						</view>
-						<text class="quick-text">上传外院资料</text>
-					</view>
-					<view class="quick-item" @click="navTo('/pages/patient/visit-history/visit-history')">
-						<view class="quick-icon">
-							<text class="app-icon uniui-calendar-filled"></text>
+							<text class="app-icon uniui-calendar"></text>
 						</view>
 						<text class="quick-text">就诊记录</text>
 					</view>
-					<view class="quick-item" @click="navTo('/pages/patient/external-supplement/external-supplement')">
+					<view class="quick-item" @click="navTo('/pages/patient/add-episode/add-episode')">
 						<view class="quick-icon">
-							<text class="app-icon uniui-paperclip"></text>
+							<text class="app-icon uniui-pulse"></text>
 						</view>
-						<text class="quick-text">补充资料</text>
+						<text class="quick-text">发作记录</text>
 					</view>
 				</view>
 			</view>
@@ -284,6 +321,9 @@ import { getStats } from '@/api/dashboard.js'
 import { getFollowUpList } from '@/api/followup.js'
 import { getMedicationList } from '@/api/medication.js'
 import { getPatientDoctor } from '@/api/relation.js'
+import { getEpisodeCount } from '@/api/episode.js'
+// 医生端 API
+import { getMyPatients } from '@/api/patient.js'
 
 export default {
 	data() {
@@ -293,16 +333,21 @@ export default {
 			doctorName: '',
 			// 患者端数据
 			pendingFollowUps: [],
-			recentMedications: [],
+			medicationCount: 0,
 			visitCount: 0,
-			adviceCount: 0,
+			episodeCount: 0,
 			// 医生端数据
 			doctorStats: {
 				patientCount: 0,
 				pendingFollow: 0,
 				medicalRecord: 0,
-				medicationCount: 0
-			}
+				medicationCount: 0,
+				episodeCount: 0
+			},
+			// 医生端最近患者
+			recentPatients: [],
+			// 医生端待处理随访
+			pendingDoctorFollowUps: []
 		};
 	},
 	computed: {
@@ -318,6 +363,20 @@ export default {
 			if (hour < 18) return '下午好';
 			if (hour < 22) return '晚上好';
 			return '夜深了';
+		},
+		diseaseTypeLabels() {
+			const types = this.userInfo.diseaseTypes || [];
+			const labelMap = {
+				'MS': 'MS',
+				'NMOSD': 'NMOSD',
+				'MG': 'MG',
+				'MOGAD': 'MOGAD',
+				'AUTO_ENCEPHALITIS': '自免脑',
+				'GBS': 'GBS',
+				'CIDP': 'CIDP',
+				'OTHER': '其他'
+			};
+			return types.map(t => labelMap[t] || t).slice(0, 3);
 		}
 	},
 	onLoad() {
@@ -336,6 +395,8 @@ export default {
 			uni.reLaunch({ url: '/pages/login/login' });
 			return;
 		}
+		// 刷新用户信息（包括疾病类型）
+		this.userInfo = uni.getStorageSync('userInfo') || {};
 		// 根据角色加载数据
 		if (this.isDoctor) {
 			this.loadDoctorData();
@@ -346,15 +407,45 @@ export default {
 	methods: {
 		// 医生端加载数据
 		async loadDoctorData() {
-			// 模拟数据，实际可从API获取
-			this.doctorStats = {
-				patientCount: 28,
-				pendingFollow: 5,
-				medicalRecord: 156,
-				medicationCount: 12
-			};
+			try {
+				const statsRes = await getStats()
+				console.log('医生端stats响应:', statsRes)
+				if (statsRes) {
+					this.doctorStats = {
+						patientCount: statsRes.totalPatients || 0,
+						pendingFollow: statsRes.pendingFollowUps || 0,
+						medicalRecord: statsRes.totalMedicalRecords || 0,
+						medicationCount: statsRes.totalMedications || 0,
+						episodeCount: statsRes.totalEpisodes || 0
+					}
+				}
+				// 获取最近患者列表（5条）
+				const patientRes = await getMyPatients({ pageNum: 1, pageSize: 5 })
+				if (patientRes && patientRes.list) {
+					this.recentPatients = patientRes.list.map(p => ({
+						id: p.id,
+						name: p.name || '患者',
+						gender: p.gender || '男',
+						age: p.age || '-',
+						diseaseType: p.diseaseTypes?.[0] || ''
+					}))
+				}
+				// 获取待处理随访（3条）
+				const followRes = await getFollowUpList({ pageNum: 1, pageSize: 10 })
+				if (followRes && followRes.list) {
+					const pendingList = followRes.list.filter(f => f.status === 0)
+					this.pendingDoctorFollowUps = pendingList.slice(0, 3).map(f => ({
+						id: f.id,
+						patientId: f.patientId,
+						patientName: f.patientName || '患者',
+						date: f.followDate || f.date,
+						project: f.project || '随访'
+					}))
+				}
+			} catch (e) {
+				console.error('加载医生端数据失败:', e)
+			}
 		},
-		// 患者端加载数据
 		// 患者端加载数据
 		async loadPatientData() {
 			try {
@@ -383,13 +474,21 @@ export default {
 				const stats = await getStats();
 				if (stats) {
 					this.visitCount = stats.visitCount || 0;
-					this.adviceCount = stats.adviceCount || 0;
+				}
+
+				// 获取发作次数
+				if (this.userInfo.id) {
+					try {
+						this.episodeCount = await getEpisodeCount(this.userInfo.id) || 0;
+					} catch (e) {
+						this.episodeCount = 0;
+					}
 				}
 
 				// 获取随访列表
 				const followRes = await getFollowUpList({ pageNum: 1, pageSize: 10 });
 				if (followRes && followRes.list) {
-					const pendingList = followRes.list.filter(f => f.status === 'pending' || f.status === '待随访');
+					const pendingList = followRes.list.filter(f => f.status === 0);
 					this.pendingFollowUps = pendingList.slice(0, 3).map(f => ({
 						id: f.id,
 						title: f.project || '随访',
@@ -398,24 +497,21 @@ export default {
 					}));
 				}
 
-				// 获取用药记录
-				const medRes = await getMedicationList({ pageNum: 1, pageSize: 5 });
-				if (medRes && medRes.list) {
-					this.recentMedications = medRes.list.slice(0, 3).map(m => ({
-						id: m.id,
-						medicationName: m.medicationName,
-						dosage: m.dosage,
-						unit: m.unit || '',
-						frequency: m.frequency,
-						duration: m.duration
-					}));
+				// 获取用药记录数量
+				const medRes = await getMedicationList({ pageNum: 1, pageSize: 100 });
+				if (medRes) {
+					this.medicationCount = medRes.total || 0;
 				}
 			} catch (e) {
 				console.error('加载数据失败:', e);
 			}
 		},
 		goPatientCenter() {
-			uni.switchTab({ url: '/pages/patient-center/patient-center' });
+			if (this.isDoctor) {
+				uni.navigateTo({ url: '/pages/doctor/patient-list/patient-list' });
+			} else {
+				uni.switchTab({ url: '/pages/patient-center/patient-center' });
+			}
 		},
 		handleLogout() {
 			uni.showModal({
@@ -537,6 +633,22 @@ export default {
 	color: #fff;
 	font-weight: 700;
 	display: block;
+}
+
+/* 疾病标签行 */
+.disease-tags-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8rpx;
+	margin-top: 8rpx;
+}
+
+.mini-tag {
+	font-size: 22rpx;
+	color: #fff;
+	background: rgba(255,255,255,0.25);
+	padding: 4rpx 12rpx;
+	border-radius: 12rpx;
 }
 
 .header-actions {
@@ -667,12 +779,19 @@ export default {
 .health-icon-wrap.warning { background: $app-warning; }
 .health-icon-wrap.success { background: $app-success; }
 .health-icon-wrap.info { background: $app-info; }
+.health-icon-wrap.episode { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); }
+
+/* 统计项样式（无点击效果） */
+.health-item.stat-only:active {
+	transform: none;
+}
 
 /* 医生端工作概览图标 */
 .health-icon-wrap.doctor-primary { background: #6366F1; }
 .health-icon-wrap.doctor-warning { background: $app-warning; }
 .health-icon-wrap.doctor-success { background: $app-success; }
 .health-icon-wrap.doctor-info { background: #EC4899; }
+.health-icon-wrap.doctor-episode { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); }
 
 .health-value {
 	font-size: 44rpx;
@@ -723,9 +842,21 @@ export default {
 	justify-content: center;
 }
 
+.reminder-icon.doctor {
+	background: rgba(99, 102, 241, 0.1);
+}
+
 .reminder-icon .app-icon {
 	font-size: 32rpx !important;
 	color: $app-primary !important;
+}
+
+.reminder-icon.doctor .app-icon {
+	color: #6366F1 !important;
+}
+
+.reminder-content {
+	flex: 1;
 }
 
 .reminder-title {
@@ -749,6 +880,71 @@ export default {
 	padding: 8rpx 20rpx;
 	border-radius: 20rpx;
 	font-weight: 500;
+}
+
+.reminder-tag.doctor {
+	color: #6366F1;
+	background: rgba(99, 102, 241, 0.1);
+}
+
+/* 最近患者列表 */
+.patient-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.patient-item {
+	display: flex;
+	align-items: center;
+	padding: 24rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+	transition: $app-transition;
+}
+
+.patient-item:active {
+	background: $app-hover-bg;
+	margin: 0 -24rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+}
+
+.patient-item:last-child {
+	border-bottom: none;
+}
+
+.patient-avatar {
+	width: 64rpx;
+	height: 64rpx;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 20rpx;
+}
+
+.avatar-text {
+	font-size: 28rpx;
+	font-weight: bold;
+	color: #fff;
+}
+
+.patient-content {
+	flex: 1;
+}
+
+.patient-name {
+	font-size: 30rpx;
+	color: $app-text;
+	font-weight: 500;
+	display: block;
+}
+
+.patient-meta {
+	font-size: 24rpx;
+	color: $app-text-muted;
+	margin-top: 4rpx;
+	display: block;
 }
 
 /* 功能菜单 */
@@ -794,13 +990,8 @@ export default {
 
 .menu-icon.medical { background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%); }
 .menu-icon.medication { background: linear-gradient(135deg, #EC4899 0%, #F472B6 100%); }
-.menu-icon.advice { background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%); }
 .menu-icon.follow { background: $app-gradient-primary; }
-
-/* 医生端菜单图标 */
-.menu-icon.doctor-patient { background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%); }
-.menu-icon.doctor-follow { background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%); }
-.menu-icon.doctor-medication { background: linear-gradient(135deg, #EC4899 0%, #F472B6 100%); }
+.menu-icon.episode { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); }
 
 .menu-content {
 	flex: 1;
@@ -818,46 +1009,6 @@ export default {
 	color: $app-text-muted;
 	margin-top: 6rpx;
 	display: block;
-}
-
-/* 最近用药 */
-.med-list {
-	display: flex;
-	flex-direction: column;
-	gap: 16rpx;
-}
-
-.med-item {
-	background: $app-hover-bg;
-	border-radius: $app-radius-sm;
-	padding: 24rpx;
-	transition: $app-transition;
-}
-
-.med-item:active {
-	background: #EBEDEF;
-}
-
-.med-name {
-	font-size: 30rpx;
-	color: $app-text;
-	font-weight: 600;
-	display: block;
-}
-
-.med-dosage {
-	font-size: 26rpx;
-	color: $app-text-secondary;
-	margin-top: 10rpx;
-	display: block;
-}
-
-.med-duration {
-	font-size: 24rpx;
-	color: $app-primary;
-	margin-top: 10rpx;
-	display: block;
-	font-weight: 500;
 }
 
 /* 快速操作 */
@@ -909,12 +1060,5 @@ export default {
 	font-size: 28rpx;
 	color: $app-text;
 	font-weight: 500;
-}
-
-.empty-tip {
-	font-size: 28rpx;
-	color: $app-text-muted;
-	text-align: center;
-	padding: 48rpx 0;
 }
 </style>

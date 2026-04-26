@@ -18,58 +18,11 @@
 			</view>
 		</view>
 
-		<view class="section card">
-			<view class="section-title">基本信息</view>
-			<view class="info-row"><text class="label">姓名</text><text class="value">{{ patient.name || '未填写' }}</text></view>
-			<view class="info-row"><text class="label">性别</text><text class="value">{{ patient.gender || '未填写' }}</text></view>
-			<view class="info-row"><text class="label">年龄</text><text class="value">{{ patient.age || '未填写' }}岁</text></view>
-			<view class="info-row"><text class="label">出生日期</text><text class="value">{{ patient.birthday || '未填写' }}</text></view>
-			<view class="info-row"><text class="label">身份证号</text><text class="value">{{ formatIdCard(patient.idCard) || '未填写' }}</text></view>
-			<view class="info-row"><text class="label">手机号码</text><text class="value">{{ formatPhone(patient.phone) || '未填写' }}</text></view>
-			<view class="info-row"><text class="label">紧急联系人</text><text class="value">{{ patient.emergencyContact || '未填写' }}</text></view>
-		</view>
-		<view class="section card">
-			<view class="section-title">病历信息</view>
-			<view class="info-row"><text class="label">主要诊断</text><text class="value">{{ record.diagnosis || '未填写' }}</text></view>
-			<view class="info-row"><text class="label">初诊日期</text><text class="value">{{ record.firstDiagnosisDate || '未填写' }}</text></view>
-			<view class="info-row"><text class="label">主治医生</text><text class="value">{{ record.doctorName || '未绑定' }}</text></view>
-			<view class="info-row"><text class="label">科室</text><text class="value">{{ record.department || '未填写' }}</text></view>
-			<view class="info-block">
-				<text class="label">病史</text>
-				<text class="value block">{{ record.medicalHistory || '未填写' }}</text>
-			</view>
-			<view class="info-block">
-				<text class="label">过敏史</text>
-				<text class="value block">{{ record.allergyHistory || '无' }}</text>
-			</view>
-		</view>
-		<view class="section card">
-			<view class="section-title">检查结果</view>
-			<text class="empty-tip" v-if="!examinations.length">暂无检查结果</text>
-			<view class="exam-item" v-for="(item, i) in examinations" :key="i">
-				<view class="exam-head">
-					<text class="exam-title">{{ item.title }}</text>
-					<text class="exam-date">{{ item.date }}</text>
-				</view>
-				<text class="exam-desc">{{ item.description || '无描述' }}</text>
-			</view>
-		</view>
-		<view class="section card">
-			<view class="section-title">用药记录</view>
-			<text class="empty-tip" v-if="!medications.length">暂无用药记录</text>
-			<view class="med-item" v-for="(item, i) in medications" :key="i" @click="navTo('/pages/patient/medication-advice/medication-advice')">
-				<view class="med-head">
-					<text class="med-name">{{ item.medicineName }}</text>
-					<text class="med-date">{{ item.startDate }}</text>
-				</view>
-				<view class="med-body">剂量：{{ item.dosage }}{{ item.unit }} 频率：{{ item.frequency }} 途径：{{ item.route }}</view>
-			</view>
-		</view>
-
 		<!-- 本院病历 -->
 		<view class="section card">
 			<view class="section-header">
 				<text class="section-title">本院病历</text>
+				<text class="add-btn" @click="navTo('/pages/patient/upload-external/upload-external')">+上传</text>
 			</view>
 			<text class="empty-tip" v-if="!hospitalRecords.length">暂无本院病历</text>
 			<view class="record-item" v-for="(item, i) in hospitalRecords" :key="i">
@@ -83,7 +36,7 @@
 						<text class="action-btn delete" @click="deleteHospitalRecord(item)">删除</text>
 					</view>
 				</view>
-				<view class="record-body" @click="showRecordDetail(item)">
+				<view class="record-body" @click="showRecordDetail(item, 'hospital')">
 					<view class="record-info" v-if="item.department || item.doctorName">
 						<text class="info-tag" v-if="item.department">{{ item.department }}</text>
 						<text class="info-tag" v-if="item.doctorName">{{ item.doctorName }}</text>
@@ -98,7 +51,7 @@
 		<view class="section card">
 			<view class="section-header">
 				<text class="section-title">外院病历</text>
-				<text class="add-btn" @click="navTo('/pages/patient/upload-external/upload-external')">+上传</text>
+				<text class="add-btn" @click="navTo('/pages/patient/upload-external/upload-external?type=外院病历')">+上传</text>
 			</view>
 			<text class="empty-tip" v-if="!externalRecords.length">暂无外院病历</text>
 			<view class="external-item" v-for="(item, i) in externalRecords" :key="i">
@@ -109,7 +62,7 @@
 						<text class="action-btn delete" @click="deleteExternal(item)">删除</text>
 					</view>
 				</view>
-				<view class="external-body" @click="showExternalDetail(item)">
+				<view class="external-body" @click="showRecordDetail(item, 'external')">
 					<text class="external-hospital" v-if="item.hospital">{{ item.hospital }}</text>
 					<view class="external-info" v-if="item.department || item.doctorName">
 						<text class="info-tag" v-if="item.department">{{ item.department }}</text>
@@ -123,40 +76,121 @@
 				</view>
 			</view>
 		</view>
+
+		<!-- 详情弹窗 -->
+		<uni-popup ref="detailPopup" type="bottom" :safe-area="true" background-color="transparent">
+			<view class="detail-popup">
+				<view class="popup-header">
+					<text class="popup-title">{{ detailData.recordType === 'external' ? '外院病历详情' : '本院病历详情' }}</text>
+					<view class="popup-close" @click="closeDetailPopup">
+						<uni-icons type="close" size="24" color="#9CA3AF"></uni-icons>
+					</view>
+				</view>
+
+				<view class="popup-body">
+					<!-- 基本信息 -->
+					<view class="detail-section">
+						<view class="detail-row">
+							<text class="detail-label">就诊日期</text>
+							<text class="detail-value">{{ detailData.date || '未知' }}</text>
+						</view>
+						<view class="detail-row" v-if="detailData.recordType === 'hospital'">
+							<text class="detail-label">病历类型</text>
+							<text class="detail-value">{{ detailData.type || '门诊病历' }}</text>
+						</view>
+						<view class="detail-row" v-if="detailData.hospital">
+							<text class="detail-label">就诊医院</text>
+							<text class="detail-value highlight">{{ detailData.hospital }}</text>
+						</view>
+						<view class="detail-row" v-if="detailData.department">
+							<text class="detail-label">科室</text>
+							<text class="detail-value">{{ detailData.department }}</text>
+						</view>
+						<view class="detail-row" v-if="detailData.doctorName">
+							<text class="detail-label">医生</text>
+							<text class="detail-value">{{ detailData.doctorName }}</text>
+						</view>
+					</view>
+
+					<!-- 诊断信息 -->
+					<view class="detail-section" v-if="detailData.diagnosis">
+						<view class="section-label">
+							<uni-icons type="medal" size="18" color="#0D9488"></uni-icons>
+							<text class="section-label-text">诊断结果</text>
+						</view>
+						<view class="diagnosis-box">
+							<text class="diagnosis-text">{{ detailData.diagnosis }}</text>
+						</view>
+					</view>
+
+					<!-- 病历内容 -->
+					<view class="detail-section">
+						<view class="section-label">
+							<uni-icons type="list" size="18" color="#0D9488"></uni-icons>
+							<text class="section-label-text">病历内容</text>
+						</view>
+						<view class="content-box">
+							<text class="content-text">{{ detailData.content || detailData.notes || '暂无内容' }}</text>
+						</view>
+					</view>
+
+					<!-- 附件图片 -->
+					<view class="detail-section" v-if="detailData.attachments">
+						<view class="section-label">
+							<uni-icons type="image" size="18" color="#0D9488"></uni-icons>
+							<text class="section-label-text">附件图片</text>
+						</view>
+						<view class="attachment-grid">
+							<image
+								v-for="(img, idx) in detailData.attachments.split(',')"
+								:key="idx"
+								:src="img"
+								mode="aspectFill"
+								class="attachment-img"
+								@click="previewImage(img, detailData.attachments)"
+							/>
+						</view>
+					</view>
+				</view>
+
+				<view class="popup-footer">
+					<view class="footer-btn edit" @click="editFromPopup">
+						<uni-icons type="compose" size="20" color="#0D9488"></uni-icons>
+						<text class="footer-btn-text">编辑</text>
+					</view>
+					<view class="footer-btn delete" @click="deleteFromPopup">
+						<uni-icons type="trash" size="20" color="#EF4444"></uni-icons>
+						<text class="footer-btn-text delete-text">删除</text>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
 	</view>
 </template>
 
 <script>
-import { getPatientById } from '@/api/patient.js'
 import { getMedicalRecordList, deleteMedicalRecord } from '@/api/medicalRecord.js'
-import { getMedicationList } from '@/api/medication.js'
 
 export default {
 	data() {
 		return {
 			startDate: '',
 			endDate: '',
-			patient: {
-				name: '',
-				gender: '',
-				age: '',
-				birthday: '',
-				idCard: '',
-				phone: '',
-				emergencyContact: ''
-			},
-			record: {
-				diagnosis: '',
-				firstDiagnosisDate: '',
-				doctorName: '',
-				department: '',
-				medicalHistory: '',
-				allergyHistory: ''
-			},
-			examinations: [],
-			medications: [],
 			hospitalRecords: [],
-			externalRecords: []
+			externalRecords: [],
+			detailData: {
+				id: '',
+				date: '',
+				type: '',
+				hospital: '',
+				department: '',
+				doctorName: '',
+				diagnosis: '',
+				content: '',
+				notes: '',
+				attachments: '',
+				recordType: 'hospital' // hospital 或 external
+			}
 		};
 	},
 	onLoad() {
@@ -178,89 +212,14 @@ export default {
 			this.loadData()
 		},
 		async loadData() {
-			const u = uni.getStorageSync('userInfo') || {};
-			// 尝试获取患者信息
 			try {
-				if (u.id) {
-					const patientData = await getPatientById(u.id);
-					if (patientData) {
-						this.patient = {
-							name: patientData.name || u.name || '',
-							gender: patientData.gender || '',
-							age: patientData.age || '',
-							birthday: patientData.birthday || '',
-							idCard: patientData.idCard || '',
-							phone: patientData.phone || u.phone || '',
-							emergencyContact: patientData.emergencyContact || ''
-						};
-					}
-				}
-			} catch (e) {
-				// 使用本地存储的信息
-				this.patient.name = u.name || '张哲瀚';
-				this.patient.phone = u.phone || '';
-			}
-
-			// 尝试获取病历信息
-			try {
-				const params = { pageNum: 1, pageSize: 10 }
+				const params = { pageNum: 1, pageSize: 50 }
 				if (this.startDate) params.startDate = this.startDate
 				if (this.endDate) params.endDate = this.endDate
-				const recordRes = await getMedicalRecordList(params);
-				if (recordRes && recordRes.list && recordRes.list.length > 0) {
-					const r = recordRes.list[0];
-					this.record = {
-						diagnosis: r.diagnosis || '',
-						firstDiagnosisDate: r.date || '',
-						doctorName: r.doctorName || '',
-						department: r.department || '',
-						medicalHistory: r.content || '',
-						allergyHistory: ''
-					};
-				}
-			} catch (e) {
-				this.record = {
-					diagnosis: '神经免疫相关疾病',
-					firstDiagnosisDate: '2024-01-15',
-					doctorName: '张哲瀚',
-					department: '神经内科',
-					medicalHistory: '既往病史描述',
-					allergyHistory: '无'
-				};
-			}
+				const res = await getMedicalRecordList(params)
 
-			// 尝试获取用药记录
-			try {
-				const medParams = { pageNum: 1, pageSize: 10 }
-				if (this.startDate) medParams.startDate = this.startDate
-				if (this.endDate) medParams.endDate = this.endDate
-				const medRes = await getMedicationList(medParams);
-				if (medRes && medRes.list) {
-					this.medications = medRes.list.map(m => ({
-						medicineName: m.medicationName,
-						startDate: m.date,
-						dosage: m.dosage,
-						unit: m.unit || '',
-						frequency: m.frequency,
-						route: m.route
-					}));
-				}
-			} catch (e) {
-				this.medications = [
-					{ medicineName: '甲钴胺片', startDate: '2025-02-20', dosage: '0.5mg', unit: '/次', frequency: '一日三次', route: '口服' }
-				];
-			}
-
-			// 获取外院病历和本院病历
-			try {
-				// 获取所有病历
-				const allParams = { pageNum: 1, pageSize: 50 }
-				if (this.startDate) allParams.startDate = this.startDate
-				if (this.endDate) allParams.endDate = this.endDate
-				const allRes = await getMedicalRecordList(allParams)
-
-				if (allRes && allRes.list) {
-					const allRecords = allRes.list.map(r => ({
+				if (res && res.list) {
+					const allRecords = res.list.map(r => ({
 						id: r.id,
 						date: r.date ? (typeof r.date === 'string' ? r.date.split('T')[0] : r.date) : '',
 						type: r.type || '',
@@ -273,7 +232,6 @@ export default {
 						attachments: r.attachments || ''
 					}))
 
-					// 区分本院病历和外院病历
 					this.externalRecords = allRecords.filter(r => r.type === '外院病历')
 					this.hospitalRecords = allRecords.filter(r => r.type !== '外院病历')
 				}
@@ -281,30 +239,43 @@ export default {
 				console.log('获取病历记录失败');
 			}
 		},
-		formatIdCard(v) {
-			if (!v) return '';
-			return v.replace(/(^\d{6})\d*(\d{4})$/, '$1********$2');
-		},
-		formatPhone(v) {
-			if (!v) return '';
-			return v.replace(/(^\d{3})\d*(\d{4})$/, '$1****$2');
-		},
 		navTo(url) {
 			uni.navigateTo({ url });
 		},
-		showExternalDetail(item) {
-			let content = `就诊日期：${item.date || '未知'}\n`
-			if (item.hospital) content += `医院：${item.hospital}\n`
-			if (item.department) content += `科室：${item.department}\n`
-			if (item.doctorName) content += `医生：${item.doctorName}\n`
-			if (item.diagnosis) content += `诊断：${item.diagnosis}\n`
-			content += `\n${item.content || item.notes || '暂无内容'}`
-
+		showRecordDetail(item, recordType) {
+			this.detailData = {
+				...item,
+				recordType: recordType
+			}
+			this.$refs.detailPopup.open()
+		},
+		closeDetailPopup() {
+			this.$refs.detailPopup.close()
+		},
+		editFromPopup() {
+			this.closeDetailPopup()
+			const url = '/pages/patient/upload-external/upload-external?id=' + this.detailData.id +
+				(this.detailData.type ? '&type=' + this.detailData.type : '')
+			uni.navigateTo({ url })
+		},
+		deleteFromPopup() {
+			this.closeDetailPopup()
+			const title = this.detailData.recordType === 'external' ? '外院病历' : '本院病历'
 			uni.showModal({
-				title: '外院病历详情',
-				content: content,
-				showCancel: false
-			});
+				title: '确认删除',
+				content: `确定要删除这条${title}吗？`,
+				success: async (res) => {
+					if (res.confirm) {
+						try {
+							await deleteMedicalRecord(this.detailData.id)
+							uni.showToast({ title: '删除成功', icon: 'success' })
+							this.loadData()
+						} catch (e) {
+							uni.showToast({ title: '删除失败', icon: 'none' })
+						}
+					}
+				}
+			})
 		},
 		previewImage(current, attachments) {
 			const urls = attachments.split(',').filter(url => url)
@@ -334,20 +305,6 @@ export default {
 					}
 				}
 			})
-		},
-		showRecordDetail(item) {
-			let content = `就诊日期：${item.date || '未知'}\n`
-			content += `类型：${item.type || '门诊病历'}\n`
-			if (item.department) content += `科室：${item.department}\n`
-			if (item.doctorName) content += `医生：${item.doctorName}\n`
-			if (item.diagnosis) content += `诊断：${item.diagnosis}\n`
-			content += `\n${item.content || '暂无内容'}`
-
-			uni.showModal({
-				title: '本院病历详情',
-				content: content,
-				showCancel: false
-			});
 		},
 		editHospitalRecord(item) {
 			uni.navigateTo({
@@ -461,128 +418,11 @@ export default {
 	margin-bottom: $app-spacing-md;
 }
 
-.info-row {
-	display: flex;
-	justify-content: space-between;
-	padding: 18rpx 0;
-	border-bottom: 1rpx solid $app-divider;
-}
-
-.info-row:last-child {
-	border-bottom: none;
-}
-
-.info-row .label {
-	font-size: 28rpx;
-	color: $app-text-muted;
-	width: 180rpx;
-}
-
-.info-row .value {
-	font-size: 28rpx;
-	color: $app-text;
-	flex: 1;
-	text-align: right;
-	font-weight: 500;
-}
-
-.info-block {
-	padding: 18rpx 0;
-	border-bottom: 1rpx solid $app-divider;
-}
-
-.info-block:last-child {
-	border-bottom: none;
-}
-
-.info-block .label {
-	font-size: 28rpx;
-	color: $app-text-muted;
-	display: block;
-}
-
-.info-block .value.block {
-	font-size: 28rpx;
-	color: $app-text;
-	margin-top: 10rpx;
-	line-height: 1.6;
-}
-
 .empty-tip {
 	font-size: 28rpx;
 	color: $app-text-muted;
 	text-align: center;
 	padding: 32rpx 0;
-}
-
-.exam-item {
-	background: $app-hover-bg;
-	border-radius: $app-radius-sm;
-	padding: $app-spacing-md;
-	margin-bottom: $app-spacing-sm;
-	transition: $app-transition;
-}
-
-.exam-item:active {
-	background: #EBEDEF;
-}
-
-.exam-head {
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 12rpx;
-}
-
-.exam-title {
-	font-size: 32rpx;
-	font-weight: 600;
-	color: $app-text;
-}
-
-.exam-date {
-	font-size: 24rpx;
-	color: $app-text-muted;
-}
-
-.exam-desc {
-	font-size: 26rpx;
-	color: $app-text-secondary;
-	line-height: 1.5;
-}
-
-.med-item {
-	background: $app-hover-bg;
-	border-radius: $app-radius-sm;
-	padding: $app-spacing-md;
-	margin-bottom: $app-spacing-sm;
-	transition: $app-transition;
-}
-
-.med-item:active {
-	background: #EBEDEF;
-}
-
-.med-head {
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 10rpx;
-}
-
-.med-name {
-	font-size: 32rpx;
-	font-weight: 600;
-	color: $app-text;
-}
-
-.med-date {
-	font-size: 24rpx;
-	color: $app-text-muted;
-}
-
-.med-body {
-	font-size: 26rpx;
-	color: $app-text-secondary;
-	line-height: 1.5;
 }
 
 /* 本院病历样式 */
@@ -784,5 +624,157 @@ export default {
 	height: 120rpx;
 	border-radius: $app-radius-sm;
 	border: 2rpx solid $app-border;
+}
+
+/* 详情弹窗样式 */
+.detail-popup {
+	background: $app-card-bg;
+	border-radius: 32rpx 32rpx 0 0;
+	max-height: 80vh;
+	overflow: hidden;
+}
+
+.popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 32rpx;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.popup-title {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: $app-text;
+}
+
+.popup-close {
+	padding: 8rpx;
+}
+
+.popup-body {
+	padding: 24rpx 32rpx;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+.detail-section {
+	margin-bottom: 24rpx;
+}
+
+.detail-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.detail-row:last-child {
+	border-bottom: none;
+}
+
+.detail-label {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
+
+.detail-value {
+	font-size: 28rpx;
+	color: $app-text;
+	font-weight: 500;
+}
+
+.detail-value.highlight {
+	color: $app-primary;
+}
+
+.section-label {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	margin-bottom: 16rpx;
+}
+
+.section-label-text {
+	font-size: 30rpx;
+	font-weight: 600;
+	color: $app-text;
+}
+
+.diagnosis-box {
+	background: $app-primary-bg;
+	border-radius: $app-radius;
+	padding: 20rpx;
+	border-left: 6rpx solid $app-primary;
+}
+
+.diagnosis-text {
+	font-size: 28rpx;
+	color: $app-text;
+	line-height: 1.6;
+}
+
+.content-box {
+	background: $app-hover-bg;
+	border-radius: $app-radius;
+	padding: 20rpx;
+}
+
+.content-text {
+	font-size: 28rpx;
+	color: $app-text-secondary;
+	line-height: 1.8;
+}
+
+.attachment-grid {
+	display: flex;
+	gap: 16rpx;
+	flex-wrap: wrap;
+}
+
+.attachment-img {
+	width: 180rpx;
+	height: 180rpx;
+	border-radius: $app-radius;
+	border: 2rpx solid $app-border;
+}
+
+.popup-footer {
+	display: flex;
+	gap: 24rpx;
+	padding: 24rpx 32rpx;
+	border-top: 1rpx solid $app-divider;
+	background: $app-card-bg;
+}
+
+.footer-btn {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12rpx;
+	padding: 24rpx;
+	border-radius: $app-radius;
+	background: $app-primary-bg;
+	transition: $app-transition;
+}
+
+.footer-btn:active {
+	opacity: 0.8;
+}
+
+.footer-btn-text {
+	font-size: 30rpx;
+	color: $app-primary;
+	font-weight: 500;
+}
+
+.footer-btn.delete {
+	background: $app-error-bg;
+}
+
+.footer-btn-text.delete-text {
+	color: $app-error;
 }
 </style>

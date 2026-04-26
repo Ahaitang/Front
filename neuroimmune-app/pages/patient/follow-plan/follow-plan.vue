@@ -23,16 +23,22 @@
 			</view>
 		</view>
 
-		<!-- 今日随访列表 -->
+		<!-- 查看全部按钮 -->
+		<view class="view-all-bar">
+			<view class="view-all-btn" :class="{ active: showAll }" @click="toggleShowAll">
+				<text class="app-icon" :class="showAll ? 'uniui-eye-slash' : 'uniui-eye'"></text>
+				<text>{{ showAll ? '查看当日' : '查看全部记录' }}</text>
+			</view>
+			<text class="total-count" v-if="showAll">共 {{ followList.length }} 条随访记录</text>
+		</view>
+
+		<!-- 随访列表 -->
 		<view class="section">
-			<view class="section-header">
-				<text class="section-title">今日随访安排</text>
-			</view>
-			<view class="empty-tip" v-if="todayFollowList.length === 0">
+			<view class="empty-tip" v-if="filteredFollowList.length === 0">
 				<text class="app-icon uniui-calendar"></text>
-				<text>今日暂无随访安排</text>
+				<text>{{ showAll ? '暂无随访记录' : '当日暂无随访安排' }}</text>
 			</view>
-			<view class="follow-item card" v-for="(item, i) in todayFollowList" :key="i" @click="viewFollowDetail(item)">
+			<view class="follow-item card" v-for="(item, i) in filteredFollowList" :key="i" @click="viewFollowDetail(item)">
 				<view class="follow-left">
 					<view class="follow-icon" :class="item.statusClass">
 						<text class="app-icon uniui-notification-filled"></text>
@@ -41,33 +47,6 @@
 						<text class="follow-project">{{ item.project || '随访' }}</text>
 						<text class="follow-doctor">随访医生：{{ item.doctorName || '医生' }}</text>
 						<text class="follow-time">时间：{{ item.date }}</text>
-						<view class="follow-detail" v-if="item.hospital || item.department">
-							<text>{{ item.hospital }} {{ item.department }}</text>
-						</view>
-						<view class="follow-detail" v-if="item.examinationItems">
-							<text>检查：{{ item.examinationItems }}</text>
-						</view>
-					</view>
-				</view>
-				<view class="follow-status" :class="item.statusClass">{{ item.statusText }}</view>
-			</view>
-		</view>
-
-		<!-- 近期随访 -->
-		<view class="section" v-if="upcomingFollowList.length > 0">
-			<view class="section-header">
-				<text class="section-title">近期随访</text>
-				<text class="section-more" @click="showAllFollowUp = true">查看全部</text>
-			</view>
-			<view class="follow-item card" v-for="(item, i) in upcomingFollowList" :key="i" @click="viewFollowDetail(item)">
-				<view class="follow-left">
-					<view class="follow-icon" :class="item.statusClass">
-						<text class="app-icon uniui-calendar-filled"></text>
-					</view>
-					<view class="follow-info">
-						<text class="follow-project">{{ item.project || '随访' }}</text>
-						<text class="follow-doctor">随访医生：{{ item.doctorName || '医生' }}</text>
-						<text class="follow-time">{{ item.date }}</text>
 						<view class="follow-detail" v-if="item.hospital || item.department">
 							<text>{{ item.hospital }} {{ item.department }}</text>
 						</view>
@@ -102,7 +81,7 @@ export default {
 			weekDays: [],
 			weekLabels: ['一', '二', '三', '四', '五', '六', '日'],
 			baseOffset: 0,
-			showAllFollowUp: false,
+			showAll: false,
 			followList: []
 		};
 	},
@@ -113,28 +92,21 @@ export default {
 			const last = this.weekDays[6];
 			return `${first.date.substring(5)} - ${last.date.substring(5)}`;
 		},
-		todayFollowList() {
+		filteredFollowList() {
+			if (this.showAll) {
+				return this.followList.map(f => ({
+					...f,
+					statusText: this.getStatusText(f.status),
+					statusClass: this.getStatusClass(f.status)
+				}));
+			}
+			// 按日期过滤当日随访
 			return this.followList.filter(f => {
 				if (!f.date) return false;
 				// 处理日期格式，提取 yyyy-MM-dd 部分
 				const followDate = f.date.split('T')[0].split(' ')[0];
 				return followDate === this.selectedDate;
 			}).map(f => ({
-				...f,
-				statusText: this.getStatusText(f.status),
-				statusClass: this.getStatusClass(f.status)
-			}));
-		},
-		upcomingFollowList() {
-			const today = new Date(this.selectedDate);
-			today.setHours(0, 0, 0, 0);
-			return this.followList.filter(f => {
-				if (!f.date) return false;
-				const followDateStr = f.date.split('T')[0].split(' ')[0];
-				const followDate = new Date(followDateStr);
-				followDate.setHours(0, 0, 0, 0);
-				return followDate > today;
-			}).slice(0, 5).map(f => ({
 				...f,
 				statusText: this.getStatusText(f.status),
 				statusClass: this.getStatusClass(f.status)
@@ -191,6 +163,9 @@ export default {
 		},
 		selectDay(index) {
 			this.selectedDate = this.weekDays[index].date;
+			if (this.showAll) {
+				this.showAll = false;
+			}
 		},
 		prevWeek() {
 			this.baseOffset--;
@@ -222,21 +197,27 @@ export default {
 				const diffDays = Math.floor((selected - today) / (1000 * 60 * 60 * 24));
 				this.baseOffset = Math.floor(diffDays / 7);
 				this.initWeekDays();
+				if (this.showAll) {
+					this.showAll = false;
+				}
 			}
+		},
+		toggleShowAll() {
+			this.showAll = !this.showAll;
 		},
 		getStatusText(status) {
 			const map = {
-				'pending': '待随访',
-				'completed': '已完成',
-				'cancelled': '已取消'
+				0: '待随访',
+				1: '已完成',
+				2: '已取消'
 			};
-			return map[status] || status || '待随访';
+			return map[status] || '待随访';
 		},
 		getStatusClass(status) {
 			const map = {
-				'pending': 'status-pending',
-				'completed': 'status-completed',
-				'cancelled': 'status-cancelled'
+				0: 'status-pending',
+				1: 'status-completed',
+				2: 'status-cancelled'
 			};
 			return map[status] || 'status-pending';
 		},
@@ -298,7 +279,7 @@ export default {
 
 /* 日期选择器 */
 .date-picker {
-	margin-bottom: $app-spacing-md;
+	margin-bottom: 0;
 }
 
 .date-nav {
@@ -391,28 +372,49 @@ export default {
 	color: $app-primary;
 }
 
+/* 查看全部按钮 */
+.view-all-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 $app-spacing-md;
+	margin: $app-spacing-md 0;
+}
+
+.view-all-btn {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
+	font-size: 28rpx;
+	color: $app-primary;
+	padding: 14rpx 28rpx;
+	border: 2rpx solid $app-primary;
+	border-radius: 32rpx;
+	font-weight: 500;
+	transition: $app-transition;
+}
+
+.view-all-btn:active {
+	background: $app-primary-bg;
+}
+
+.view-all-btn.active {
+	background: $app-primary;
+	color: #fff;
+}
+
+.view-all-btn .app-icon {
+	font-size: 36rpx;
+}
+
+.total-count {
+	font-size: 26rpx;
+	color: $app-text-muted;
+}
+
 /* 区块 */
 .section {
 	margin: 0 $app-spacing-md;
-}
-
-.section-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: $app-spacing-md;
-}
-
-.section-title {
-	font-size: 32rpx;
-	font-weight: 700;
-	color: $app-text;
-}
-
-.section-more {
-	font-size: 26rpx;
-	color: $app-primary;
-	font-weight: 500;
 }
 
 /* 空状态 */

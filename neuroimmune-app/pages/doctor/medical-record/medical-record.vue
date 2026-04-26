@@ -5,6 +5,9 @@
 			<text class="app-icon uniui-search"></text>
 			<input class="search-input" placeholder="搜索病历标题/诊断" v-model="searchKeyword" @confirm="doSearch" />
 			<text class="search-btn" @click="doSearch">搜索</text>
+			<view class="add-btn" @click="navTo('/pages/doctor/upload-record/upload-record')">
+				<text class="app-icon uniui-plus-filled"></text>
+			</view>
 		</view>
 
 		<!-- 患者筛选 -->
@@ -257,6 +260,9 @@ export default {
 					url: `/pages/doctor/episode-list/episode-list?id=${item.relatedEpisodeId}`
 				})
 			}
+		},
+		navTo(url) {
+			uni.navigateTo({ url })
 		}
 	}
 }
@@ -302,6 +308,22 @@ export default {
 .search-btn {
 	font-size: 28rpx;
 	color: $app-primary;
+	padding: 0 16rpx;
+}
+
+.add-btn {
+	width: 56rpx;
+	height: 56rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #6366F1;
+	border-radius: 50%;
+}
+
+.add-btn .app-icon {
+	font-size: 32rpx;
+	color: #fff;
 }
 
 /* 患者筛选 */
@@ -432,10 +454,11 @@ export default {
 	font-size: 26rpx;
 	color: $app-text-secondary;
 	display: block;
-	line-height: 1.5;
+	line-height: 1.6;
 	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
 }
 
 .record-footer {

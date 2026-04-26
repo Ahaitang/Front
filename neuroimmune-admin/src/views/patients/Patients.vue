@@ -22,12 +22,14 @@ const searchForm = ref({
   keyword: '',
   gender: '',
   isRealAuth: '',
-  doctorId: ''
+  doctorId: '',
+  diseaseType: ''
 })
 
 const tableData = ref<Patient[]>([])
 const doctors = ref<Doctor[]>([])
 const genderOptions = ref<CommonDict[]>([])
+const diseaseOptions = ref<CommonDict[]>([])
 const loading = ref(false)
 const total = ref(0)
 const pagination = ref({
@@ -57,6 +59,7 @@ const fileList = ref<any[]>([])
 const loadDicts = async () => {
   try {
     genderOptions.value = await getCommonDictByType(DICT_TYPES.GENDER)
+    diseaseOptions.value = await getCommonDictByType(DICT_TYPES.DISEASE)
   } catch (e) {
     console.error('加载字典失败:', e)
   }
@@ -71,7 +74,8 @@ const loadData = async () => {
       keyword: searchForm.value.keyword,
       gender: searchForm.value.gender,
       isRealAuth: searchForm.value.isRealAuth === 'true' ? true : searchForm.value.isRealAuth === 'false' ? false : undefined,
-      doctorId: searchForm.value.doctorId ? Number(searchForm.value.doctorId) : undefined
+      doctorId: searchForm.value.doctorId ? Number(searchForm.value.doctorId) : undefined,
+      type: searchForm.value.diseaseType || undefined
     }
     const res = await getPatientList(params)
     if (res) {
@@ -124,7 +128,8 @@ const handleReset = () => {
     keyword: '',
     gender: '',
     isRealAuth: '',
-    doctorId: ''
+    doctorId: '',
+    diseaseType: ''
   }
   handleSearch()
 }
@@ -220,6 +225,10 @@ const savePatientSubmit = async () => {
       age: undefined,
       doctorId: undefined,
       doctorName: undefined
+    }
+    // 如果 birthDate 只有日期部分，补上时间
+    if (submitData.birthDate && submitData.birthDate.length === 10) {
+      submitData.birthDate = submitData.birthDate + ' 00:00:00'
     }
     const newPatientId = await savePatient(submitData)
 
@@ -417,6 +426,16 @@ const handleExport = () => {
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="疾病类型">
+          <el-select v-model="searchForm.diseaseType" clearable placeholder="全部" style="width: 140px">
+            <el-option
+              v-for="disease in diseaseOptions"
+              :key="disease.id"
+              :label="disease.name"
+              :value="disease.code"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
@@ -444,6 +463,17 @@ const handleExport = () => {
         <el-table-column label="主治医生" min-width="100">
           <template #default="{ row }">
             <span :class="row.doctorName ? '' : 'text-muted'">{{ row.doctorName || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="疾病类型" min-width="120">
+          <template #default="{ row }">
+            <span v-if="row.diseaseTypes && row.diseaseTypes.length">
+              <el-tag v-for="(disease, idx) in row.diseaseTypes.slice(0, 2)" :key="idx" size="small" effect="plain" style="margin-right: 4px">
+                {{ disease }}
+              </el-tag>
+              <span v-if="row.diseaseTypes.length > 2" class="text-muted">+{{ row.diseaseTypes.length - 2 }}</span>
+            </span>
+            <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="isRealAuth" label="实名状态" width="90">

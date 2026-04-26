@@ -39,6 +39,35 @@ const dialogType = ref<'view' | 'add' | 'edit'>('view')
 const currentMedication = ref<Partial<Medication>>({})
 const saveLoading = ref(false)
 
+// 根据开药日期和疗程计算状态
+const calculateMedicationStatus = (date: string, duration?: string): number => {
+  if (!date) return 0 // 无日期默认进行中
+  if (!duration) return 0 // 无疗程默认进行中
+
+  // 解析疗程字符串，如 "7天"、"1个月"、"3个月"、"2周"
+  const startDate = new Date(date.substring(0, 10))
+  let daysToAdd = 0
+
+  const durationMatch = duration.match(/^(\d+)(天|周|个月|月)$/)
+  if (durationMatch && durationMatch[1] && durationMatch[2]) {
+    const value = parseInt(durationMatch[1])
+    const unit = durationMatch[2]
+    if (unit === '天') daysToAdd = value
+    else if (unit === '周') daysToAdd = value * 7
+    else if (unit === '个月' || unit === '月') daysToAdd = value * 30
+  } else {
+    // 无法解析，默认进行中
+    return 0
+  }
+
+  const endDate = new Date(startDate)
+  endDate.setDate(endDate.getDate() + daysToAdd)
+  endDate.setHours(23, 59, 59) // 结束日期的最后一刻
+
+  const now = new Date()
+  return now > endDate ? 1 : 0 // 1=已完成, 0=进行中
+}
+
 const getStatusType = (status: number) => {
   const map: Record<number, string> = { 0: 'warning', 1: 'success', 2: 'info' }
   return map[status] || 'info'
@@ -47,6 +76,13 @@ const getStatusType = (status: number) => {
 const getStatusText = (status: number) => {
   const map: Record<number, string> = { 0: '进行中', 1: '已完成', 2: '已取消' }
   return map[status] || '进行中'
+}
+
+// 根据记录计算实际状态（用于显示）
+const getActualStatus = (row: Medication): number => {
+  // 如果已手动取消，保持取消状态
+  if (row.status === 2) return 2
+  return calculateMedicationStatus(row.date, row.duration)
 }
 
 const getUnitLabel = (unit: string) => {
@@ -227,7 +263,7 @@ const handleExport = () => {
     '疗程': item.duration || '-',
     '开药医生': item.doctorName,
     '开药日期': item.date,
-    '状态': getStatusText(item.status),
+    '状态': getStatusText(getActualStatus(item)),
     '备注': item.notes || '-',
     '创建时间': formatDate(item.createTime)
   }))
@@ -287,13 +323,13 @@ const handleExport = () => {
         </el-table-column>
         <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
+            <el-tag :type="getStatusType(getActualStatus(row))" size="small" effect="light">{{ getStatusText(getActualStatus(row)) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="editMedication(row)">编辑</el-button>
-            <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelMedicationRecord(row)">取消</el-button>
+            <el-button v-if="getActualStatus(row) === 0" type="warning" link size="small" @click="cancelMedicationRecord(row)">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -322,7 +358,7 @@ const handleExport = () => {
           </el-row>
           <el-row :gutter="20" v-if="dialogType === 'view'">
             <el-col :span="12"><el-form-item label="患者">{{ currentMedication.patientName }}</el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="状态"><el-tag :type="getStatusType(currentMedication.status || 0)" size="small">{{ getStatusText(currentMedication.status || 0) }}</el-tag></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="状态"><el-tag :type="getStatusType(getActualStatus(currentMedication as Medication))" size="small">{{ getStatusText(getActualStatus(currentMedication as Medication)) }}</el-tag></el-form-item></el-col>
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">

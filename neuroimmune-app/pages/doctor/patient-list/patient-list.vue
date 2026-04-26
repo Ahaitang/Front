@@ -4,6 +4,10 @@
 		<view class="search-bar">
 			<text class="app-icon uniui-search"></text>
 			<input class="search-input" type="text" placeholder="搜索患者姓名或疾病类型" v-model="keyword" />
+			<text class="search-btn">搜索</text>
+			<view class="add-btn" @click="navTo('/pages/doctor/add-patient/add-patient')">
+				<text class="app-icon uniui-plus-filled"></text>
+			</view>
 		</view>
 
 		<!-- 筛选标签 -->
@@ -241,6 +245,27 @@ export default {
 	flex: 1;
 	font-size: 28rpx;
 	color: $app-text;
+}
+
+.search-btn {
+	font-size: 28rpx;
+	color: $app-primary;
+	padding: 0 16rpx;
+}
+
+.add-btn {
+	width: 56rpx;
+	height: 56rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: $app-primary;
+	border-radius: 50%;
+}
+
+.add-btn .app-icon {
+	font-size: 32rpx;
+	color: #fff;
 }
 
 /* 筛选标签 */

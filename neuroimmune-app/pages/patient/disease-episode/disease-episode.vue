@@ -93,7 +93,6 @@ export default {
 				this.totalCount = countRes || this.list.length
 			} catch (e) {
 				console.error('加载发作记录失败:', e)
-				// 模拟数据
 				this.list = []
 				this.totalCount = 0
 			}
@@ -106,11 +105,8 @@ export default {
 			uni.navigateTo({ url })
 		},
 		viewDetail(item) {
-			// 可以跳转到详情页或弹出详情
-			uni.showModal({
-				title: `第${item.episodeNumber}次发作详情`,
-				content: `主诉：${item.chiefComplaint || '无'}\n症状：${item.symptoms || '无'}\n诊断：${item.diagnosis || '无'}`,
-				showCancel: false
+			uni.navigateTo({
+				url: '/pages/patient/episode-detail/episode-detail?id=' + item.id
 			})
 		}
 	}

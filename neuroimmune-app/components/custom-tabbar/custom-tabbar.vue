@@ -48,7 +48,7 @@ export default {
 					pagePath: '/pages/patient-center/patient-center',
 					iconPath: '/static/extui.png',
 					selectedIconPath: '/static/extuiHL.png',
-					text: this.isDoctor ? '患者管理' : '我的'
+					text: this.isDoctor ? '个人中心' : '我的'
 				}
 			];
 			return baseList;

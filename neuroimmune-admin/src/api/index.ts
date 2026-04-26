@@ -11,6 +11,7 @@ export interface DashboardStats {
   totalPatients: number
   totalDoctors: number
   pendingFollowUps: number
+  completedFollowUps: number
   totalMedications: number
 }
 
@@ -193,6 +194,30 @@ export const cancelRecord = (id: string | number) => {
   return request.put(`/neuroimmune/records/${id}/cancel`)
 }
 
+// 发作记录相关
+export const getEpisodeList = (params: PageRequest) => {
+  return request.get<PageResult<DiseaseEpisode>>('/neuroimmune/episodes', params)
+}
+
+export const getEpisodeById = (id: string | number) => {
+  return request.get<DiseaseEpisode>(`/neuroimmune/episodes/${id}`)
+}
+
+export const getEpisodesByPatient = (patientId: string | number) => {
+  return request.get<DiseaseEpisode[]>(`/neuroimmune/episodes/patient/${patientId}`)
+}
+
+export const saveEpisode = (data: Partial<DiseaseEpisode>) => {
+  if (data.id) {
+    return request.put(`/neuroimmune/episodes/${data.id}`, data)
+  }
+  return request.post('/neuroimmune/episodes', data)
+}
+
+export const deleteEpisode = (id: string | number) => {
+  return request.delete(`/neuroimmune/episodes/${id}`)
+}
+
 // 文件上传
 export const uploadFile = async (file: File) => {
   const formData = new FormData()
@@ -231,7 +256,8 @@ export interface Patient {
   isRealAuth: boolean
   doctorId?: number      // 通过 relation 表获取
   doctorName?: string    // 通过 relation 表获取
-  diseaseType?: string
+  diseaseType?: string   // 单个疾病类型（兼容旧数据）
+  diseaseTypes?: string[] // 疾病类型列表（从 patient_disease 表查询）
   createTime?: string    // 仅显示，不参与保存
   updateTime?: string    // 仅显示，不参与保存
 }
@@ -298,8 +324,28 @@ export interface MedicalRecord {
   date: string
   content: string
   attachments?: string
+  relatedEpisodeId?: number   // 关联的发作记录ID
+  relatedEpisodeNumber?: number // 关联的发作次数
   status: number  // 0-进行中, 1-完成, 2-取消
   createTime: string
+}
+
+export interface DiseaseEpisode {
+  id: number
+  patientId: number
+  patientName: string
+  episodeNumber: number      // 发作次数（第几次发作）
+  episodeDate: string        // 发作时间
+  chiefComplaint?: string    // 主诉
+  symptoms?: string          // 症状
+  diseaseProgress?: string   // 病情变化过程
+  treatmentProcess?: string  // 诊治经过
+  diagnosis?: string         // 诊断结果
+  hospital?: string          // 就诊医院
+  department?: string        // 科室
+  notes?: string             // 备注
+  createTime: string
+  updateTime?: string
 }
 
 // 通用字典 API

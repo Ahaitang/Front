@@ -129,12 +129,6 @@
             "root": "pages/doctor",
             "pages": [
                 {
-                    "path": "index/index",
-                    "style": {
-                        "navigationBarTitleText": "医生工作台"
-                    }
-                },
-                {
                     "path": "follow-plan/follow-plan",
                     "style": {
                         "navigationBarTitleText": "随访计划"

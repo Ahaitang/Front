@@ -2,9 +2,9 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Picture, Folder, DocumentCopy } from '@element-plus/icons-vue'
-import { getRecordList, saveRecord, cancelRecord, getPatientList, uploadFile, ocrParseMedical, getCommonDictByType, DICT_TYPES } from '@/api'
+import { getRecordList, saveRecord, cancelRecord, getPatientList, uploadFile, ocrParseMedical, getCommonDictByType, DICT_TYPES, getEpisodeById } from '@/api'
 import { exportToExcel } from '@/utils/export'
-import type { MedicalRecord, Patient, CommonDict } from '@/api'
+import type { MedicalRecord, Patient, CommonDict, DiseaseEpisode } from '@/api'
 
 const searchForm = ref({
   keyword: '',
@@ -34,6 +34,10 @@ const imageList = ref<string[]>([])
 const imagePreviewVisible = ref(false)
 const previewImageUrl = ref('')
 const ocrLoading = ref(false)
+
+// 发作详情对话框
+const episodeDetailVisible = ref(false)
+const currentEpisode = ref<DiseaseEpisode | null>(null)
 
 // 加载字典
 const loadDicts = async () => {
@@ -259,6 +263,19 @@ const formatDate = (date: string) => {
   return date || '-'
 }
 
+// 查看关联发作记录
+const viewEpisode = async (episodeId: number) => {
+  try {
+    const episode = await getEpisodeById(episodeId)
+    if (episode) {
+      currentEpisode.value = episode
+      episodeDetailVisible.value = true
+    }
+  } catch (e) {
+    ElMessage.error('获取发作记录失败')
+  }
+}
+
 // 导出数据
 const handleExport = () => {
   if (tableData.value.length === 0) {
@@ -360,9 +377,12 @@ const hasImages = computed(() => imageList.value.length > 0)
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
+        <el-table-column label="关联发作" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
+            <el-button v-if="row.relatedEpisodeId" type="warning" link size="small" @click="viewEpisode(row.relatedEpisodeId)">
+              第{{ row.relatedEpisodeNumber }}次
+            </el-button>
+            <span v-else class="text-muted">无关联</span>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160">
@@ -374,7 +394,7 @@ const hasImages = computed(() => imageList.value.length > 0)
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="viewRecord(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="editRecord(row)">编辑</el-button>
-            <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelRecordRecord(row)">取消</el-button>
+            <el-button type="danger" link size="small" @click="cancelRecordRecord(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -543,6 +563,30 @@ const hasImages = computed(() => imageList.value.length > 0)
     <!-- 图片预览 -->
     <el-dialog v-model="imagePreviewVisible" title="图片预览" width="700px">
       <el-image :src="previewImageUrl" fit="contain" style="width: 100%" />
+    </el-dialog>
+
+    <!-- 发作详情对话框 -->
+    <el-dialog v-model="episodeDetailVisible" title="发作记录详情" width="600px">
+      <template v-if="currentEpisode">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="患者">{{ currentEpisode.patientName }}</el-descriptions-item>
+          <el-descriptions-item label="发作次数">
+            <el-tag type="warning" size="small">第{{ currentEpisode.episodeNumber }}次</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="发作时间">{{ formatDate(currentEpisode.episodeDate) }}</el-descriptions-item>
+          <el-descriptions-item label="就诊医院">{{ currentEpisode.hospital || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="科室">{{ currentEpisode.department || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="主诉">{{ currentEpisode.chiefComplaint || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="症状" :span="2">{{ currentEpisode.symptoms || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="病情变化" :span="2">{{ currentEpisode.diseaseProgress || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="诊治经过" :span="2">{{ currentEpisode.treatmentProcess || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="诊断结果" :span="2">{{ currentEpisode.diagnosis || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="备注" :span="2">{{ currentEpisode.notes || '-' }}</el-descriptions-item>
+        </el-descriptions>
+      </template>
+      <template #footer>
+        <el-button @click="episodeDetailVisible = false">关闭</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>

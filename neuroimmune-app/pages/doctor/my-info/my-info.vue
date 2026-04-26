@@ -69,6 +69,7 @@
 
 <script>
 import { getDoctorById, updateDoctor } from '@/api/doctor.js'
+import { uploadFile } from '@/api/request.js'
 
 export default {
 	data() {
@@ -117,8 +118,19 @@ export default {
 		chooseAvatar() {
 			uni.chooseImage({
 				count: 1,
-				success: (res) => {
-					this.form.avatar = res.tempFilePaths[0]
+				success: async (res) => {
+					const tempPath = res.tempFilePaths[0]
+					uni.showToast({ title: '上传中...', icon: 'loading' })
+					try {
+						const uploadRes = await uploadFile(tempPath)
+						this.form.avatar = uploadRes.url
+						uni.hideToast()
+						uni.showToast({ title: '头像已更新', icon: 'success' })
+					} catch (e) {
+						uni.hideToast()
+						uni.showToast({ title: '上传失败', icon: 'none' })
+						console.error('头像上传失败:', e)
+					}
 				}
 			})
 		},

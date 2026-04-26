@@ -24,15 +24,6 @@
 		</view>
 
 		<view class="block card">
-			<view class="block-title"><text class="app-icon primary uniui-location-filled"></text> 就诊计划</view>
-			<view class="empty-tip" v-if="!scheduleList.visit.length">暂无安排</view>
-			<view class="schedule-item" v-for="(item, i) in scheduleList.visit" :key="'v'+i">
-				<text class="time">{{ item.time }}</text>
-				<text class="who">{{ item.who }}</text>
-				<text class="date">{{ item.date }}</text>
-			</view>
-		</view>
-		<view class="block card">
 			<view class="block-title"><text class="app-icon primary uniui-notification-filled"></text> 随访计划</view>
 			<view class="empty-tip" v-if="!scheduleList.follow.length">暂无安排</view>
 			<view class="schedule-item" v-for="(item, i) in scheduleList.follow" :key="'f'+i">
@@ -76,12 +67,11 @@
 				weekDays: [],
 				weekLabels: ['一', '二', '三', '四', '五', '六', '日'],
 				scheduleList: {
-					visit: [],
 					follow: [],
 					medication: []
 				},
 				isDoctor: false,
-				baseOffset: 0, // 周偏移量，0表示当前周
+				baseOffset: 0,
 				loading: false
 			};
 		},
@@ -118,8 +108,7 @@
 				const today = new Date();
 				const todayStr = this.formatDate(today);
 				const days = [];
-				const currentDay = today.getDay(); // 0-6, 0是周日
-				// 计算本周一的日期
+				const currentDay = today.getDay();
 				const monday = new Date(today);
 				const diff = currentDay === 0 ? -6 : 1 - currentDay;
 				monday.setDate(today.getDate() + diff + this.baseOffset * 7);
@@ -136,7 +125,6 @@
 					});
 				}
 				this.weekDays = days;
-				// 更新当前年月
 				this.currentYear = monday.getFullYear();
 				this.currentMonth = monday.getMonth() + 1;
 			},
@@ -147,7 +135,6 @@
 			prevWeek() {
 				this.baseOffset--;
 				this.initWeekDays();
-				// 如果选中的日期不在当前周，选中周一
 				const inCurrentWeek = this.weekDays.some(d => d.date === this.selectedDate);
 				if (!inCurrentWeek) {
 					this.selectedDate = this.weekDays[0].date;
@@ -157,7 +144,6 @@
 			nextWeek() {
 				this.baseOffset++;
 				this.initWeekDays();
-				// 如果选中的日期不在当前周，选中周一
 				const inCurrentWeek = this.weekDays.some(d => d.date === this.selectedDate);
 				if (!inCurrentWeek) {
 					this.selectedDate = this.weekDays[0].date;
@@ -170,7 +156,6 @@
 			onCalendarConfirm(e) {
 				if (e.fulldate) {
 					this.selectedDate = e.fulldate;
-					// 计算周偏移量
 					const today = new Date();
 					const selected = new Date(e.fulldate);
 					const diffDays = Math.floor((selected - today) / (1000 * 60 * 60 * 24));
@@ -193,19 +178,14 @@
 					const result = await api.schedule.getScheduleByDate(this.selectedDate);
 					if (result) {
 						this.scheduleList = {
-							visit: result.visit || [],
 							follow: result.follow || [],
 							medication: result.medication || []
 						};
 					}
 				} catch (e) {
 					console.error('获取日程失败:', e);
-					// 如果API失败，使用模拟数据
 					this.scheduleList = this.isDoctor
 						? {
-								visit: [
-									{ time: '09:00-10:00', who: '刘博超', date: this.selectedDate }
-								],
 								follow: [
 									{ time: '09:00-10:00', who: '刘博超', date: this.selectedDate }
 								],
@@ -214,7 +194,6 @@
 								]
 						  }
 						: {
-								visit: [{ time: '09:00-10:00', who: '就诊医生', date: this.selectedDate }],
 								follow: [],
 								medication: []
 						  };

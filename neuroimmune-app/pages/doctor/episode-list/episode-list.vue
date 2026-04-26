@@ -22,6 +22,10 @@
 		<view class="search-bar">
 			<text class="app-icon uniui-search"></text>
 			<input class="search-input" type="text" placeholder="搜索患者姓名" v-model="keyword" />
+			<text class="search-btn" @click="applyTimeFilter">搜索</text>
+			<view class="add-btn" @click="navTo('/pages/doctor/add-episode/add-episode')">
+				<text class="app-icon uniui-plus-filled"></text>
+			</view>
 		</view>
 
 		<!-- 时间筛选 -->
@@ -231,6 +235,9 @@ export default {
 		},
 		goPatient(id) {
 			uni.navigateTo({ url: '/pages/doctor/patient-info/patient-info?id=' + (id || '1') })
+		},
+		navTo(url) {
+			uni.navigateTo({ url })
 		}
 	}
 }
@@ -310,6 +317,27 @@ export default {
 	flex: 1;
 	font-size: 28rpx;
 	color: $app-text;
+}
+
+.search-btn {
+	font-size: 28rpx;
+	color: #F59E0B;
+	padding: 0 16rpx;
+}
+
+.add-btn {
+	width: 56rpx;
+	height: 56rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #F59E0B;
+	border-radius: 50%;
+}
+
+.add-btn .app-icon {
+	font-size: 32rpx;
+	color: #fff;
 }
 
 /* 时间筛选 */

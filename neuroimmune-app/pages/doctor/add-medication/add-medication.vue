@@ -191,7 +191,7 @@ export default {
 					frequency: this.form.frequency,
 					route: this.form.route,
 					duration: this.form.duration,
-					date: this.form.date,
+					date: (this.form.date && this.form.date.length === 10 ? this.form.date + ' 00:00:00' : this.form.date),
 					notes: this.form.notes
 				});
 				uni.showToast({ title: '保存成功', icon: 'success' });

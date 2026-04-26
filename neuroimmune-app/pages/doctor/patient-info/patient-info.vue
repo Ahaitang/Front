@@ -40,6 +40,14 @@
 					<view class="quick-icon med"><text class="app-icon uniui-compose"></text></view>
 					<text class="quick-text">添加用药</text>
 				</view>
+				<view class="quick-item" @click="navTo('/pages/doctor/upload-record/upload-record?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
+					<view class="quick-icon record"><text class="app-icon uniui-folder-add-filled"></text></view>
+					<text class="quick-text">新增病历</text>
+				</view>
+				<view class="quick-item" @click="navTo('/pages/doctor/add-episode/add-episode?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
+					<view class="quick-icon episode"><text class="app-icon uniui-pulse"></text></view>
+					<text class="quick-text">新增发作</text>
+				</view>
 				<view class="quick-item" @click="copyBasicInfo">
 					<view class="quick-icon copy"><text class="app-icon uniui-paperclip"></text></view>
 					<text class="quick-text">复制信息</text>
@@ -273,8 +281,8 @@ export default {
 						title: f.project || '随访',
 						date: f.date,
 						content: f.content,
-						status: f.status === 'completed' ? 'completed' : 'pending',
-						statusText: f.status === 'completed' ? '已完成' : '待随访'
+						status: f.status === 1 ? 'completed' : 'pending',
+						statusText: f.status === 1 ? '已完成' : '待随访'
 					}));
 					this.patient.followUpCount = followRes.total || this.followList.length;
 				}
@@ -664,6 +672,8 @@ export default {
 
 .quick-icon.follow { background: $app-primary; }
 .quick-icon.med { background: #EC4899; }
+.quick-icon.record { background: #6366F1; }
+.quick-icon.episode { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); }
 .quick-icon.copy { background: #8B5CF6; }
 
 .quick-text {

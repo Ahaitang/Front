@@ -22,6 +22,7 @@ const menuItems = computed(() => {
     { path: '/followups', title: '随访记录', icon: 'Calendar' },
     { path: '/medications', title: '用药记录', icon: 'FirstAidKit' },
     { path: '/records', title: '病历记录', icon: 'Document' },
+    { path: '/episodes', title: '发作记录', icon: 'Warning' },
     { path: '/dict', title: '字典管理', icon: 'Setting', adminOnly: true }
   ]
 

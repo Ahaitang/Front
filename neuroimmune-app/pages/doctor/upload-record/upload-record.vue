@@ -1,82 +1,109 @@
 <template>
 	<view class="container">
-		<!-- 选择患者 -->
-		<view class="form-section card">
-			<view class="section-title">选择患者</view>
-			<view class="patient-select" @click="showPatientPicker = true">
-				<image class="patient-avatar" :src="form.patient.avatar || '/static/component.png'" mode="aspectFill" v-if="form.patient.id"></image>
-				<view class="patient-info" v-if="form.patient.id">
-					<text class="patient-name">{{ form.patient.name }}</text>
-					<text class="patient-meta">{{ form.patient.gender }} · {{ form.patient.age }}岁</text>
-				</view>
-				<view class="select-placeholder" v-else>
-					<text class="app-icon uniui-contact-filled"></text>
-					<text>请选择患者</text>
-				</view>
-				<text class="app-icon uniui-arrowright"></text>
+		<view class="card">
+			<view class="tips">
+				<text>为患者上传病历资料，便于全面了解病情进展。</text>
 			</view>
-		</view>
 
-		<!-- 病历信息 -->
-		<view class="form-section card">
-			<view class="section-title">病历信息</view>
-
-			<view class="form-item">
-				<text class="form-label">病历类型</text>
-				<view class="type-options">
-					<view class="type-item" :class="{ active: form.recordType === '门诊病历' }" @click="form.recordType = '门诊病历'">门诊病历</view>
-					<view class="type-item" :class="{ active: form.recordType === '住院病历' }" @click="form.recordType = '住院病历'">住院病历</view>
-					<view class="type-item" :class="{ active: form.recordType === '检查报告' }" @click="form.recordType = '检查报告'">检查报告</view>
-					<view class="type-item" :class="{ active: form.recordType === '化验报告' }" @click="form.recordType = '化验报告'">化验报告</view>
+			<!-- 选择患者 -->
+			<view class="section">
+				<text class="section-title">选择患者 <text class="required">*</text></text>
+				<view class="patient-select" @click="showPatientPicker = true">
+					<view class="patient-info" v-if="form.patientId">
+						<text class="patient-name">{{ form.patientName }}</text>
+						<text class="patient-meta">{{ form.patientGender }} · {{ form.patientAge }}岁</text>
+					</view>
+					<view class="select-placeholder" v-else>
+						<text class="app-icon uniui-contact-filled"></text>
+						<text>请选择患者</text>
+					</view>
+					<text class="app-icon uniui-arrowright"></text>
 				</view>
 			</view>
 
-			<view class="form-item">
-				<text class="form-label">病历日期</text>
-				<picker mode="date" :value="form.recordDate" @change="onDateChange">
-					<view class="picker-value">
-						<text>{{ form.recordDate || '请选择日期' }}</text>
-						<text class="app-icon sm uniui-arrowdown"></text>
+			<!-- 病历类型 -->
+			<view class="section">
+				<text class="section-title">病历类型 <text class="required">*</text></text>
+				<picker :value="typeIndex" :range="typeOptions" range-key="label" @change="onTypeChange">
+					<view class="picker-input">
+						<text class="picker-value">{{ typeOptions[typeIndex].label }}</text>
+						<text class="app-icon uniui-arrowright"></text>
 					</view>
 				</picker>
 			</view>
 
-			<view class="form-item">
-				<text class="form-label">病历标题</text>
-				<input class="form-input" placeholder="请输入病历标题" v-model="form.title" />
-			</view>
-
-			<view class="form-item">
-				<text class="form-label">病历描述</text>
-				<textarea class="form-textarea" placeholder="请输入病历描述内容" v-model="form.description" />
-			</view>
-		</view>
-
-		<!-- 上传文件 -->
-		<view class="form-section card">
-			<view class="section-title">上传文件</view>
-			<view class="upload-area">
-				<view class="upload-item" v-for="(file, index) in form.files" :key="index">
-					<image class="upload-image" :src="file.url" mode="aspectFill" v-if="file.type === 'image'"></image>
-					<view class="upload-file" v-else>
-						<text class="app-icon uniui-paperclip"></text>
-						<text class="file-name">{{ file.name }}</text>
+			<!-- 就诊日期 -->
+			<view class="section">
+				<text class="section-title">就诊日期 <text class="required">*</text></text>
+				<picker mode="date" :value="form.date" @change="onDateChange">
+					<view class="picker-input">
+						<text class="picker-value">{{ form.date || '请选择日期' }}</text>
+						<text class="app-icon uniui-arrowright"></text>
 					</view>
-					<view class="upload-delete" @click="removeFile(index)">
-						<text class="app-icon uniui-close"></text>
+				</picker>
+			</view>
+
+			<!-- 医院 -->
+			<view class="section" v-if="isExternal">
+				<text class="section-title">就诊医院</text>
+				<input class="input" v-model="form.hospital" placeholder="请输入医院名称" />
+			</view>
+
+			<!-- 科室 -->
+			<view class="section">
+				<text class="section-title">科室</text>
+				<input class="input" v-model="form.department" placeholder="请输入科室" />
+			</view>
+
+			<!-- 医生姓名 -->
+			<view class="section">
+				<text class="section-title">医生姓名</text>
+				<input class="input" v-model="form.doctorName" placeholder="请输入医生姓名" />
+			</view>
+
+			<!-- 诊断结果 -->
+			<view class="section">
+				<text class="section-title">诊断结果</text>
+				<textarea class="textarea" v-model="form.diagnosis" placeholder="请输入诊断结果" />
+			</view>
+
+			<!-- 图片上传区域 -->
+			<view class="section">
+				<text class="section-title">上传图片</text>
+				<view class="upload-area" @click="chooseImage">
+					<text class="upload-icon">+</text>
+					<text class="upload-text">点击上传图片</text>
+				</view>
+				<view class="image-list" v-if="images.length">
+					<view class="image-item" v-for="(img, i) in images" :key="i">
+						<image class="preview-img" :src="img" mode="aspectFill" />
+						<view class="del-btn" @click="delImage(i)">×</view>
 					</view>
 				</view>
-				<view class="upload-btn" @click="chooseFile">
-					<text class="app-icon uniui-plusempty"></text>
-					<text class="upload-text">添加文件</text>
-				</view>
 			</view>
-			<text class="upload-hint">支持上传图片、PDF等文件，单个文件不超过10MB</text>
-		</view>
 
-		<!-- 提交按钮 -->
-		<view class="submit-section">
-			<button class="submit-btn" :loading="loading" @click="handleSubmit">提交病历</button>
+			<!-- 资料内容 -->
+			<view class="section">
+				<view class="section-header">
+					<text class="section-title">资料内容</text>
+					<text class="section-tip" v-if="images.length" @click="parseImages">解析图片</text>
+				</view>
+				<textarea
+					class="textarea"
+					v-model="form.content"
+					placeholder="请输入或粘贴就诊资料内容，也可上传图片后点击【解析图片】自动识别"
+					:maxlength="2000"
+				/>
+				<text class="char-count">{{ form.content.length }}/2000</text>
+			</view>
+
+			<!-- 备注 -->
+			<view class="section">
+				<text class="section-title">备注（选填）</text>
+				<input class="input" v-model="form.remark" placeholder="其他需要说明的信息" />
+			</view>
+
+			<button class="btn primary" :loading="loading" @click="submit">提交病历</button>
 		</view>
 
 		<!-- 患者选择弹窗 -->
@@ -91,7 +118,9 @@
 				</view>
 				<scroll-view class="picker-list" scroll-y>
 					<view class="picker-item" v-for="(p, i) in filteredPatients" :key="i" @click="selectPatient(p)">
-						<image class="picker-avatar" :src="p.avatar || '/static/component.png'" mode="aspectFill"></image>
+						<view class="picker-avatar">
+							<text class="avatar-text">{{ p.name.charAt(0) }}</text>
+						</view>
 						<view class="picker-info">
 							<text class="picker-name">{{ p.name }}</text>
 							<text class="picker-meta">{{ p.gender }} · {{ p.age }}岁 · {{ p.diseaseType || '' }}</text>
@@ -104,8 +133,10 @@
 </template>
 
 <script>
-import { getPatientList } from '@/api/patient.js'
+import { getMyPatients } from '@/api/patient.js'
 import { createMedicalRecord } from '@/api/medicalRecord.js'
+import { parseMedicalRecord } from '@/api/ocr.js'
+import { uploadFile } from '@/api/request.js'
 
 export default {
 	data() {
@@ -113,131 +144,215 @@ export default {
 			showPatientPicker: false,
 			searchKeyword: '',
 			patientList: [],
+			images: [],
+			typeIndex: 0,
+			typeOptions: [
+				{ label: '门诊病历', value: '门诊病历' },
+				{ label: '住院病历', value: '住院病历' },
+				{ label: '检查报告', value: '检查报告' },
+				{ label: '化验报告', value: '化验报告' },
+				{ label: '外院病历', value: '外院病历' }
+			],
 			form: {
-				patient: {},
-				recordType: '门诊病历',
-				recordDate: '',
-				title: '',
-				description: '',
-				files: []
+				patientId: null,
+				patientName: '',
+				patientGender: '',
+				patientAge: '',
+				date: '',
+				hospital: '',
+				department: '',
+				doctorName: '',
+				diagnosis: '',
+				content: '',
+				remark: ''
 			},
 			loading: false
 		}
 	},
 	computed: {
+		isExternal() {
+			return this.typeOptions[this.typeIndex].value === '外院病历'
+		},
 		filteredPatients() {
 			const k = this.searchKeyword.trim().toLowerCase()
 			if (!k) return this.patientList
 			return this.patientList.filter(p => (p.name || '').toLowerCase().includes(k))
 		}
 	},
-	onLoad() {
+	onLoad(options) {
 		this.loadPatients()
 		// 设置默认日期
-		this.form.recordDate = this.formatDate(new Date())
+		const today = new Date()
+		this.form.date = this.formatDate(today)
+		// 如果传入了 patientId，自动选中
+		if (options.patientId) {
+			this.form.patientId = parseInt(options.patientId)
+			this.form.patientName = options.patientName || ''
+		}
 	},
 	methods: {
-		async loadPatients() {
-			try {
-				const res = await getPatientList({ pageNum: 1, pageSize: 200 })
-				if (res && res.list) {
-					this.patientList = res.list.map(p => ({
-						id: p.id,
-						name: p.name,
-						gender: p.gender || '男',
-						age: p.age || 45,
-						diseaseType: p.diseaseType || ''
-					}))
-				}
-			} catch (e) {
-				this.patientList = [
-					{ id: 1, name: '张三', gender: '男', age: 45, diseaseType: 'MS' },
-					{ id: 2, name: '李四', gender: '女', age: 38, diseaseType: 'NMOSD' },
-					{ id: 3, name: '王五', gender: '男', age: 52, diseaseType: 'MG' }
-				]
-			}
-		},
 		formatDate(date) {
 			const y = date.getFullYear()
 			const m = String(date.getMonth() + 1).padStart(2, '0')
 			const d = String(date.getDate()).padStart(2, '0')
 			return `${y}-${m}-${d}`
 		},
+		async loadPatients() {
+			try {
+				const res = await getMyPatients({ pageNum: 1, pageSize: 200 })
+				if (res && res.list) {
+					this.patientList = res.list.map(p => ({
+						id: p.id,
+						name: p.name || '患者',
+						gender: p.gender === 'male' ? '男' : (p.gender === 'female' ? '女' : p.gender || '未知'),
+						age: p.age || '-',
+						diseaseType: p.diseaseTypes?.[0] || ''
+					}))
+					// 如果已有patientId，填充信息
+					if (this.form.patientId) {
+						const patient = this.patientList.find(p => p.id === this.form.patientId)
+						if (patient) {
+							this.form.patientName = patient.name
+							this.form.patientGender = patient.gender
+							this.form.patientAge = patient.age
+						}
+					}
+				}
+			} catch (e) {
+				console.error('加载患者列表失败:', e)
+			}
+		},
 		selectPatient(patient) {
-			this.form.patient = patient
+			this.form.patientId = patient.id
+			this.form.patientName = patient.name
+			this.form.patientGender = patient.gender
+			this.form.patientAge = patient.age
 			this.showPatientPicker = false
 		},
-		onDateChange(e) {
-			this.form.recordDate = e.detail.value
+		onTypeChange(e) {
+			this.typeIndex = e.detail.value
 		},
-		chooseFile() {
-			uni.showActionSheet({
-				itemList: ['拍照', '从相册选择', '选择文件'],
+		onDateChange(e) {
+			this.form.date = e.detail.value
+		},
+		chooseImage() {
+			uni.chooseImage({
+				count: 9 - this.images.length,
 				success: (res) => {
-					if (res.tapIndex === 0) {
-						uni.chooseImage({
-							count: 9,
-							sourceType: ['camera'],
-							success: (result) => {
-								this.addFiles(result.tempFilePaths, 'image')
-							}
-						})
-					} else if (res.tapIndex === 1) {
-						uni.chooseImage({
-							count: 9,
-							sourceType: ['album'],
-							success: (result) => {
-								this.addFiles(result.tempFilePaths, 'image')
-							}
-						})
-					} else if (res.tapIndex === 2) {
-						// 选择文件
-						uni.showToast({ title: '选择文件功能开发中', icon: 'none' })
-					}
+					this.images = [...this.images, ...res.tempFilePaths]
 				}
 			})
 		},
-		addFiles(paths, type) {
-			paths.forEach(path => {
-				this.form.files.push({
-					url: path,
-					type: type,
-					name: path.split('/').pop()
-				})
-			})
+		delImage(i) {
+			this.images.splice(i, 1)
 		},
-		removeFile(index) {
-			this.form.files.splice(index, 1)
+		async parseImages() {
+			if (!this.images.length) {
+				uni.showToast({ title: '请先上传图片', icon: 'none' })
+				return
+			}
+
+			uni.showLoading({ title: '上传并解析中...' })
+			try {
+				// 上传图片获取真实URL
+				const urls = []
+				for (const path of this.images) {
+					try {
+						const res = await uploadFile(path)
+						if (res && res.url) {
+							urls.push(res.url)
+							// 更新显示为真实URL
+							const idx = this.images.indexOf(path)
+							if (idx >= 0) {
+								this.images[idx] = res.url
+							}
+						}
+					} catch (e) {
+						console.error('上传失败:', e)
+					}
+				}
+
+				// OCR识别
+				if (urls.length > 0) {
+					const res = await parseMedicalRecord(urls)
+					if (res && res.content) {
+						this.form.content = res.content
+						uni.showToast({ title: '解析成功', icon: 'success' })
+					} else if (res && !res.success) {
+						uni.showToast({ title: res.errorMsg || '识别失败', icon: 'none' })
+					}
+				}
+			} catch (e) {
+				console.error('解析失败:', e)
+				uni.showToast({ title: '解析失败，请手动输入', icon: 'none' })
+			} finally {
+				uni.hideLoading()
+			}
 		},
-		async handleSubmit() {
-			if (!this.form.patient.id) {
+		async uploadImages() {
+			const urls = []
+			for (const path of this.images) {
+				// 如果已经是URL则直接使用
+				if (path.startsWith('http')) {
+					urls.push(path)
+					continue
+				}
+				try {
+					const res = await uploadFile(path)
+					if (res && res.url) {
+						urls.push(res.url)
+					}
+				} catch (e) {
+					console.error('上传失败:', e)
+				}
+			}
+			return urls
+		},
+		async submit() {
+			if (!this.form.patientId) {
 				uni.showToast({ title: '请选择患者', icon: 'none' })
 				return
 			}
-			if (!this.form.title) {
-				uni.showToast({ title: '请输入病历标题', icon: 'none' })
+			if (!this.form.date) {
+				uni.showToast({ title: '请选择就诊日期', icon: 'none' })
+				return
+			}
+			if (!this.form.content.trim() && !this.images.length && !this.form.diagnosis) {
+				uni.showToast({ title: '请填写诊断或上传资料', icon: 'none' })
 				return
 			}
 
 			this.loading = true
 			try {
-				await createMedicalRecord({
-					patientId: this.form.patient.id,
-					recordType: this.form.recordType,
-					recordDate: this.form.recordDate,
-					title: this.form.title,
-					description: this.form.description,
-					files: this.form.files
-				})
-				uni.showToast({ title: '上传成功', icon: 'success' })
-				setTimeout(() => {
-					uni.navigateBack()
-				}, 1000)
+				let attachments = []
+				if (this.images.length) {
+					uni.showLoading({ title: '上传图片中...' })
+					attachments = await this.uploadImages()
+					uni.hideLoading()
+				}
+
+				const doctorInfo = uni.getStorageSync('userInfo') || {}
+				const data = {
+					patientId: this.form.patientId,
+					patientName: this.form.patientName,
+					type: this.typeOptions[this.typeIndex].value,
+					date: this.form.date,
+					hospital: this.form.hospital,
+					department: this.form.department,
+					doctorName: this.form.doctorName,
+					diagnosis: this.form.diagnosis,
+					content: this.form.content,
+					attachments: attachments.join(','),
+					notes: this.form.remark,
+					doctorId: doctorInfo.id
+				}
+
+				await createMedicalRecord(data)
+				uni.showToast({ title: '提交成功', icon: 'success' })
+				setTimeout(() => uni.navigateBack(), 800)
 			} catch (e) {
-				uni.showToast({ title: '上传成功', icon: 'success' })
-				setTimeout(() => {
-					uni.navigateBack()
-				}, 1000)
+				console.error('提交失败:', e)
+				uni.showToast({ title: '提交失败', icon: 'none' })
 			} finally {
 				this.loading = false
 			}
@@ -253,7 +368,7 @@ export default {
 	min-height: 100vh;
 	background: $app-bg;
 	padding: 24rpx;
-	padding-bottom: 140rpx;
+	padding-bottom: 60rpx;
 }
 
 .card {
@@ -263,31 +378,55 @@ export default {
 	box-shadow: $app-shadow;
 }
 
-.form-section {
-	margin-bottom: 24rpx;
+.tips {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	margin-bottom: 32rpx;
+	line-height: 1.5;
+}
+
+.section {
+	margin-bottom: 28rpx;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16rpx;
 }
 
 .section-title {
-	font-size: 30rpx;
-	font-weight: 500;
+	font-size: 28rpx;
 	color: $app-text;
-	margin-bottom: 24rpx;
+	font-weight: 500;
+	margin-bottom: 12rpx;
+	display: block;
+}
+
+.section-header .section-title {
+	margin-bottom: 0;
+}
+
+.section-tip {
+	font-size: 26rpx;
+	color: $app-primary;
+}
+
+.required {
+	color: #EF4444;
 }
 
 /* 患者选择 */
 .patient-select {
 	display: flex;
 	align-items: center;
-	padding: 24rpx;
+	justify-content: space-between;
+	height: 88rpx;
+	padding: 0 24rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
 	background: $app-bg;
-	border-radius: 12rpx;
-}
-
-.patient-avatar {
-	width: 72rpx;
-	height: 72rpx;
-	border-radius: 50%;
-	margin-right: 20rpx;
 }
 
 .patient-info {
@@ -295,16 +434,15 @@ export default {
 }
 
 .patient-name {
-	font-size: 30rpx;
+	font-size: 28rpx;
 	font-weight: 500;
 	color: $app-text;
-	display: block;
 }
 
 .patient-meta {
 	font-size: 24rpx;
 	color: $app-text-muted;
-	margin-top: 4rpx;
+	margin-left: 12rpx;
 }
 
 .select-placeholder {
@@ -316,193 +454,134 @@ export default {
 }
 
 .select-placeholder .app-icon {
-	font-size: 36rpx;
+	font-size: 32rpx;
 }
 
-/* 表单项 */
-.form-item {
-	margin-bottom: 24rpx;
-}
-
-.form-item:last-child {
-	margin-bottom: 0;
-}
-
-.form-label {
+.patient-select .app-icon {
 	font-size: 28rpx;
-	color: $app-text;
-	display: block;
-	margin-bottom: 12rpx;
+	color: $app-text-muted;
 }
 
-.form-input {
-	width: 100%;
+.picker-input {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 	height: 88rpx;
 	padding: 0 24rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
 	background: $app-bg;
-	border-radius: 12rpx;
-	font-size: 28rpx;
-	color: $app-text;
-}
-
-.form-textarea {
-	width: 100%;
-	height: 200rpx;
-	padding: 20rpx 24rpx;
-	background: $app-bg;
-	border-radius: 12rpx;
-	font-size: 28rpx;
-	color: $app-text;
-}
-
-.type-options {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 16rpx;
-}
-
-.type-item {
-	padding: 16rpx 28rpx;
-	background: $app-bg;
-	border-radius: 20rpx;
-	font-size: 26rpx;
-	color: $app-text-secondary;
-}
-
-.type-item.active {
-	background: rgba(99, 102, 241, 0.1);
-	color: #6366F1;
 }
 
 .picker-value {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	height: 88rpx;
-	padding: 0 24rpx;
-	background: $app-bg;
-	border-radius: 12rpx;
-}
-
-.picker-value text:first-child {
 	font-size: 28rpx;
 	color: $app-text;
 }
 
-/* 上传区域 */
+.picker-input .app-icon {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
+
+.input {
+	width: 100%;
+	height: 88rpx;
+	padding: 0 24rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
+	font-size: 28rpx;
+	color: $app-text;
+	background: $app-bg;
+	box-sizing: border-box;
+}
+
+.textarea {
+	width: 100%;
+	min-height: 160rpx;
+	padding: 20rpx;
+	border: 2rpx solid $app-border;
+	border-radius: $app-radius;
+	font-size: 28rpx;
+	color: $app-text;
+	background: $app-bg;
+	box-sizing: border-box;
+}
+
+.char-count {
+	display: block;
+	text-align: right;
+	font-size: 24rpx;
+	color: $app-text-muted;
+	margin-top: 8rpx;
+}
+
 .upload-area {
+	border: 2rpx dashed $app-border;
+	border-radius: $app-radius;
+	padding: 48rpx;
+	text-align: center;
+}
+
+.upload-icon {
+	font-size: 64rpx;
+	color: $app-text-muted;
+	display: block;
+}
+
+.upload-text {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	margin-top: 12rpx;
+	display: block;
+}
+
+.image-list {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 16rpx;
+	margin-top: 20rpx;
 }
 
-.upload-item {
+.image-item {
 	position: relative;
 	width: 160rpx;
 	height: 160rpx;
 }
 
-.upload-image {
+.preview-img {
 	width: 100%;
 	height: 100%;
 	border-radius: 12rpx;
 }
 
-.upload-file {
-	width: 100%;
-	height: 100%;
-	background: $app-bg;
-	border-radius: 12rpx;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-}
-
-.upload-file .app-icon {
-	font-size: 40rpx;
-	color: $app-text-muted;
-}
-
-.file-name {
-	font-size: 20rpx;
-	color: $app-text-muted;
-	margin-top: 8rpx;
-	max-width: 140rpx;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.upload-delete {
+.del-btn {
 	position: absolute;
 	top: -12rpx;
 	right: -12rpx;
 	width: 40rpx;
 	height: 40rpx;
-	border-radius: 50%;
 	background: #EF4444;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.upload-delete .app-icon {
-	font-size: 24rpx;
 	color: #fff;
-}
-
-.upload-btn {
-	width: 160rpx;
-	height: 160rpx;
-	background: $app-bg;
-	border: 2rpx dashed $app-border;
-	border-radius: 12rpx;
+	border-radius: 50%;
 	display: flex;
-	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	font-size: 28rpx;
+	line-height: 1;
 }
 
-.upload-btn .app-icon {
-	font-size: 48rpx;
-	color: $app-text-muted;
-}
-
-.upload-text {
-	font-size: 24rpx;
-	color: $app-text-muted;
-	margin-top: 8rpx;
-}
-
-.upload-hint {
-	font-size: 24rpx;
-	color: $app-text-muted;
-	margin-top: 16rpx;
-}
-
-/* 提交按钮 */
-.submit-section {
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	padding: 24rpx 32rpx;
-	padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-	background: #fff;
-	box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
-}
-
-.submit-btn {
-	width: 100%;
-	height: 96rpx;
-	line-height: 96rpx;
-	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-	border-radius: 48rpx;
+.btn {
+	margin-top: 32rpx;
+	height: 88rpx;
+	line-height: 88rpx;
+	border-radius: $app-radius;
 	font-size: 32rpx;
 	font-weight: 500;
+}
+
+.btn.primary {
+	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
 	color: #fff;
-	border: none;
 }
 
 /* 患者选择弹窗 */
@@ -575,7 +654,17 @@ export default {
 	width: 72rpx;
 	height: 72rpx;
 	border-radius: 50%;
+	background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	margin-right: 20rpx;
+}
+
+.avatar-text {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: #fff;
 }
 
 .picker-info {
