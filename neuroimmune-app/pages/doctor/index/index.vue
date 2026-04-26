@@ -67,7 +67,7 @@
 		<view class="section">
 			<view class="section-header">
 				<text class="section-title">我的患者</text>
-				<text class="section-more" @click="goPatientCenter">查看全部</text>
+				<text class="section-more" @click="goPatientList">查看全部</text>
 			</view>
 			<view class="patient-list" v-if="recentPatients.length">
 				<view class="patient-item" v-for="(item, i) in recentPatients" :key="i"
@@ -228,7 +228,7 @@ export default {
 			if (!url) return
 			uni.navigateTo({ url })
 		},
-		goPatientCenter() {
+		goPatientList() {
 			uni.navigateTo({ url: '/pages/doctor/patient-list/patient-list' })
 		},
 		handleLogout() {
