@@ -136,7 +136,7 @@ export default {
 .circle-1 {
 	width: 400rpx;
 	height: 400rpx;
-	background: linear-gradient(135deg, rgba(13, 148, 136, 0.15) 0%, rgba(20, 184, 166, 0.1) 100%);
+	background: linear-gradient(135deg, rgba(8, 145, 178, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
 	top: -100rpx;
 	right: -100rpx;
 }

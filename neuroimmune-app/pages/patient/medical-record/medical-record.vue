@@ -115,7 +115,7 @@
 					<!-- 诊断信息 -->
 					<view class="detail-section" v-if="detailData.diagnosis">
 						<view class="section-label">
-							<uni-icons type="medal" size="18" color="#0D9488"></uni-icons>
+							<uni-icons type="medal" size="18" color="#0891B2"></uni-icons>
 							<text class="section-label-text">诊断结果</text>
 						</view>
 						<view class="diagnosis-box">
@@ -126,7 +126,7 @@
 					<!-- 病历内容 -->
 					<view class="detail-section">
 						<view class="section-label">
-							<uni-icons type="list" size="18" color="#0D9488"></uni-icons>
+							<uni-icons type="list" size="18" color="#0891B2"></uni-icons>
 							<text class="section-label-text">病历内容</text>
 						</view>
 						<view class="content-box">
@@ -137,7 +137,7 @@
 					<!-- 附件图片 -->
 					<view class="detail-section" v-if="detailData.attachments">
 						<view class="section-label">
-							<uni-icons type="image" size="18" color="#0D9488"></uni-icons>
+							<uni-icons type="image" size="18" color="#0891B2"></uni-icons>
 							<text class="section-label-text">附件图片</text>
 						</view>
 						<view class="attachment-grid">
@@ -155,7 +155,7 @@
 
 				<view class="popup-footer">
 					<view class="footer-btn edit" @click="editFromPopup">
-						<uni-icons type="compose" size="20" color="#0D9488"></uni-icons>
+						<uni-icons type="compose" size="20" color="#0891B2"></uni-icons>
 						<text class="footer-btn-text">编辑</text>
 					</view>
 					<view class="footer-btn delete" @click="deleteFromPopup">
@@ -515,7 +515,7 @@ export default {
 }
 
 .add-btn:active {
-	background: rgba(13, 148, 136, 0.15);
+	background: rgba(8, 145, 178, 0.15);
 }
 
 .external-item {

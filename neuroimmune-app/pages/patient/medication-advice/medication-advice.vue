@@ -275,7 +275,7 @@ export default {
 }
 
 .nav-btn:active {
-	background: rgba(13, 148, 136, 0.15);
+	background: rgba(8, 145, 178, 0.15);
 	transform: scale(0.95);
 }
 
@@ -316,7 +316,7 @@ export default {
 }
 
 .date-tab:active {
-	background: rgba(13, 148, 136, 0.05);
+	background: rgba(8, 145, 178, 0.05);
 }
 
 .date-tab.active {
