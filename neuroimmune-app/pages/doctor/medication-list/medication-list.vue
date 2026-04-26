@@ -17,7 +17,7 @@
 			<view class="stats-item">
 				<text class="stats-num">{{ medicationList.length }}</text>
 				<text class="stats-label">条用药建议</text>
-			view>
+			</view>
 			<view class="stats-divider"></view>
 			<view class="stats-item">
 				<text class="stats-num">{{ patientCount }}</text>
