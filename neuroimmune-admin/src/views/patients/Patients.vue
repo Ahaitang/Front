@@ -165,9 +165,7 @@ const addPatient = () => {
     gender: genderOptions.value[0]?.name || '男',
     birthDate: undefined,
     phone: '',
-    password: '',
-    hasFollowUp: false,
-    isRealAuth: false
+    password: ''
   }
   confirmPassword.value = ''
   selectedDoctorId.value = undefined
@@ -580,13 +578,19 @@ const handleExport = () => {
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="实名认证">
-                <el-switch v-model="currentPatient.isRealAuth" />
+              <el-form-item label="实名状态">
+                <el-tag :type="currentPatient.isRealAuth ? 'success' : 'warning'" size="small" effect="light">
+                  {{ currentPatient.isRealAuth ? '已实名' : '未实名' }}
+                </el-tag>
+                <span class="status-hint">（根据身份证号自动判断）</span>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="待随访">
-                <el-switch v-model="currentPatient.hasFollowUp" />
+              <el-form-item label="随访状态">
+                <el-tag :type="currentPatient.hasFollowUp ? 'warning' : 'info'" size="small" effect="light">
+                  {{ currentPatient.hasFollowUp ? '待随访' : '正常' }}
+                </el-tag>
+                <span class="status-hint">（根据随访记录自动判断）</span>
               </el-form-item>
             </el-col>
           </el-row>
@@ -771,5 +775,11 @@ const handleExport = () => {
       line-height: 1.6;
     }
   }
+}
+
+.status-hint {
+  font-size: 12px;
+  color: #909399;
+  margin-left: 8px;
 }
 </style>
