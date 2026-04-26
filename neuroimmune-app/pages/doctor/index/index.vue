@@ -111,7 +111,7 @@
 					<view class="action-icon medication">
 						<text class="app-icon uniui-compose"></text>
 					</view>
-					<text class="action-text">用药建议</text>
+					<text class="action-text">用药方案</text>
 				</view>
 			</view>
 		</view>
