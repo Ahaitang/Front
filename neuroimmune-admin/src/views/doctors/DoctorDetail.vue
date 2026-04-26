@@ -445,34 +445,34 @@ const calculateAge = (birthDate: string | undefined) => {
             </div>
           </div>
           <el-table :data="patients" stripe v-loading="patientsLoading" empty-text="暂无患者">
-            <el-table-column prop="name" label="姓名" min-width="100" />
-            <el-table-column prop="gender" label="性别" width="80" />
-            <el-table-column label="年龄" width="80">
+            <el-table-column prop="name" label="姓名" min-width="120" />
+            <el-table-column prop="gender" label="性别" width="100" />
+            <el-table-column label="年龄" width="100">
               <template #default="{ row }">
                 {{ calculateAge(row.birthDate) ?? '-' }}
               </template>
             </el-table-column>
-            <el-table-column prop="phone" label="手机号" min-width="120" />
-            <el-table-column prop="isRealAuth" label="实名状态" width="90">
+            <el-table-column prop="phone" label="手机号" min-width="140" />
+            <el-table-column prop="isRealAuth" label="实名状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.isRealAuth ? 'success' : 'warning'" size="small" effect="light">
                   {{ row.isRealAuth ? '已实名' : '未实名' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="hasFollowUp" label="随访状态" width="90">
+            <el-table-column prop="hasFollowUp" label="随访状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.hasFollowUp ? 'warning' : 'info'" size="small" effect="light">
                   {{ row.hasFollowUp ? '待随访' : '正常' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="updateTime" label="更新时间" width="160">
+            <el-table-column prop="updateTime" label="更新时间" width="180">
               <template #default="{ row }">
                 <span class="text-secondary">{{ formatDate(row.updateTime) }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="120" fixed="right">
+            <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
                 <el-button type="success" link size="small" @click="viewPatientDetail(row)">详情</el-button>
                 <el-button type="primary" link size="small" @click="editPatient(row)">修改</el-button>
@@ -491,24 +491,24 @@ const calculateAge = (birthDate: string | undefined) => {
             <el-button type="primary" :icon="Plus" @click="openAddFollowUpDialog">新增随访</el-button>
           </div>
           <el-table :data="followUps" stripe v-loading="followUpsLoading" empty-text="暂无随访记录">
-            <el-table-column prop="date" label="随访日期" width="110" />
-            <el-table-column prop="patientName" label="患者" min-width="100" />
-            <el-table-column prop="project" label="随访项目" min-width="140" />
-            <el-table-column prop="type" label="类型" width="100">
+            <el-table-column prop="date" label="随访日期" width="140" />
+            <el-table-column prop="patientName" label="患者" min-width="120" />
+            <el-table-column prop="project" label="随访项目" min-width="180" show-overflow-tooltip />
+            <el-table-column prop="type" label="类型" width="120">
               <template #default="{ row }">
                 <el-tag type="info" size="small" effect="plain">{{ row.type }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="90">
+            <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="content" label="备注" min-width="120" show-overflow-tooltip />
-            <el-table-column label="操作" width="120" fixed="right">
+            <el-table-column prop="content" label="备注" min-width="150" show-overflow-tooltip />
+            <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link size="small" @click="openEditFollowUpDialog(row)">编辑</el-button>
-                <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelFollowUpConfirm(row)">取消</el-button>
+                <el-button v-if="row.status === 0" type="danger" link size="small" @click="cancelFollowUpConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -524,30 +524,30 @@ const calculateAge = (birthDate: string | undefined) => {
             <el-button type="primary" :icon="Plus" @click="openAddMedicationDialog">新增用药</el-button>
           </div>
           <el-table :data="medications" stripe v-loading="medicationsLoading" empty-text="暂无用药记录">
-            <el-table-column prop="patientName" label="患者" min-width="100" />
-            <el-table-column prop="medicationName" label="药品名称" min-width="140" />
+            <el-table-column prop="patientName" label="患者" min-width="120" />
+            <el-table-column prop="medicationName" label="药品名称" min-width="160" show-overflow-tooltip />
             <el-table-column label="剂量" width="100">
               <template #default="{ row }">
                 <span class="dosage-value">{{ row.dosageValue }}{{ getUnitLabel(row.dosageUnit) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="frequency" label="频率" width="100" />
-            <el-table-column prop="route" label="途径" width="80">
+            <el-table-column prop="frequency" label="频率" width="120" />
+            <el-table-column prop="route" label="途径" width="100">
               <template #default="{ row }">
                 <el-tag type="info" size="small" effect="plain">{{ row.route }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="duration" label="疗程" width="80" />
-            <el-table-column prop="date" label="开药日期" width="110" />
-            <el-table-column prop="status" label="状态" width="90">
+            <el-table-column prop="duration" label="疗程" width="100" />
+            <el-table-column prop="date" label="开药日期" width="140" />
+            <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusType(row.status)" size="small" effect="light">{{ getStatusText(row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="120" fixed="right">
+            <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link size="small" @click="openEditMedicationDialog(row)">编辑</el-button>
-                <el-button v-if="row.status === 0" type="warning" link size="small" @click="cancelMedicationConfirm(row)">取消</el-button>
+                <el-button v-if="row.status === 0" type="danger" link size="small" @click="cancelMedicationConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
