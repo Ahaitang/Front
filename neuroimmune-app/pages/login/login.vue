@@ -43,6 +43,12 @@
 				</view>
 			</view>
 			<button class="btn primary" @click="handleLogin" :loading="loading">登录</button>
+
+			<!-- 注册链接 -->
+			<view class="register-link">
+				<text class="link-text">没有账号？</text>
+				<text class="link-action" @click="navToRegister">立即注册</text>
+			</view>
 		</view>
 
 		<view class="footer">
@@ -100,6 +106,9 @@ export default {
 		},
 		navTo(url) {
 			uni.navigateTo({ url });
+		},
+		navToRegister() {
+			uni.navigateTo({ url: '/pages/register/register' });
 		}
 	}
 };
@@ -299,6 +308,22 @@ export default {
 
 .btn::after {
 	border: none;
+}
+
+.register-link {
+	text-align: center;
+	padding: 32rpx 0 16rpx;
+}
+
+.link-text {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
+
+.link-action {
+	font-size: 28rpx;
+	color: $app-primary;
+	font-weight: 500;
 }
 
 .footer {
