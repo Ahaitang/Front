@@ -10,8 +10,24 @@
 			</view>
 		</view>
 
+		<!-- 状态Tab -->
+		<view class="status-tabs">
+			<view class="tab" :class="{ active: statusTab === 'confirmed' }" @click="switchTab('confirmed')">
+				已绑定
+				<text class="count" v-if="confirmedCount > 0">{{ confirmedCount }}</text>
+			</view>
+			<view class="tab" :class="{ active: statusTab === 'pending' }" @click="switchTab('pending')">
+				待确认
+				<text class="count pending" v-if="pendingCount > 0">{{ pendingCount }}</text>
+			</view>
+			<view class="tab" :class="{ active: statusTab === 'rejected' }" @click="switchTab('rejected')">
+				已拒绝
+				<text class="count" v-if="rejectedCount > 0">{{ rejectedCount }}</text>
+			</view>
+		</view>
+
 		<!-- 筛选标签 -->
-		<view class="filter-tags">
+		<view class="filter-tags" v-if="statusTab === 'confirmed'">
 			<view class="tag" :class="{ active: filterType === 'all' }" @click="filterType = 'all'">全部</view>
 			<view class="tag" :class="{ active: filterType === 'MS' }" @click="filterType = 'MS'">MS</view>
 			<view class="tag" :class="{ active: filterType === 'NMOSD' }" @click="filterType = 'NMOSD'">NMOSD</view>
@@ -20,7 +36,7 @@
 		</view>
 
 		<!-- 更多筛选 -->
-		<view class="more-types" v-if="showMoreTypes">
+		<view class="more-types" v-if="showMoreTypes && statusTab === 'confirmed'">
 			<view class="type-item" :class="{ active: filterType === 'MOGAD' }" @click="filterType = 'MOGAD'">MOGAD</view>
 			<view class="type-item" :class="{ active: filterType === 'GBS' }" @click="filterType = 'GBS'">GBS</view>
 			<view class="type-item" :class="{ active: filterType === 'CIDP' }" @click="filterType = 'CIDP'">CIDP</view>
@@ -34,7 +50,7 @@
 
 		<!-- 患者列表 -->
 		<view class="patient-list">
-			<view class="patient-card" v-for="(item, i) in filteredList" :key="i" @click="goPatientDetail(item.id)">
+			<view class="patient-card" v-for="(item, i) in filteredList" :key="i" @click="statusTab === 'confirmed' ? goPatientDetail(item.id) : null">
 				<view class="card-header">
 					<view class="avatar-wrap">
 						<text class="avatar-text">{{ item.name.charAt(0) }}</text>
@@ -49,7 +65,7 @@
 						<text class="basic-text">{{ item.gender }} | {{ item.age }}岁</text>
 					</view>
 				</view>
-				<view class="card-body">
+				<view class="card-body" v-if="statusTab === 'confirmed'">
 					<view class="info-row">
 						<view class="info-item">
 							<text class="app-icon uniui-calendar-filled"></text>
@@ -73,7 +89,19 @@
 						</view>
 					</view>
 				</view>
-				<view class="card-footer">
+				<!-- 待确认状态显示操作按钮 -->
+				<view class="card-footer pending-actions" v-if="statusTab === 'pending'">
+					<view class="action-btn confirm" @click.stop="handleConfirm(item.relationId)">
+						<text class="app-icon uniui-checkmarkempty"></text>
+						<text>确认</text>
+					</view>
+					<view class="action-btn reject" @click.stop="handleReject(item.relationId)">
+						<text class="app-icon uniui-closeempty"></text>
+						<text>拒绝</text>
+					</view>
+				</view>
+				<!-- 已绑定状态显示原有操作 -->
+				<view class="card-footer" v-if="statusTab === 'confirmed'">
 					<view class="action-btn primary" @click.stop="navTo('/pages/doctor/add-follow/add-follow?patientId=' + item.id + '&patientName=' + encodeURIComponent(item.name))">
 						<text class="app-icon uniui-plus-filled"></text>
 						<text>随访</text>
@@ -83,12 +111,13 @@
 						<text>电话</text>
 					</view>
 				</view>
+				<!-- 已拒绝状态不显示操作按钮 -->
 			</view>
 
 			<!-- 空状态 -->
 			<view class="empty-state" v-if="!filteredList.length">
 				<text class="app-icon empty-icon uniui-contact-filled"></text>
-				<text class="empty-text">暂无患者记录</text>
+				<text class="empty-text">{{ emptyText }}</text>
 			</view>
 		</view>
 	</view>
@@ -100,6 +129,7 @@ import { getFollowUpList } from '@/api/followup.js'
 import { getMedicationList } from '@/api/medication.js'
 import { getMedicalRecordList } from '@/api/medicalRecord.js'
 import { getEpisodesByPatient } from '@/api/episode.js'
+import { getPendingPatients, getRejectedPatients, confirmRelation, rejectRelation } from '@/api/auth.js'
 
 export default {
 	data() {
@@ -107,31 +137,149 @@ export default {
 			keyword: '',
 			filterType: 'all',
 			showMoreTypes: false,
-			patientList: []
+			statusTab: 'confirmed',
+			patientList: [],
+			pendingList: [],
+			rejectedList: []
 		}
 	},
 	computed: {
+		confirmedCount() {
+			return this.patientList.length
+		},
+		pendingCount() {
+			return this.pendingList.length
+		},
+		rejectedCount() {
+			return this.rejectedList.length
+		},
 		filteredList() {
-			let list = this.patientList
-			// 按姓名或疾病类型筛选
+			let list = []
+			if (this.statusTab === 'pending') {
+				list = this.pendingList
+			} else if (this.statusTab === 'rejected') {
+				list = this.rejectedList
+			} else {
+				list = this.patientList
+			}
+
+			// 应用关键词筛选
 			if (this.keyword) {
 				const k = this.keyword.toLowerCase()
 				list = list.filter(item =>
 					item.name.toLowerCase().includes(k) ||
-					item.diseaseLabels.some(label => label.toLowerCase().includes(k))
+					(item.diseaseLabels && item.diseaseLabels.some(label => label.toLowerCase().includes(k)))
 				)
 			}
-			// 按疾病类型筛选
-			if (this.filterType !== 'all') {
-				list = list.filter(item => item.diseaseTypes.includes(this.filterType))
+
+			// 应用疾病类型筛选（仅在已绑定Tab）
+			if (this.statusTab === 'confirmed' && this.filterType !== 'all') {
+				list = list.filter(item => item.diseaseTypes && item.diseaseTypes.includes(this.filterType))
 			}
+
 			return list
+		},
+		emptyText() {
+			if (this.statusTab === 'pending') {
+				return '暂无待确认患者'
+			} else if (this.statusTab === 'rejected') {
+				return '暂无已拒绝患者'
+			} else {
+				return '暂无患者记录'
+			}
 		}
 	},
 	onShow() {
 		this.loadData()
+		this.loadPendingPatients()
 	},
 	methods: {
+		async switchTab(tab) {
+			this.statusTab = tab
+			this.filterType = 'all'
+			this.showMoreTypes = false
+			if (tab === 'pending') {
+				await this.loadPendingPatients()
+			} else if (tab === 'rejected') {
+				await this.loadRejectedPatients()
+			}
+		},
+
+		async loadPendingPatients() {
+			const userInfo = uni.getStorageSync('userInfo')
+			const doctorId = userInfo?.id
+			if (!doctorId) return
+
+			try {
+				const res = await getPendingPatients(doctorId)
+				this.pendingList = (res || []).map(p => ({
+					relationId: p.relationId,
+					id: p.patientId,
+					name: p.name || '患者',
+					gender: p.gender === 'male' ? '男' : (p.gender === 'female' ? '女' : p.gender || '未知'),
+					age: p.age || '-',
+					phone: p.phone || '',
+					requestTime: p.requestTime,
+					diseaseLabels: ['新注册'],
+					diseaseTypes: []
+				}))
+			} catch (e) {
+				console.error('加载待确认患者失败:', e)
+			}
+		},
+
+		async loadRejectedPatients() {
+			const userInfo = uni.getStorageSync('userInfo')
+			const doctorId = userInfo?.id
+			if (!doctorId) return
+
+			try {
+				const res = await getRejectedPatients(doctorId)
+				this.rejectedList = (res || []).map(p => ({
+					relationId: p.relationId,
+					id: p.patientId,
+					name: p.name || '患者',
+					gender: p.gender === 'male' ? '男' : (p.gender === 'female' ? '女' : p.gender || '未知'),
+					age: p.age || '-',
+					phone: p.phone || '',
+					diseaseLabels: ['已拒绝'],
+					diseaseTypes: []
+				}))
+			} catch (e) {
+				console.error('加载已拒绝患者失败:', e)
+			}
+		},
+
+		async handleConfirm(relationId) {
+			try {
+				await confirmRelation(relationId)
+				uni.showToast({ title: '已确认绑定', icon: 'success' })
+				await this.loadPendingPatients()
+				await this.loadData()
+			} catch (e) {
+				uni.showToast({ title: '确认失败', icon: 'none' })
+			}
+		},
+
+		async handleReject(relationId) {
+			uni.showModal({
+				title: '确认拒绝',
+				content: '拒绝后患者将无法登录，确定拒绝？',
+				success: async (res) => {
+					if (res.confirm) {
+						try {
+							await rejectRelation(relationId)
+							uni.showToast({ title: '已拒绝', icon: 'none' })
+							await this.loadPendingPatients()
+							await this.loadRejectedPatients()
+						} catch (e) {
+							uni.showToast({ title: '拒绝失败', icon: 'none' })
+						}
+					}
+				}
+			})
+		},
+
 		async loadData() {
 			try {
 				const res = await getMyPatients({ pageNum: 1, pageSize: 100 })
@@ -265,6 +413,47 @@ export default {
 
 .add-btn .app-icon {
 	font-size: 32rpx;
+	color: #fff;
+}
+
+/* 状态Tab */
+.status-tabs {
+	display: flex;
+	gap: 16rpx;
+	margin-bottom: 20rpx;
+	background: $app-card-bg;
+	padding: 16rpx 24rpx;
+	border-radius: 16rpx;
+	box-shadow: $app-shadow;
+}
+
+.tab {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8rpx;
+	padding: 16rpx 24rpx;
+	background: $app-hover-bg;
+	border-radius: $app-radius-sm;
+	font-size: 28rpx;
+	color: $app-text-secondary;
+}
+
+.tab.active {
+	background: $app-primary;
+	color: #fff;
+}
+
+.count {
+	font-size: 24rpx;
+	padding: 4rpx 12rpx;
+	background: rgba(0,0,0,0.1);
+	border-radius: 12rpx;
+}
+
+.count.pending {
+	background: $app-warning;
 	color: #fff;
 }
 
@@ -451,6 +640,22 @@ export default {
 
 .action-btn.primary {
 	background: #6366F1;
+	color: #fff;
+}
+
+/* 待确认操作按钮 */
+.pending-actions {
+	display: flex;
+	gap: 16rpx;
+}
+
+.action-btn.confirm {
+	background: $app-success;
+	color: #fff;
+}
+
+.action-btn.reject {
+	background: $app-error;
 	color: #fff;
 }
 
