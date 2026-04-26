@@ -379,7 +379,7 @@ const formatDate = (date: string) => {
 <style lang="scss" scoped>
 .level-tip {
   font-size: 12px;
-  color: #6B7280;
+  color: #64748B;
   margin-top: 8px;
 }
 </style>

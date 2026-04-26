@@ -729,7 +729,8 @@ const calculateAge = (birthDate: string | undefined) => {
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
 
   .doctor-header {
     display: flex;
@@ -742,15 +743,15 @@ const calculateAge = (birthDate: string | undefined) => {
 
       h3 {
         font-size: 22px;
-        font-weight: 600;
-        color: #1F2937;
+        font-weight: 700;
+        color: #1E293B;
         margin-bottom: 10px;
       }
 
       .doctor-meta {
         display: flex;
         gap: 20px;
-        color: #6B7280;
+        color: #64748B;
         font-size: 14px;
       }
     }
@@ -769,12 +770,12 @@ const calculateAge = (birthDate: string | undefined) => {
 
     .detail-item {
       .label {
-        color: #6B7280;
+        color: #64748B;
         margin-right: 8px;
       }
 
       .value {
-        color: #1F2937;
+        color: #1E293B;
         font-weight: 500;
       }
     }
@@ -789,6 +790,6 @@ const calculateAge = (birthDate: string | undefined) => {
 
 .dosage-value {
   font-weight: 600;
-  color: #0D9488;
+  color: #0891B2;
 }
 </style>

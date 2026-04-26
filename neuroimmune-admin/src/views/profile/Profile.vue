@@ -203,9 +203,9 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .card-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  color: #1F2937;
+  color: #0891B2;
   margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 1px solid #E5E7EB;

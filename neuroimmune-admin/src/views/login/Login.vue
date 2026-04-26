@@ -59,7 +59,7 @@ const handleLogin = async () => {
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <el-icon :size="48" color="#0D9488"><FirstAidKit /></el-icon>
+        <el-icon :size="48" color="#0891B2"><FirstAidKit /></el-icon>
         <h1>神经免疫随访系统</h1>
         <p>管理后台</p>
       </div>
@@ -114,7 +114,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0D9488 0%, #14B8A6 50%, #5EEAD4 100%);
+  background: linear-gradient(135deg, #0891B2 0%, #06B6D4 50%, #67E8F9 100%);
 }
 
 .login-box {
@@ -123,6 +123,7 @@ const handleLogin = async () => {
   border-radius: 16px;
   padding: 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid #E5E7EB;
 }
 
 .login-header {
@@ -131,13 +132,14 @@ const handleLogin = async () => {
 
   h1 {
     font-size: 24px;
-    color: #1F2937;
+    font-weight: 700;
+    color: #1E293B;
     margin: 16px 0 8px;
   }
 
   p {
     font-size: 14px;
-    color: #9CA3AF;
+    color: #64748B;
     margin: 0;
   }
 }
@@ -145,12 +147,28 @@ const handleLogin = async () => {
 .login-form {
   .login-btn {
     width: 100%;
-    background: #0D9488;
-    border-color: #0D9488;
+    background: #0891B2;
+    border-color: #0891B2;
+    border-radius: 10px;
 
     &:hover {
-      background: #14B8A6;
-      border-color: #14B8A6;
+      background: #06B6D4;
+      border-color: #06B6D4;
+    }
+  }
+
+  :deep(.el-input__wrapper) {
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    box-shadow: none;
+
+    &:hover {
+      border-color: #0891B2;
+    }
+
+    &.is-focus {
+      border-color: #0891B2;
+      box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.1);
     }
   }
 
@@ -166,6 +184,7 @@ const handleLogin = async () => {
         display: flex;
         align-items: center;
         justify-content: center;
+        border-radius: 10px;
       }
     }
   }
@@ -179,7 +198,7 @@ const handleLogin = async () => {
 
   p {
     font-size: 12px;
-    color: #9CA3AF;
+    color: #94A3B8;
     margin: 0;
   }
 }

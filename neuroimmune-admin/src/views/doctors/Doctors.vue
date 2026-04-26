@@ -731,17 +731,17 @@ const formatDate = (date: string) => {
 .patient-count {
   font-weight: 600;
   font-size: 14px;
-  color: #0D9488;
+  color: #0891B2;
 }
 
 .patient-count-info {
   margin-top: 16px;
   text-align: right;
-  color: #6B7280;
+  color: #64748B;
   font-size: 14px;
 
   strong {
-    color: #0D9488;
+    color: #0891B2;
     font-size: 16px;
   }
 }
@@ -806,7 +806,7 @@ const formatDate = (date: string) => {
 
 .level-tip {
   font-size: 12px;
-  color: #6B7280;
+  color: #64748B;
   margin-top: 8px;
 }
 </style>

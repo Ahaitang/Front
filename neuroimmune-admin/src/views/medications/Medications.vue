@@ -419,5 +419,5 @@ const handleExport = () => {
 </template>
 
 <style lang="scss" scoped>
-.dosage-value { font-weight: 600; color: #0D9488; }
+.dosage-value { font-weight: 600; color: #0891B2; }
 </style>

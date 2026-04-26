@@ -257,12 +257,12 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 20px;
-    font-weight: 600;
-    color: #1F2937;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1E293B;
 
     .el-icon {
-      color: #0D9488;
+      color: #0891B2;
     }
   }
 }
@@ -282,13 +282,14 @@ onMounted(() => {
   background: #fff;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
   gap: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  border: 1px solid #E5E7EB;
 
   &:hover {
     transform: translateY(-2px);
@@ -307,8 +308,8 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(13, 148, 136, 0.1);
-    color: #0D9488;
+    background: rgba(8, 145, 178, 0.1);
+    color: #0891B2;
     flex-shrink: 0;
   }
 
@@ -333,19 +334,19 @@ onMounted(() => {
     .stat-value {
       font-size: 28px;
       font-weight: 700;
-      color: #1F2937;
+      color: #1E293B;
       line-height: 1.2;
     }
 
     .stat-label {
       font-size: 14px;
-      color: #6B7280;
+      color: #64748B;
       margin-top: 4px;
     }
   }
 
   .stat-arrow {
-    color: #9CA3AF;
+    color: #94A3B8;
     opacity: 0;
     transform: translateX(-10px);
     transition: all 0.2s ease;
@@ -360,9 +361,9 @@ onMounted(() => {
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  color: #1F2937;
+  color: #0891B2;
   margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 1px solid #E5E7EB;
@@ -371,7 +372,7 @@ onMounted(() => {
   gap: 8px;
 
   .el-icon {
-    color: #0D9488;
+    color: #0891B2;
   }
 
   .view-all {
@@ -404,14 +405,14 @@ onMounted(() => {
 
       .gender-label {
         font-size: 14px;
-        color: #4B5563;
+        color: #475569;
         font-weight: 500;
       }
 
       .gender-count {
         margin-left: auto;
         font-size: 14px;
-        color: #1F2937;
+        color: #1E293B;
         font-weight: 600;
       }
     }
@@ -424,11 +425,11 @@ onMounted(() => {
     margin-top: 16px;
     border-top: 1px dashed #E5E7EB;
     font-size: 14px;
-    color: #6B7280;
+    color: #64748B;
 
     .total-value {
       font-weight: 600;
-      color: #1F2937;
+      color: #1E293B;
     }
   }
 }
@@ -483,7 +484,7 @@ onMounted(() => {
 
     .stat-label {
       font-size: 14px;
-      color: #6B7280;
+      color: #64748B;
       font-weight: 500;
     }
   }
