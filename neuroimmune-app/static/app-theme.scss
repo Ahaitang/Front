@@ -1,16 +1,16 @@
 // 神经免疫随访 - 全局设计变量（温和专业风格）
-$app-primary: #0D9488;
-$app-primary-light: #14B8A6;
-$app-primary-dark: #0F766E;
-$app-primary-bg: rgba(#0D9488, 0.08);
+$app-primary: #0891B2;
+$app-primary-light: #06B6D4;
+$app-primary-dark: #0E7490;
+$app-primary-bg: #ECFEFF;
 
 // 背景颜色
-$app-bg: #FAFAF9;
+$app-bg: #F8FAFC;
 $app-card-bg: #FFFFFF;
-$app-hover-bg: #F3F4F6;
+$app-hover-bg: #F1F5F9;
 
 // 文字颜色
-$app-text: #1F2937;
+$app-text: #111827;
 $app-text-secondary: #6B7280;
 $app-text-muted: #9CA3AF;
 
@@ -38,8 +38,8 @@ $app-radius-full: 9999rpx;
 $app-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 $app-shadow-sm: 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
 $app-shadow-md: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
-$app-shadow-card: 0 4rpx 20rpx rgba(13, 148, 136, 0.06);
-$app-shadow-primary: 0 8rpx 24rpx rgba(13, 148, 136, 0.25);
+$app-shadow-card: 0 4rpx 20rpx rgba(8, 145, 178, 0.06);
+$app-shadow-primary: 0 8rpx 24rpx rgba(8, 145, 178, 0.25);
 
 // 间距
 $app-spacing-xs: 8rpx;
@@ -53,7 +53,7 @@ $app-transition: all 0.25s ease;
 $app-transition-fast: all 0.15s ease;
 
 // 渐变背景
-$app-gradient-primary: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+$app-gradient-primary: linear-gradient(135deg, #0891B2 0%, #06B6D4 100%);
 $app-gradient-doctor: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
 $app-gradient-success: linear-gradient(135deg, #10B981 0%, #34D399 100%);
 $app-gradient-warning: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);

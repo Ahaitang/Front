@@ -1038,7 +1038,7 @@ export default {
 	align-items: center;
 	justify-content: center;
 	margin-bottom: 16rpx;
-	box-shadow: 0 4rpx 16rpx rgba(13, 148, 136, 0.15);
+	box-shadow: 0 4rpx 16rpx rgba(8, 145, 178, 0.15);
 	transition: $app-transition;
 }
 
