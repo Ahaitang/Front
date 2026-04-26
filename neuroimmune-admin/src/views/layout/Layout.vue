@@ -73,16 +73,13 @@ onMounted(() => {
     <!-- 侧边栏 -->
     <aside class="sidebar" :class="{ collapsed: isCollapse }">
       <div class="logo">
-        <el-icon :size="28" color="#0D9488"><FirstAidKit /></el-icon>
+        <el-icon :size="28" color="#FFFFFF"><FirstAidKit /></el-icon>
         <span v-show="!isCollapse" class="logo-text">神经免疫随访</span>
       </div>
 
       <el-menu
         :default-active="activeMenu"
         :collapse="isCollapse"
-        background-color="#1F2937"
-        text-color="#9CA3AF"
-        active-text-color="#0D9488"
         router
       >
         <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
@@ -146,14 +143,16 @@ onMounted(() => {
 .layout {
   display: flex;
   height: 100vh;
+  background: #F8FAFC;
 }
 
 .sidebar {
   width: 220px;
-  background: #1F2937;
+  background: #F8FAFC;
   display: flex;
   flex-direction: column;
   transition: width 0.3s;
+  border-right: 1px solid #E5E7EB;
 
   &.collapsed {
     width: 64px;
@@ -165,7 +164,7 @@ onMounted(() => {
     align-items: center;
     padding: 0 20px;
     gap: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #0891B2;
 
     .logo-text {
       font-size: 16px;
@@ -178,22 +177,27 @@ onMounted(() => {
   .el-menu {
     border-right: none;
     flex: 1;
+    background: #F8FAFC;
 
     .el-menu-item {
+      color: #6B7280;
+
       &:hover {
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: #ECFEFF;
+        color: #0891B2;
       }
 
       &.is-active {
-        background-color: rgba(13, 148, 136, 0.2);
-        border-right: 3px solid #0D9488;
+        background-color: #ECFEFF;
+        color: #0891B2;
+        border-right: 3px solid #0891B2;
       }
     }
   }
 
   .sidebar-footer {
     padding: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid #E5E7EB;
   }
 }
 
@@ -202,12 +206,14 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #F8FAFC;
 }
 
 .header {
   height: 60px;
   background: #fff;
   border-bottom: 1px solid #E5E7EB;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -235,6 +241,6 @@ onMounted(() => {
 .content {
   flex: 1;
   overflow: auto;
-  background: #F5F7FA;
+  background: #F8FAFC;
 }
 </style>
