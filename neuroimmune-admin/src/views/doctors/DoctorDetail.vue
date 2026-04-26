@@ -438,7 +438,13 @@ const calculateAge = (birthDate: string | undefined) => {
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
         <!-- 患者列表 -->
         <el-tab-pane label="患者列表" name="patients">
-          <el-table :data="patients" stripe v-loading="patientsLoading">
+          <div class="tab-header">
+            <div class="tab-title">
+              <span>患者列表</span>
+              <span class="count-badge">{{ patients.length }}</span>
+            </div>
+          </div>
+          <el-table :data="patients" stripe v-loading="patientsLoading" empty-text="暂无患者">
             <el-table-column prop="name" label="姓名" min-width="100" />
             <el-table-column prop="gender" label="性别" width="80" />
             <el-table-column label="年龄" width="80">
@@ -478,9 +484,13 @@ const calculateAge = (birthDate: string | undefined) => {
         <!-- 随访记录 -->
         <el-tab-pane label="随访记录" name="followups">
           <div class="tab-header">
+            <div class="tab-title">
+              <span>随访记录列表</span>
+              <span class="count-badge">{{ followUps.length }}</span>
+            </div>
             <el-button type="primary" :icon="Plus" @click="openAddFollowUpDialog">新增随访</el-button>
           </div>
-          <el-table :data="followUps" stripe v-loading="followUpsLoading">
+          <el-table :data="followUps" stripe v-loading="followUpsLoading" empty-text="暂无随访记录">
             <el-table-column prop="date" label="随访日期" width="110" />
             <el-table-column prop="patientName" label="患者" min-width="100" />
             <el-table-column prop="project" label="随访项目" min-width="140" />
@@ -507,9 +517,13 @@ const calculateAge = (birthDate: string | undefined) => {
         <!-- 用药记录 -->
         <el-tab-pane label="用药记录" name="medications">
           <div class="tab-header">
+            <div class="tab-title">
+              <span>用药记录列表</span>
+              <span class="count-badge">{{ medications.length }}</span>
+            </div>
             <el-button type="primary" :icon="Plus" @click="openAddMedicationDialog">新增用药</el-button>
           </div>
-          <el-table :data="medications" stripe v-loading="medicationsLoading">
+          <el-table :data="medications" stripe v-loading="medicationsLoading" empty-text="暂无用药记录">
             <el-table-column prop="patientName" label="患者" min-width="100" />
             <el-table-column prop="medicationName" label="药品名称" min-width="140" />
             <el-table-column label="剂量" width="100">
@@ -726,70 +740,290 @@ const calculateAge = (birthDate: string | undefined) => {
 <style lang="scss" scoped>
 .doctor-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 0;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid #E5E7EB;
+  overflow: hidden;
 
   .doctor-header {
     display: flex;
     align-items: center;
-    gap: 24px;
-    margin-bottom: 20px;
+    gap: 20px;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    border-bottom: 1px solid #E5E7EB;
+
+    .doctor-avatar {
+      position: relative;
+
+      .el-avatar {
+        border: 3px solid #fff;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+    }
 
     .doctor-info {
       flex: 1;
 
       h3 {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 700;
-        color: #1E293B;
-        margin-bottom: 10px;
+        color: #0F172A;
+        margin-bottom: 12px;
+        letter-spacing: 0.5px;
       }
 
       .doctor-meta {
         display: flex;
-        gap: 20px;
-        color: #64748B;
-        font-size: 14px;
+        gap: 24px;
+        color: #475569;
+        font-size: 15px;
+
+        span {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          &:not(:last-child)::after {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: #CBD5E1;
+            border-radius: 50%;
+            margin-left: 20px;
+          }
+        }
       }
     }
 
     .doctor-tags {
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      gap: 8px;
+
+      .el-tag {
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 8px;
+      }
     }
   }
 
   .doctor-detail {
-    display: flex;
-    gap: 48px;
-    padding-top: 20px;
-    border-top: 1px solid #E5E7EB;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0;
+    padding: 20px 28px;
+    background: #fff;
 
     .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-right: 1px solid #F1F5F9;
+      border-bottom: 1px solid #F1F5F9;
+
+      &:last-child {
+        border-right: none;
+      }
+
       .label {
         color: #64748B;
-        margin-right: 8px;
+        font-size: 13px;
+        white-space: nowrap;
       }
 
       .value {
         color: #1E293B;
+        font-weight: 600;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.content-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #E5E7EB;
+
+  .el-tabs {
+    .el-tabs__header {
+      margin-bottom: 24px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #E5E7EB;
+
+      .el-tabs__nav-wrap::after {
+        display: none;
+      }
+
+      .el-tabs__item {
+        font-size: 15px;
         font-weight: 500;
+        color: #64748B;
+        padding: 0 24px;
+        height: 44px;
+        line-height: 44px;
+
+        &.is-active {
+          color: #0891B2;
+          font-weight: 600;
+        }
+
+        &:hover:not(.is-active) {
+          color: #0E7490;
+        }
+      }
+
+      .el-tabs__active-bar {
+        background-color: #0891B2;
+        height: 3px;
+        border-radius: 2px 2px 0 0;
       }
     }
   }
 }
 
 .tab-header {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+
+  .tab-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1E293B;
+
+    .count-badge {
+      background: #0891B2;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+  }
+}
+
+// 表格整体样式
+.el-table {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+
+  // 表头样式
+  th.el-table__cell {
+    background: #F1F5F9 !important;
+    color: #475569;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 16px 12px;
+    border-bottom: 2px solid #E5E7EB;
+    text-transform: none;
+    letter-spacing: 0.3px;
+
+    .cell {
+      padding: 0 8px;
+    }
+  }
+
+  // 行样式
+  td.el-table__cell {
+    padding: 14px 12px;
+    font-size: 14px;
+    color: #334155;
+    border-bottom: 1px solid #F1F5F9;
+
+    .cell {
+      padding: 0 8px;
+    }
+  }
+
+  // 斑马纹
+  .el-table__row--striped {
+    td.el-table__cell {
+      background: #F8FAFC;
+    }
+  }
+
+  // hover 效果
+  .el-table__row:hover > td.el-table__cell {
+    background: #F0FDFA !important;
+  }
+
+  // 操作按钮区
+  .el-button + .el-button {
+    margin-left: 8px;
+  }
+
+  // 状态标签美化
+  .el-tag {
+    border-radius: 8px;
+    font-weight: 500;
+    border: none;
+    padding: 5px 12px;
+    font-size: 12px;
+
+    &.el-tag--success {
+      background: #D1FAE5;
+      color: #047857;
+    }
+
+    &.el-tag--warning {
+      background: #FEF3C7;
+      color: #B45309;
+    }
+
+    &.el-tag--danger {
+      background: #FEE2E2;
+      color: #B91C1C;
+    }
+
+    &.el-tag--info {
+      background: #E0F2FE;
+      color: #0369A1;
+    }
+
+    &.el-tag--plain {
+      background: #F1F5F9;
+      color: #475569;
+      border: 1px solid #E5E7EB;
+    }
+
+    &.el-tag--light {
+      background: rgba(8, 145, 178, 0.1);
+      color: #0891B2;
+    }
+  }
 }
 
 .dosage-value {
   font-weight: 600;
   color: #0891B2;
+  font-size: 14px;
+}
+
+// 空状态
+.el-table__empty-block {
+  padding: 48px 24px;
+
+  .el-table__empty-text {
+    color: #94A3B8;
+    font-size: 14px;
+  }
 }
 </style>
