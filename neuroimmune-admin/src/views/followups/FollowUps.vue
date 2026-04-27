@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Calendar, Document, Clock, CircleCheck, CircleClose, DocumentCopy } from '@element-plus/icons-vue'
 import {
@@ -47,16 +47,75 @@ const dialogType = ref<'view' | 'edit' | 'add'>('view')
 const currentFollowUp = ref<Partial<FollowUp>>({})
 const saveLoading = ref(false)
 
-// 随访类型选项
+// 字典选项
 const followUpTypeOptions = ref<CommonDict[]>([])
+const followUpExamTypeOptions = ref<CommonDict[]>([])
+const outpatientCycleTypeOptions = ref<CommonDict[]>([])
+const timeSlotOptions = ref<CommonDict[]>([])
+
+// 检查项目多选
+const selectedExamItems = ref<string[]>([])
+const availableExamItems = ref<string[]>([])
 
 // 加载字典
 const loadDicts = async () => {
   try {
-    followUpTypeOptions.value = await getCommonDictByType(DICT_TYPES.FOLLOW_UP_TYPE)
+    const [followUpTypes, examTypes, cycleTypes, timeSlots] = await Promise.all([
+      getCommonDictByType(DICT_TYPES.FOLLOW_UP_TYPE),
+      getCommonDictByType(DICT_TYPES.FOLLOW_UP_EXAM_TYPE),
+      getCommonDictByType(DICT_TYPES.OUTPATIENT_CYCLE_TYPE),
+      getCommonDictByType(DICT_TYPES.TIME_SLOT)
+    ])
+    followUpTypeOptions.value = followUpTypes || []
+    followUpExamTypeOptions.value = examTypes || []
+    outpatientCycleTypeOptions.value = cycleTypes || []
+    timeSlotOptions.value = timeSlots || []
   } catch (e) {
     console.error('加载字典失败:', e)
   }
+}
+
+// 门诊周期类型选项（备用，如果字典未配置）
+const cycleTypeOptions = [
+  { value: 'weekly', label: '每周' },
+  { value: 'monthly', label: '每月' },
+  { value: 'quarterly', label: '每季度' }
+]
+
+// 时间段选项（备用，如果字典未配置）
+const timeSlotOptionsList = [
+  { value: 'morning', label: '上午' },
+  { value: 'afternoon', label: '下午' },
+  { value: 'evening', label: '晚上' }
+]
+
+// 格式化门诊随访周期显示
+const formatOutpatientCycle = (row: FollowUp): string => {
+  if (!row.outpatientCycleType && !row.outpatientCycleValue) return '-'
+
+  let typeLabel = ''
+  if (row.outpatientCycleType) {
+    const found = cycleTypeOptions.find(o => o.value === row.outpatientCycleType)
+    typeLabel = found ? found.label : row.outpatientCycleType
+  }
+
+  const value = row.outpatientCycleValue || ''
+  let timeLabel = ''
+  if (row.outpatientTimeSlot) {
+    const found = timeSlotOptionsList.find(o => o.value === row.outpatientTimeSlot)
+    timeLabel = found ? found.label : row.outpatientTimeSlot
+  }
+
+  let result = ''
+  if (value && typeLabel) {
+    result = `${value}${typeLabel}`
+  } else if (typeLabel) {
+    result = typeLabel
+  }
+  if (timeLabel) {
+    result += ` ${timeLabel}`
+  }
+  return result || '-'
 }
 
 // 状态相关 - 使用整数
@@ -66,8 +125,8 @@ const getStatusType = (status: number) => {
 }
 
 const getStatusText = (status: number) => {
-  const map: Record<number, string> = { 0: '进行中', 1: '已完成', 2: '已取消' }
-  return map[status] || '进行中'
+  const map: Record<number, string> = { 0: '待随访', 1: '已完成', 2: '已取消' }
+  return map[status] || '待随访'
 }
 
 // 加载数据
@@ -154,12 +213,28 @@ const handleSizeChange = (size: number) => {
 
 const viewFollowUp = (row: FollowUp) => {
   currentFollowUp.value = { ...row }
+  // 解析检查项目
+  if (row.examinationItems) {
+    selectedExamItems.value = row.examinationItems.split(',').filter(Boolean)
+  } else {
+    selectedExamItems.value = []
+  }
   dialogType.value = 'view'
   dialogVisible.value = true
 }
 
 const editFollowUp = (row: FollowUp) => {
   currentFollowUp.value = { ...row }
+  // 解析检查项目
+  if (row.examinationItems) {
+    selectedExamItems.value = row.examinationItems.split(',').filter(Boolean)
+  } else {
+    selectedExamItems.value = []
+  }
+  // 触发检查类型变更以加载可用检查项目
+  if (row.followUpExamTypeId) {
+    handleExamTypeChange(row.followUpExamTypeId)
+  }
   dialogType.value = 'edit'
   dialogVisible.value = true
 }
@@ -180,8 +255,18 @@ const addFollowUp = () => {
     project: '',
     type: '定期随访',
     status: 0,
-    content: ''
+    content: '',
+    outpatientCycleType: '',
+    outpatientCycleValue: '',
+    outpatientTimeSlot: '',
+    hospitalizationTime: '',
+    followUpExamTypeId: undefined,
+    followUpExamTypeName: '',
+    examinationItems: '',
+    notes: ''
   }
+  selectedExamItems.value = []
+  availableExamItems.value = []
   dialogType.value = 'add'
   dialogVisible.value = true
 }
@@ -218,6 +303,32 @@ const cancelFollowUpRecord = (row: FollowUp) => {
   }).catch(() => {})
 }
 
+// 随访检查类型变更处理
+const handleExamTypeChange = (examTypeId: number) => {
+  const examType = followUpExamTypeOptions.value.find(t => t.id === examTypeId)
+  if (examType) {
+    currentFollowUp.value.followUpExamTypeId = examTypeId
+    currentFollowUp.value.followUpExamTypeName = examType.name
+    // 根据检查类型设置可用的检查项目（示例：从描述字段解析）
+    if (examType.description) {
+      availableExamItems.value = examType.description.split(',').map(s => s.trim()).filter(Boolean)
+    } else {
+      availableExamItems.value = []
+    }
+  } else {
+    currentFollowUp.value.followUpExamTypeId = undefined
+    currentFollowUp.value.followUpExamTypeName = ''
+    availableExamItems.value = []
+  }
+  // 清空已选检查项目
+  selectedExamItems.value = []
+}
+
+// 检查项目选择变更
+const handleExamItemsChange = (items: string[]) => {
+  currentFollowUp.value.examinationItems = items.join(',')
+}
+
 const saveFollowUp = async () => {
   if (!currentFollowUp.value.patientId) {
     ElMessage.warning('请选择患者')
@@ -239,6 +350,8 @@ const saveFollowUp = async () => {
     if (submitData.date && submitData.date.length === 10) {
       submitData.date = submitData.date + ' 00:00:00'
     }
+    // 同步检查项目
+    submitData.examinationItems = selectedExamItems.value.join(',')
     await saveFollowUpApi(submitData)
     ElMessage.success(dialogType.value === 'add' ? '添加成功' : '保存成功')
     dialogVisible.value = false
@@ -285,12 +398,16 @@ const handleExport = () => {
     '患者性别': item.patientGender,
     '患者年龄': item.patientAge,
     '随访医生': item.doctorName,
+    '门诊随访周期': formatOutpatientCycle(item),
+    '住院时间': item.hospitalizationTime || '-',
+    '随访检查类型': item.followUpExamTypeName || '-',
+    '检查项目': item.examinationItems || '-',
     '随访日期': item.date,
     '随访项目': item.project,
     '随访类型': item.type,
     '状态': getStatusText(item.status),
-    '备注': item.content || '-',
-    '创建时间': formatDate(item.createTime)
+    '备注': item.notes || item.content || '-',
+    '创建时间': formatDate(item.createTime || '')
   }))
   exportToExcel(exportData, '随访列表')
 }
@@ -320,7 +437,7 @@ const handleExport = () => {
           <el-icon :size="24"><Clock /></el-icon>
         </div>
         <div class="stat-value">{{ statusStats.pending }}</div>
-        <div class="stat-label">进行中</div>
+        <div class="stat-label">待随访</div>
       </div>
       <div class="stat-card success">
         <div class="stat-icon">
@@ -352,7 +469,7 @@ const handleExport = () => {
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" clearable placeholder="全部状态" style="width: 120px">
-            <el-option label="进行中" value="0" />
+            <el-option label="待随访" value="0" />
             <el-option label="已完成" value="1" />
             <el-option label="已取消" value="2" />
           </el-select>
@@ -400,8 +517,31 @@ const handleExport = () => {
           </template>
         </el-table-column>
         <el-table-column prop="doctorName" label="随访医生" min-width="100" />
+        <el-table-column label="门诊随访周期" min-width="130">
+          <template #default="{ row }">
+            <span>{{ formatOutpatientCycle(row) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="hospitalizationTime" label="住院时间" min-width="110">
+          <template #default="{ row }">
+            <span>{{ row.hospitalizationTime || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="followUpExamTypeName" label="随访检查类型" min-width="120">
+          <template #default="{ row }">
+            <el-tag v-if="row.followUpExamTypeName" type="info" effect="plain" size="small">
+              {{ row.followUpExamTypeName }}
+            </el-tag>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="examinationItems" label="检查项目" min-width="140" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ row.examinationItems || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="date" label="随访日期" min-width="110" />
-        <el-table-column prop="project" label="随访项目" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="project" label="随访项目" min-width="120" show-overflow-tooltip />
         <el-table-column prop="type" label="类型" min-width="100">
           <template #default="{ row }">
             <el-tag type="info" effect="plain" size="small">{{ row.type }}</el-tag>
@@ -414,14 +554,14 @@ const handleExport = () => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="content" label="备注" min-width="120" show-overflow-tooltip>
+        <el-table-column prop="notes" label="备注" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">
-            <span class="text-muted">{{ row.content || '-' }}</span>
+            <span class="text-muted">{{ row.notes || row.content || '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160">
           <template #default="{ row }">
-            <span class="text-secondary">{{ formatDate(row.createTime) }}</span>
+            <span class="text-secondary">{{ formatDate(row.createTime || '') }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
@@ -463,10 +603,10 @@ const handleExport = () => {
     <el-dialog
       v-model="dialogVisible"
       :title="dialogType === 'view' ? '随访详情' : dialogType === 'add' ? '新建随访' : '编辑随访'"
-      width="650px"
+      width="750px"
     >
       <template v-if="currentFollowUp">
-        <el-form :model="currentFollowUp" label-width="100px" :disabled="dialogType === 'view'">
+        <el-form :model="currentFollowUp" label-width="120px" :disabled="dialogType === 'view'">
           <el-row :gutter="20" v-if="dialogType === 'view'">
             <el-col :span="12">
               <el-form-item label="状态">
@@ -513,6 +653,110 @@ const handleExport = () => {
               </el-form-item>
             </el-col>
           </el-row>
+
+          <!-- 门诊随访周期 -->
+          <el-divider content-position="left">门诊随访周期</el-divider>
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-form-item label="周期类型">
+                <el-select
+                  v-model="currentFollowUp.outpatientCycleType"
+                  placeholder="选择周期类型"
+                  style="width: 100%"
+                  clearable
+                >
+                  <el-option
+                    v-for="item in cycleTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="周期值">
+                <el-input
+                  v-model="currentFollowUp.outpatientCycleValue"
+                  placeholder="如：1、2、3"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="时间段">
+                <el-select
+                  v-model="currentFollowUp.outpatientTimeSlot"
+                  placeholder="选择时间段"
+                  style="width: 100%"
+                  clearable
+                >
+                  <el-option
+                    v-for="item in timeSlotOptionsList"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <!-- 住院与检查 -->
+          <el-divider content-position="left">住院与检查信息</el-divider>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="住院时间">
+                <el-date-picker
+                  v-model="currentFollowUp.hospitalizationTime"
+                  type="date"
+                  value-format="YYYY-MM-DD"
+                  placeholder="选择住院时间"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="随访检查类型">
+                <el-select
+                  v-model="currentFollowUp.followUpExamTypeId"
+                  placeholder="选择检查类型"
+                  style="width: 100%"
+                  clearable
+                  @change="handleExamTypeChange"
+                >
+                  <el-option
+                    v-for="t in followUpExamTypeOptions"
+                    :key="t.id"
+                    :label="t.name"
+                    :value="t.id"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-form-item label="检查项目" v-if="availableExamItems.length > 0">
+            <el-checkbox-group
+              v-model="selectedExamItems"
+              @change="handleExamItemsChange"
+            >
+              <el-checkbox
+                v-for="item in availableExamItems"
+                :key="item"
+                :label="item"
+                :value="item"
+              />
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="检查项目" v-else>
+            <el-input
+              v-model="currentFollowUp.examinationItems"
+              placeholder="输入检查项目，多个用逗号分隔"
+            />
+          </el-form-item>
+
+          <!-- 随访信息 -->
+          <el-divider content-position="left">随访信息</el-divider>
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="随访时间">
@@ -542,7 +786,7 @@ const handleExport = () => {
             <el-input v-model="currentFollowUp.project" placeholder="请输入随访项目" />
           </el-form-item>
           <el-form-item label="备注">
-            <el-input v-model="currentFollowUp.content" type="textarea" :rows="3" placeholder="请输入备注信息" />
+            <el-input v-model="currentFollowUp.notes" type="textarea" :rows="3" placeholder="请输入备注信息" />
           </el-form-item>
           <el-row :gutter="20" v-if="currentFollowUp.createTime">
             <el-col :span="12">
@@ -561,3 +805,11 @@ const handleExport = () => {
   </div>
 </template>
 
+<style lang="scss" scoped>
+.text-muted {
+  color: var(--el-text-color-secondary);
+}
+.text-secondary {
+  color: var(--el-text-color-secondary);
+}
+</style>
