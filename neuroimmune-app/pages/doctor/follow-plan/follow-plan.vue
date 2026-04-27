@@ -271,7 +271,7 @@ export default {
 			const value = item.outpatientCycleValue
 			const slot = item.outpatientTimeSlot
 
-			if (!type || !value) return ''
+			if (!type) return ''
 
 			// 周期类型中文映射
 			const typeMap = {
@@ -283,11 +283,11 @@ export default {
 			const slotMap = {
 				'morning': '上午',
 				'afternoon': '下午',
-				'evening': '晚上'
+				'evening': '晚间'
 			}
 
-			const typeText = typeMap[type] || type
-			const slotText = slotMap[slot] || slot || ''
+			const typeText = typeMap[type] || ''
+			const slotText = slotMap[slot] || ''
 
 			// 组合显示: 每月5号 上午 / 每周周一 下午
 			return `${typeText}${value}${slotText ? ' ' + slotText : ''}`
