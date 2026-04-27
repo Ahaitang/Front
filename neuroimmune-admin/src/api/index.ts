@@ -286,12 +286,27 @@ export interface FollowUp {
   patientAge: number
   doctorId: number
   doctorName: string
-  date: string
-  project: string
-  type: string
-  status: number  // 0-进行中, 1-完成, 2-取消
-  content?: string
-  createTime: string
+  // 门诊随访周期
+  outpatientCycleType?: string    // monthly/weekly/quarterly
+  outpatientCycleValue?: string   // 周期值
+  outpatientTimeSlot?: string     // morning/afternoon/evening
+  // 住院时间
+  hospitalizationTime?: string
+  // 随访检查类型
+  followUpExamTypeId?: number
+  followUpExamTypeName?: string
+  // 检查项目
+  examinationItems?: string
+  // 备注
+  notes?: string
+  // 状态
+  status: number  // 0-待随访, 1-完成, 2-取消
+  date?: string      // 兼容旧字段
+  project?: string   // 兼容旧字段
+  type?: string      // 兼容旧字段
+  content?: string   // 兼容旧字段
+  createTime?: string
+  updateTime?: string
 }
 
 export interface Medication {
@@ -391,6 +406,7 @@ export const DICT_TYPES = {
   TITLE: 'title',
   RECORD_TYPE: 'recordType',
   FOLLOW_UP_TYPE: 'followUpType',
+  FOLLOW_UP_EXAM_TYPE: 'followUpExamType',  // 随访检查类型
   GENDER: 'gender',
   STATUS: 'status',
   FREQUENCY: 'frequency',
@@ -398,5 +414,7 @@ export const DICT_TYPES = {
   MEDICATION: 'medication',
   MEDICATION_UNIT: 'medicationUnit',
   DISEASE: 'disease',
-  ROLE: 'role'
+  ROLE: 'role',
+  OUTPATIENT_CYCLE_TYPE: 'outpatientCycleType',  // 门诊随访周期类型
+  TIME_SLOT: 'timeSlot'  // 时间段
 } as const
