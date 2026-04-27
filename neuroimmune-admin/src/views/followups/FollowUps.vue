@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Calendar, Document, Clock, CircleCheck, CircleClose, DocumentCopy } from '@element-plus/icons-vue'
 import {
@@ -564,8 +564,9 @@ const handleExport = () => {
             <span class="text-secondary">{{ formatDate(row.createTime || '') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="viewFollowUp(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="editFollowUp(row)">编辑</el-button>
             <el-button
               v-if="row.status === 0"
