@@ -1755,16 +1755,11 @@ const calculateAge = (birthDate: string | undefined) => {
 .clickable-table {
   .el-table__row {
     cursor: pointer;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background: #F0FDFA !important;
-    }
   }
 }
 
 // 详情图片展示
-.detail-images {
+.detail-image-list {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
