@@ -49,19 +49,27 @@
 							</view>
 							<view class="patient-meta">
 								<text class="patient-name">{{ item.patientName }}</text>
-								<text class="project-tag">{{ item.project }}</text>
+								<text class="project-tag">{{ item.examTypeName || '随访' }}</text>
 							</view>
 						</view>
 						<view class="status-badge pending">待随访</view>
 					</view>
 					<view class="card-body">
-						<view class="info-row">
+						<view class="info-row" v-if="item.outpatientCycle">
 							<text class="app-icon uniui-calendar"></text>
-							<text>{{ item.date }}</text>
+							<text>门诊周期: {{ item.outpatientCycle }}</text>
 						</view>
-						<view class="info-row" v-if="item.content">
+						<view class="info-row" v-if="item.hospitalizationTime">
+							<text class="app-icon uniui-calendar"></text>
+							<text>住院时间: {{ item.hospitalizationTime }}</text>
+						</view>
+						<view class="info-row" v-if="item.examinationItems">
 							<text class="app-icon uniui-list"></text>
-							<text>{{ item.content }}</text>
+							<text>检查项目: {{ item.examinationItems }}</text>
+						</view>
+						<view class="info-row" v-if="item.notes">
+							<text class="app-icon uniui-paperclip"></text>
+							<text>备注: {{ item.notes }}</text>
 						</view>
 					</view>
 					<view class="card-footer">
@@ -92,15 +100,23 @@
 							</view>
 							<view class="patient-meta">
 								<text class="patient-name">{{ item.patientName }}</text>
-								<text class="project-tag completed">{{ item.project }}</text>
+								<text class="project-tag completed">{{ item.examTypeName || '随访' }}</text>
 							</view>
 						</view>
 						<view class="status-badge completed">已完成</view>
 					</view>
 					<view class="card-body">
-						<view class="info-row">
+						<view class="info-row" v-if="item.outpatientCycle">
 							<text class="app-icon uniui-calendar"></text>
-							<text>{{ item.date }}</text>
+							<text>门诊周期: {{ item.outpatientCycle }}</text>
+						</view>
+						<view class="info-row" v-if="item.hospitalizationTime">
+							<text class="app-icon uniui-calendar"></text>
+							<text>住院时间: {{ item.hospitalizationTime }}</text>
+						</view>
+						<view class="info-row" v-if="item.examinationItems">
+							<text class="app-icon uniui-list"></text>
+							<text>检查项目: {{ item.examinationItems }}</text>
 						</view>
 					</view>
 				</view>
@@ -191,9 +207,11 @@ export default {
 							id: f.id,
 							patientId: f.patientId,
 							patientName: f.patientName || '患者',
-							date: this.formatDate(f.followDate || f.date),
-							project: f.project || '随访',
-							content: f.content || '',
+							examTypeName: f.followUpExamTypeName || '',
+							outpatientCycle: this.formatOutpatientCycle(f),
+							hospitalizationTime: this.formatDate(f.hospitalizationTime),
+							examinationItems: f.examinationItems || '',
+							notes: f.notes || '',
 							phone: f.patientPhone || ''
 						}))
 
@@ -204,8 +222,10 @@ export default {
 							id: f.id,
 							patientId: f.patientId,
 							patientName: f.patientName || '患者',
-							date: this.formatDate(f.followDate || f.date),
-							project: f.project || '随访'
+							examTypeName: f.followUpExamTypeName || '',
+							outpatientCycle: this.formatOutpatientCycle(f),
+							hospitalizationTime: this.formatDate(f.hospitalizationTime),
+							examinationItems: f.examinationItems || ''
 						}))
 
 					if (this.pageNum === 1) {
@@ -235,6 +255,7 @@ export default {
 				this.loading = false
 			}
 		},
+		// 格式化日期
 		formatDate(dateStr) {
 			if (!dateStr) return ''
 			const d = new Date(dateStr)
@@ -242,6 +263,34 @@ export default {
 			const m = String(d.getMonth() + 1).padStart(2, '0')
 			const day = String(d.getDate()).padStart(2, '0')
 			return `${y}-${m}-${day}`
+		},
+		// 格式化门诊随访周期
+		formatOutpatientCycle(item) {
+			if (!item) return ''
+			const type = item.outpatientCycleType
+			const value = item.outpatientCycleValue
+			const slot = item.outpatientTimeSlot
+
+			if (!type || !value) return ''
+
+			// 周期类型中文映射
+			const typeMap = {
+				'monthly': '每月',
+				'weekly': '每周',
+				'quarterly': '每季度'
+			}
+			// 时间段中文映射
+			const slotMap = {
+				'morning': '上午',
+				'afternoon': '下午',
+				'evening': '晚上'
+			}
+
+			const typeText = typeMap[type] || type
+			const slotText = slotMap[slot] || slot || ''
+
+			// 组合显示: 每月5号 上午 / 每周周一 下午
+			return `${typeText}${value}${slotText ? ' ' + slotText : ''}`
 		},
 		doSearch() {
 			// 搜索时重置列表
