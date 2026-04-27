@@ -336,7 +336,7 @@
 					const params = { pageNum: 1, pageSize: 100 }
 					// 如果有选中的疾病类型，传递给后端
 					if (this.selectedDiseaseTypes.length > 0) {
-						params.diseaseTypes = this.selectedDiseaseTypes
+						params.diseaseTypes = this.selectedDiseaseTypes.join(',')
 					}
 					const res = await getMyPatients(params)
 					if (res && res.list) {
