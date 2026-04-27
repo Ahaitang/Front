@@ -44,12 +44,13 @@
 						<text class="app-icon uniui-notification-filled"></text>
 					</view>
 					<view class="follow-info">
-						<text class="follow-project">{{ item.project || '随访' }}</text>
-						<text class="follow-doctor">随访医生：{{ item.doctorName || '医生' }}</text>
-						<text class="follow-time">时间：{{ item.date }}</text>
-						<view class="follow-detail" v-if="item.hospital || item.department">
-							<text>{{ item.hospital }} {{ item.department }}</text>
-						</view>
+						<text class="follow-project">{{ item.followUpExamTypeName || '随访' }}</text>
+						<text class="follow-cycle" v-if="item.outpatientCycleType">
+							门诊：{{ formatCycleText(item) }}
+						</text>
+						<text class="follow-hospital" v-if="item.hospitalizationTime">
+							住院：{{ formatDate(new Date(item.hospitalizationTime)) }}
+						</text>
 						<view class="follow-detail" v-if="item.examinationItems">
 							<text>检查：{{ item.examinationItems }}</text>
 						</view>
@@ -93,20 +94,7 @@ export default {
 			return `${first.date.substring(5)} - ${last.date.substring(5)}`;
 		},
 		filteredFollowList() {
-			if (this.showAll) {
-				return this.followList.map(f => ({
-					...f,
-					statusText: this.getStatusText(f.status),
-					statusClass: this.getStatusClass(f.status)
-				}));
-			}
-			// 按日期过滤当日随访
-			return this.followList.filter(f => {
-				if (!f.date) return false;
-				// 处理日期格式，提取 yyyy-MM-dd 部分
-				const followDate = f.date.split('T')[0].split(' ')[0];
-				return followDate === this.selectedDate;
-			}).map(f => ({
+			return this.followList.map(f => ({
 				...f,
 				statusText: this.getStatusText(f.status),
 				statusClass: this.getStatusClass(f.status)
@@ -128,6 +116,41 @@ export default {
 			const m = this.pad(date.getMonth() + 1);
 			const d = this.pad(date.getDate());
 			return `${y}-${m}-${d}`;
+		},
+		formatCycleText(item) {
+			const typeMap = {
+				'monthly': '每月',
+				'weekly': '每周',
+				'quarterly': '每季度'
+			};
+			const slotMap = {
+				'morning': '上午',
+				'afternoon': '下午',
+				'evening': '晚间'
+			};
+
+			const typeLabel = typeMap[item.outpatientCycleType] || '';
+			const value = item.outpatientCycleValue || '';
+			const slotLabel = slotMap[item.outpatientTimeSlot] || '';
+
+			if (item.outpatientCycleType === 'weekly') {
+				const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
+				const weekNum = parseInt(value);
+				// 边界检查：周几必须是1-7
+				if (weekNum >= 1 && weekNum <= 7) {
+					const weekLabel = weekDays[weekNum - 1];
+					return `${typeLabel}周${weekLabel}${slotLabel}`;
+				}
+				// 无效值时仅显示周期类型和时段
+				return `${typeLabel}${slotLabel}`;
+			}
+
+			// 月/季度周期：显示具体日期
+			if (value) {
+				return `${typeLabel}${value}号${slotLabel}`;
+			}
+			// 无周期值时仅显示周期类型和时段
+			return `${typeLabel}${slotLabel}`;
 		},
 		initWeekDays() {
 			const today = new Date();
@@ -228,17 +251,17 @@ export default {
 				if (allFollowRes && allFollowRes.list) {
 					this.followList = allFollowRes.list.map(f => ({
 						id: f.id,
-						project: f.project,
-						doctorName: f.doctorName,
-						date: f.date,
+						// 新字段（带默认值保护）
+						followUpExamTypeName: f.followUpExamTypeName || '',
+						outpatientCycleType: f.outpatientCycleType || '',
+						outpatientCycleValue: f.outpatientCycleValue || '',
+						outpatientTimeSlot: f.outpatientTimeSlot || '',
+						hospitalizationTime: f.hospitalizationTime || '',
+						examinationItems: f.examinationItems || '',
+						// 保留字段
+						doctorName: f.doctorName || '',
 						status: f.status,
-						content: f.content,
-						outpatientTime: f.outpatientTime,
-						hospitalizationTime: f.hospitalizationTime,
-						examinationItems: f.examinationItems,
-						hospital: f.hospital,
-						department: f.department,
-						notes: f.notes
+						notes: f.notes || ''
 					}));
 				}
 			} catch (e) {
@@ -247,7 +270,7 @@ export default {
 		},
 		viewFollowDetail(item) {
 			uni.showToast({
-				title: item.project || '随访详情',
+				title: item.followUpExamTypeName || '随访详情',
 				icon: 'none'
 			});
 		},
@@ -498,8 +521,8 @@ export default {
 	margin-bottom: 10rpx;
 }
 
-.follow-doctor,
-.follow-time {
+.follow-cycle,
+.follow-hospital {
 	display: block;
 	font-size: 24rpx;
 	color: $app-text-muted;
