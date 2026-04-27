@@ -1232,6 +1232,195 @@ const calculateAge = (birthDate: string | undefined) => {
         <el-button type="primary" :loading="saveLoading" @click="saveEpisodeSubmit">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 详情查看对话框 -->
+    <el-dialog v-model="detailDialogVisible" :title="`查看${detailDialogType === 'record' ? '病历' : detailDialogType === 'followup' ? '随访' : detailDialogType === 'episode' ? '发作' : '用药'}详情`" width="700px">
+      <!-- 病历详情 -->
+      <el-form v-if="detailDialogType === 'record'" :model="viewingRecord" label-width="100px" disabled>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="类型">
+              <el-input :value="viewingRecord.type" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="就诊日期">
+              <el-input :value="viewingRecord.date" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="医院">
+              <el-input :value="viewingRecord.hospital" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="科室">
+              <el-input :value="viewingRecord.department" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="医生姓名">
+          <el-input :value="viewingRecord.doctorName" />
+        </el-form-item>
+        <el-form-item label="诊断结果">
+          <el-input :value="viewingRecord.diagnosis" />
+        </el-form-item>
+        <el-form-item label="病历内容">
+          <el-input :value="viewingRecord.content" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="病历图片" v-if="viewingRecord.attachments">
+          <div class="detail-image-list">
+            <el-image
+              v-for="(url, index) in viewingRecord.attachments?.split(',').filter((u: string) => u)"
+              :key="index"
+              :src="url"
+              :preview-src-list="viewingRecord.attachments?.split(',').filter((u: string) => u)"
+              fit="cover"
+              style="width: 80px; height: 80px; margin-right: 8px"
+            />
+          </div>
+        </el-form-item>
+      </el-form>
+
+      <!-- 随访详情 -->
+      <el-form v-if="detailDialogType === 'followup'" :model="viewingFollowUp" label-width="100px" disabled>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="随访检查类型">
+              <el-input :value="viewingFollowUp.followUpExamTypeName" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="随访医生">
+              <el-input :value="viewingFollowUp.doctorName" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="门诊周期">
+              <el-input :value="formatCycleText(viewingFollowUp as FollowUp)" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="住院时间">
+              <el-input :value="viewingFollowUp.hospitalizationTime" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="检查项目">
+          <el-input :value="viewingFollowUp.examinationItems" type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-tag :type="getStatusType(viewingFollowUp.status)" size="small" effect="light">{{ getStatusText(viewingFollowUp.status) }}</el-tag>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input :value="viewingFollowUp.notes" type="textarea" :rows="2" />
+        </el-form-item>
+      </el-form>
+
+      <!-- 发作详情 -->
+      <el-form v-if="detailDialogType === 'episode'" :model="viewingEpisode" label-width="100px" disabled>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="发作次数">
+              <el-input :value="`第${viewingEpisode.episodeNumber}次发作`" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="发作时间">
+              <el-input :value="viewingEpisode.episodeDate" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="就诊医院">
+              <el-input :value="viewingEpisode.hospital" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="科室">
+              <el-input :value="viewingEpisode.department" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="主诉">
+          <el-input :value="viewingEpisode.chiefComplaint" />
+        </el-form-item>
+        <el-form-item label="症状描述">
+          <el-input :value="viewingEpisode.symptoms" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="病情变化">
+          <el-input :value="viewingEpisode.diseaseProgress" type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item label="诊治经过">
+          <el-input :value="viewingEpisode.treatmentProcess" type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item label="诊断结果">
+          <el-input :value="viewingEpisode.diagnosis" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input :value="viewingEpisode.notes" type="textarea" :rows="2" />
+        </el-form-item>
+      </el-form>
+
+      <!-- 用药详情 -->
+      <el-form v-if="detailDialogType === 'medication'" :model="viewingMedication" label-width="100px" disabled>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="药品名称">
+              <el-input :value="viewingMedication.medicationName" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="开药日期">
+              <el-input :value="viewingMedication.date" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="剂量">
+              <el-input :value="`${viewingMedication.dosageValue}${getUnitLabel(viewingMedication.dosageUnit)}`" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="用药频率">
+              <el-input :value="viewingMedication.frequency" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="用药途径">
+              <el-input :value="viewingMedication.route" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="疗程">
+              <el-input :value="viewingMedication.duration" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="开药医生">
+          <el-input :value="viewingMedication.doctorName" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-tag :type="getStatusType(viewingMedication.status)" size="small" effect="light">{{ getStatusText(viewingMedication.status) }}</el-tag>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input :value="viewingMedication.notes" type="textarea" :rows="2" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="closeDetailDialog">关闭</el-button>
+        <el-button type="primary" @click="switchToEdit">编辑</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
