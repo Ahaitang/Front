@@ -17,6 +17,7 @@ const DICT_TYPE_LABELS: Record<string, string> = {
   'title': '职称',
   'recordType': '病历类型',
   'followUpType': '随访类型',
+  'followUpExamType': '随访检查类型',
   'gender': '性别',
   'status': '状态',
   'frequency': '用药频率',
@@ -24,7 +25,9 @@ const DICT_TYPE_LABELS: Record<string, string> = {
   'medication': '药品名称',
   'medicationUnit': '用药单位',
   'disease': '疾病类型',
-  'role': '系统角色'
+  'role': '系统角色',
+  'outpatientCycleType': '门诊随访周期类型',
+  'timeSlot': '时间段'
 }
 
 // All dictionary types to display
@@ -33,6 +36,7 @@ const DICT_TYPE_LIST = [
   DICT_TYPES.TITLE,
   DICT_TYPES.RECORD_TYPE,
   DICT_TYPES.FOLLOW_UP_TYPE,
+  DICT_TYPES.FOLLOW_UP_EXAM_TYPE,
   DICT_TYPES.GENDER,
   DICT_TYPES.STATUS,
   DICT_TYPES.FREQUENCY,
@@ -40,7 +44,9 @@ const DICT_TYPE_LIST = [
   DICT_TYPES.MEDICATION,
   DICT_TYPES.MEDICATION_UNIT,
   DICT_TYPES.DISEASE,
-  DICT_TYPES.ROLE
+  DICT_TYPES.ROLE,
+  DICT_TYPES.OUTPATIENT_CYCLE_TYPE,
+  DICT_TYPES.TIME_SLOT
 ]
 
 // State
