@@ -127,20 +127,20 @@
 				</view>
 				<view v-show="activeTab === 'follow'" class="tab-panel">
 					<text class="empty-tip" v-if="!followList.length">暂无随访记录</text>
-					<view class="list-item" v-for="(item, i) in followList" :key="i">
+					<view class="list-item clickable" v-for="(item, i) in followList" :key="i" @click="showFollowUpDetail(item)">
 						<view class="item-header">
 							<text class="item-title">{{ item.title }}</text>
 							<text class="item-status" :class="item.status">{{ item.statusText }}</text>
 						</view>
 						<text class="item-date">{{ item.date }}</text>
-						<view class="item-actions">
-							<text class="action-text" @click="copyFollowToVisit(item)">复制为就诊记录</text>
+						<view class="item-actions" @click.stop>
+							<text class="action-text" @click.stop="copyFollowToVisit(item)">复制为就诊记录</text>
 						</view>
 					</view>
 				</view>
 				<view v-show="activeTab === 'medication'" class="tab-panel">
 					<text class="empty-tip" v-if="!medicationList.length">暂无用药记录</text>
-					<view class="list-item" v-for="(item, i) in medicationList" :key="i">
+					<view class="list-item clickable" v-for="(item, i) in medicationList" :key="i" @click="showMedicationDetail(item)">
 						<text class="item-title">{{ item.name }}</text>
 						<text class="item-desc">{{ item.dosage }} {{ item.frequency }}</text>
 						<text class="item-date">{{ item.date }}</text>
@@ -168,6 +168,67 @@
 				</view>
 			</view>
 		</view>
+
+		<!-- 随访详情弹窗 -->
+		<uni-popup ref="followUpPopup" type="bottom" :safe-area="true">
+			<view class="detail-popup">
+				<view class="popup-header">
+					<text class="popup-title">随访详情</text>
+					<text class="popup-close" @click="closeFollowUpPopup">×</text>
+				</view>
+				<view class="popup-body" v-if="selectedFollowUp">
+					<view class="detail-card">
+						<view class="detail-row">
+							<text class="detail-label">随访项目</text>
+							<text class="detail-value">{{ selectedFollowUp.title }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">随访日期</text>
+							<text class="detail-value">{{ selectedFollowUp.date || '未记录' }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">随访状态</text>
+							<text class="detail-value" :class="selectedFollowUp.status">{{ selectedFollowUp.statusText }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedFollowUp.content">
+							<text class="detail-label">随访内容</text>
+							<text class="detail-value notes">{{ selectedFollowUp.content }}</text>
+						</view>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
+
+		<!-- 用药详情弹窗 -->
+		<uni-popup ref="medicationPopup" type="bottom" :safe-area="true">
+			<view class="detail-popup">
+				<view class="popup-header">
+					<text class="popup-title">用药详情</text>
+					<text class="popup-close" @click="closeMedicationPopup">×</text>
+				</view>
+				<view class="popup-body" v-if="selectedMedication">
+					<view class="detail-card">
+						<view class="detail-row">
+							<text class="detail-label">药品名称</text>
+							<text class="detail-value">{{ selectedMedication.name }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">剂量</text>
+							<text class="detail-value">{{ selectedMedication.dosage }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">用药频率</text>
+							<text class="detail-value">{{ selectedMedication.frequency || '未记录' }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">开药日期</text>
+							<text class="detail-value">{{ selectedMedication.date || '未记录' }}</text>
+						</view>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
+
 		<view class="actions">
 			<button class="btn" @click="callPhone">打电话</button>
 			<button class="btn primary" @click="fillVisit">填写就诊信息</button>
@@ -221,7 +282,7 @@ export default {
 				medicationPopupVisible: false
 		};
 	},
-	
+
 	onLoad(op) {
 		if (op.id) this.patientId = op.id;
 		else this.patientId = '1';
@@ -387,12 +448,12 @@ export default {
 		// 复制基本信息
 		copyBasicInfo() {
 			const info = `患者：${this.patient.name}
-性别：${this.patient.gender}
-年龄：${this.patient.age}岁
-电话：${this.patient.phone}
-疾病分类：${(this.patient.diseaseTypes || []).join('、') || '未分类'}
-身份证号：${this.patient.idCard || '未填写'}
-居住地：${this.patient.address || '未填写'}`;
+	性别：${this.patient.gender}
+	年龄：${this.patient.age}岁
+	电话：${this.patient.phone}
+	疾病分类：${(this.patient.diseaseTypes || []).join('、') || '未分类'}
+	身份证号：${this.patient.idCard || '未填写'}
+	居住地：${this.patient.address || '未填写'}`;
 
 			uni.setClipboardData({
 				data: info,
@@ -507,6 +568,22 @@ export default {
 					}
 				}
 			})
+		},
+		// 随访详情弹窗
+		showFollowUpDetail(item) {
+			this.selectedFollowUp = item
+			this.$refs.followUpPopup.open()
+		},
+		closeFollowUpPopup() {
+			this.$refs.followUpPopup.close()
+		},
+		// 用药详情弹窗
+		showMedicationDetail(item) {
+			this.selectedMedication = item
+			this.$refs.medicationPopup.open()
+		},
+		closeMedicationPopup() {
+			this.$refs.medicationPopup.close()
 		}
 	}
 };
@@ -1036,5 +1113,89 @@ export default {
 	display: block;
 	margin-top: 6rpx;
 	line-height: 1.4;
+}
+
+/* 点击提示样式 */
+.list-item.clickable {
+	cursor: pointer;
+}
+
+.list-item.clickable:active {
+	background: $app-hover-bg;
+}
+
+/* 详情弹窗样式 */
+.detail-popup {
+	background: $app-card-bg;
+	border-radius: 24rpx 24rpx 0 0;
+	max-height: 70vh;
+}
+
+.popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 24rpx 32rpx;
+	border-bottom: 1rpx solid $app-border;
+}
+
+.popup-title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: $app-text;
+}
+
+.popup-close {
+	font-size: 48rpx;
+	color: $app-text-muted;
+	line-height: 1;
+}
+
+.popup-body {
+	padding: 24rpx 32rpx;
+}
+
+.detail-card {
+	background: $app-bg;
+	border-radius: $app-radius;
+	padding: 20rpx;
+}
+
+.detail-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	padding: 16rpx 0;
+	border-bottom: 1rpx solid $app-border;
+}
+
+.detail-row:last-child {
+	border-bottom: none;
+}
+
+.detail-label {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	min-width: 140rpx;
+}
+
+.detail-value {
+	font-size: 28rpx;
+	color: $app-text;
+	flex: 1;
+	text-align: right;
+}
+
+.detail-value.completed {
+	color: $app-success;
+}
+
+.detail-value.pending {
+	color: $app-warning;
+}
+
+.detail-value.notes {
+	text-align: left;
+	word-break: break-all;
 }
 </style>
