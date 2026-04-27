@@ -1,42 +1,60 @@
 <template>
 	<view class="container">
 		<view class="card">
-			<!-- 随访类型 -->
+			<!-- 随访检查类型 -->
 			<view class="form-item">
-				<text class="label">随访类型</text>
-				<view class="type-options">
-					<view class="type-option" :class="{ active: form.type === '门诊随访' }" @click="form.type = '门诊随访'">门诊随访</view>
-					<view class="type-option" :class="{ active: form.type === '住院随访' }" @click="form.type = '住院随访'">住院随访</view>
-					<view class="type-option" :class="{ active: form.type === '自定义' }" @click="form.type = '自定义'">自定义</view>
+				<text class="label">随访检查类型</text>
+				<picker mode="selector" :range="examTypeOptions" range-key="name" @change="onExamTypeChange">
+					<view class="picker-wrap">
+						<text class="picker-text" :class="{ placeholder: !form.followUpExamTypeName }">
+							{{ form.followUpExamTypeName || '请选择随访检查类型' }}
+						</text>
+						<text class="app-icon uniui-arrowright"></text>
+					</view>
+				</picker>
+			</view>
+
+			<!-- 检查项目 -->
+			<view class="form-item">
+				<text class="label">检查项目</text>
+				<view class="exam-items" v-if="examItemsList.length > 0">
+					<view class="exam-item" v-for="(item, index) in examItemsList" :key="index"
+						:class="{ selected: selectedExamItems.includes(item) }" @click="toggleExamItem(item)">
+						<text class="app-icon" :class="selectedExamItems.includes(item) ? 'uniui-checkbox-filled' : 'uniui-circle'"></text>
+						<text class="exam-item-text">{{ item }}</text>
+					</view>
 				</view>
-			</view>
-
-			<!-- 随访时间 -->
-			<view class="form-item">
-				<text class="label">随访时间</text>
-				<uni-datetime-picker type="datetime" v-model="form.date" :placeholder="'请选择随访时间'" />
-			</view>
-
-			<!-- 随访项目 -->
-			<view class="form-item">
-				<text class="label">随访项目</text>
-				<input class="input" type="text" placeholder="请输入随访项目名称" v-model="form.project" />
+				<textarea class="textarea" placeholder="请输入检查项目（多个项目用顿号分隔）" v-model="form.examinationItems" />
 			</view>
 
 			<!-- 详细信息分隔 -->
 			<view class="section-title">详细信息</view>
 
-			<!-- 门诊随访时间 -->
+			<!-- 门诊周期 -->
 			<view class="form-item">
-				<text class="label">门诊随访时间</text>
-				<picker mode="multiSelector" :range="dateTimeRange" @change="onOutpatientTimeChange" @columnchange="onColumnChange">
-					<view class="picker-wrap">
-						<text class="picker-text" :class="{ placeholder: !form.outpatientTime }">
-							{{ form.outpatientTime || '请选择门诊时间' }}
-						</text>
-						<text class="app-icon uniui-calendar"></text>
+				<text class="label">门诊周期</text>
+				<view class="cycle-row">
+					<picker mode="selector" :range="cycleTypeOptions" range-key="label" @change="onCycleTypeChange" class="cycle-picker">
+						<view class="picker-wrap small">
+							<text class="picker-text">{{ getCycleTypeLabel(form.outpatientCycleType) }}</text>
+							<text class="app-icon uniui-arrowright"></text>
+						</view>
+					</picker>
+					<input class="input cycle-value" type="number" placeholder="周期值" v-model="form.outpatientCycleValue" />
+				</view>
+			</view>
+
+			<!-- 门诊时间段 -->
+			<view class="form-item">
+				<text class="label">门诊时间段</text>
+				<view class="time-slot-options">
+					<view class="time-slot-option"
+						v-for="slot in timeSlotOptions" :key="slot.value"
+						:class="{ active: form.outpatientTimeSlot === slot.value }"
+						@click="form.outpatientTimeSlot = slot.value">
+						{{ slot.label }}
 					</view>
-				</picker>
+				</view>
 			</view>
 
 			<!-- 住院时间 -->
@@ -52,42 +70,6 @@
 				</picker>
 			</view>
 
-			<!-- 检查检验项目 -->
-			<view class="form-item">
-				<text class="label">检查检验项目</text>
-				<view class="template-selector">
-					<view class="template-btn" :class="{ active: selectedTemplate === 'immunosuppressant' }" @click="selectTemplate('immunosuppressant')">
-						免疫抑制剂
-					</view>
-					<view class="template-btn" :class="{ active: selectedTemplate === 'biologic' }" @click="selectTemplate('biologic')">
-						生物制剂
-					</view>
-					<view class="template-btn" :class="{ active: selectedTemplate === 'custom' }" @click="selectTemplate('custom')">
-						自定义
-					</view>
-				</view>
-				<view class="exam-items" v-if="selectedTemplate !== 'custom'">
-					<view class="exam-item" v-for="(item, index) in currentExamItems" :key="index"
-						:class="{ selected: selectedExamItems.includes(item) }" @click="toggleExamItem(item)">
-						<text class="app-icon" :class="selectedExamItems.includes(item) ? 'uniui-checkbox-filled' : 'uniui-circle'"></text>
-						<text class="exam-item-text">{{ item }}</text>
-					</view>
-				</view>
-				<textarea class="textarea" placeholder="已选项目或自定义输入" v-model="form.examinationItems" />
-			</view>
-
-			<!-- 医院 -->
-			<view class="form-item">
-				<text class="label">医院</text>
-				<input class="input" type="text" placeholder="请输入医院名称" v-model="form.hospital" />
-			</view>
-
-			<!-- 科室 -->
-			<view class="form-item">
-				<text class="label">科室</text>
-				<input class="input" type="text" placeholder="请输入科室名称" v-model="form.department" />
-			</view>
-
 			<!-- 备注 -->
 			<view class="form-item">
 				<text class="label">备注</text>
@@ -101,97 +83,67 @@
 
 <script>
 import { createFollowUp } from '@/api/followup.js'
+import { getDictByType } from '@/api/dict.js'
 
 export default {
 	data() {
 		return {
 			form: {
-				type: '门诊随访',
-				date: '',
-				project: '',
-				outpatientTime: '',
-				hospitalizationTime: '',
+				patientId: null,
+				patientName: '',
+				followUpExamTypeId: null,
+				followUpExamTypeName: '',
 				examinationItems: '',
-				hospital: '',
-				department: '',
+				outpatientCycleType: 'monthly',
+				outpatientCycleValue: '',
+				outpatientTimeSlot: 'morning',
+				hospitalizationTime: '',
 				notes: ''
 			},
-			selectedTemplate: 'immunosuppressant',
+			examTypeOptions: [],
+			examItemsList: [],
 			selectedExamItems: [],
 			loading: false,
-			dateTimeRange: [[], [], []],
-			// 检查项目模板
-			examTemplates: {
-				'immunosuppressant': {
-					name: '免疫抑制剂随访',
-					items: ['血常规', '肝肾功能', '电解质']
-				},
-				'biologic': {
-					name: '生物制剂随访',
-					items: ['淋巴细胞亚群', 'TSPOT（结核感染T细胞检测）']
-				},
-				'custom': {
-					name: '自定义',
-					items: []
-				}
-			}
+			cycleTypeOptions: [
+				{ value: 'monthly', label: '每月' },
+				{ value: 'weekly', label: '每周' },
+				{ value: 'quarterly', label: '每季度' }
+			],
+			timeSlotOptions: [
+				{ value: 'morning', label: '上午' },
+				{ value: 'afternoon', label: '下午' },
+				{ value: 'evening', label: '晚上' }
+			]
 		};
 	},
-	computed: {
-		currentExamItems() {
-			return this.examTemplates[this.selectedTemplate]?.items || [];
-		}
-	},
 	onLoad() {
-		this.initDateTimeRange();
-		// 初始化默认随访时间为当前时间
-		this.form.date = this.formatDateTime(new Date());
-		// 默认选中第一个模板的所有项目
-		this.selectTemplate('immunosuppressant');
+		this.loadExamTypes();
 	},
 	methods: {
-		formatDateTime(date) {
-			const y = date.getFullYear();
-			const m = String(date.getMonth() + 1).padStart(2, '0');
-			const d = String(date.getDate()).padStart(2, '0');
-			const h = String(date.getHours()).padStart(2, '0');
-			const min = String(date.getMinutes()).padStart(2, '0');
-			return `${y}-${m}-${d} ${h}:${min}:00`;
-		},
-		initDateTimeRange() {
-			// 初始化日期时间选择器范围
-			const hours = [];
-			for (let i = 8; i <= 18; i++) {
-				hours.push(i + '时');
+		async loadExamTypes() {
+			try {
+				const res = await getDictByType('followUpExamType');
+				if (res && res.data) {
+					this.examTypeOptions = res.data.map(item => ({
+						id: item.id,
+						name: item.name,
+						items: item.remark ? item.remark.split(',').map(s => s.trim()).filter(s => s) : []
+					}));
+				}
+			} catch (e) {
+				console.error('加载随访检查类型失败:', e);
 			}
-			const minutes = [];
-			for (let i = 0; i < 60; i += 15) {
-				minutes.push(i.toString().padStart(2, '0') + '分');
-			}
-			this.dateTimeRange = [['上午', '下午'], hours, minutes];
 		},
-		onOutpatientTimeChange(e) {
-			const val = e.detail.value;
-			const period = this.dateTimeRange[0][val[0]];
-			let hour = parseInt(this.dateTimeRange[1][val[1]]);
-			if (period === '下午' && hour < 12) hour += 12;
-			const minute = this.dateTimeRange[2][val[2]].replace('分', '');
-			this.form.outpatientTime = `${this.form.date ? this.form.date.substring(0, 10) : ''} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-		},
-		onColumnChange(e) {
-			// 列变化处理
-		},
-		onHospitalizationChange(e) {
-			this.form.hospitalizationTime = e.detail.value;
-		},
-		selectTemplate(template) {
-			this.selectedTemplate = template;
-			if (template !== 'custom') {
-				// 默认选中所有模板项目
-				this.selectedExamItems = [...this.examTemplates[template].items];
+		onExamTypeChange(e) {
+			const index = e.detail.value;
+			const selected = this.examTypeOptions[index];
+			if (selected) {
+				this.form.followUpExamTypeId = selected.id;
+				this.form.followUpExamTypeName = selected.name;
+				this.examItemsList = selected.items || [];
+				// 默认选中所有检查项目
+				this.selectedExamItems = [...this.examItemsList];
 				this.updateExamItems();
-			} else {
-				this.selectedExamItems = [];
 			}
 		},
 		toggleExamItem(item) {
@@ -206,36 +158,48 @@ export default {
 		updateExamItems() {
 			this.form.examinationItems = this.selectedExamItems.join('、');
 		},
+		onCycleTypeChange(e) {
+			const index = e.detail.value;
+			this.form.outpatientCycleType = this.cycleTypeOptions[index].value;
+		},
+		getCycleTypeLabel(value) {
+			const found = this.cycleTypeOptions.find(opt => opt.value === value);
+			return found ? found.label : '每月';
+		},
+		onHospitalizationChange(e) {
+			this.form.hospitalizationTime = e.detail.value;
+		},
 		async submit() {
 			// 表单验证
-			if (!this.form.project.trim()) {
-				uni.showToast({ title: '请输入随访项目', icon: 'none' });
+			if (!this.form.followUpExamTypeId) {
+				uni.showToast({ title: '请选择随访检查类型', icon: 'none' });
 				return;
 			}
 
 			this.loading = true;
 			const userInfo = uni.getStorageSync('userInfo') || {};
 
-			// 确保 date 格式为 YYYY-MM-DD HH:mm:ss
-			let dateStr = this.form.date;
-			if (dateStr && dateStr.length === 10) {
-				dateStr = dateStr + ' 00:00:00';
+			// 格式化住院时间
+			let hospitalizationTime = null;
+			if (this.form.hospitalizationTime) {
+				hospitalizationTime = this.form.hospitalizationTime.length === 10
+					? this.form.hospitalizationTime + ' 00:00:00'
+					: this.form.hospitalizationTime;
 			}
 
 			try {
 				await createFollowUp({
 					patientId: userInfo.id,
 					patientName: userInfo.name || userInfo.realName,
-					type: this.form.type,
-					date: dateStr,
-					project: this.form.project,
-					status: 0,
-					outpatientTime: this.form.outpatientTime || null,
-					hospitalizationTime: (this.form.hospitalizationTime && this.form.hospitalizationTime.length === 10 ? this.form.hospitalizationTime + ' 00:00:00' : this.form.hospitalizationTime) || null,
+					followUpExamTypeId: this.form.followUpExamTypeId,
+					followUpExamTypeName: this.form.followUpExamTypeName,
 					examinationItems: this.form.examinationItems,
-					hospital: this.form.hospital,
-					department: this.form.department,
-					notes: this.form.notes
+					outpatientCycleType: this.form.outpatientCycleType,
+					outpatientCycleValue: this.form.outpatientCycleValue ? parseInt(this.form.outpatientCycleValue) : null,
+					outpatientTimeSlot: this.form.outpatientTimeSlot,
+					hospitalizationTime: hospitalizationTime,
+					notes: this.form.notes,
+					status: 0
 				});
 				uni.showToast({ title: '保存成功', icon: 'success' });
 				setTimeout(() => uni.navigateBack(), 800);
@@ -279,28 +243,6 @@ export default {
 	font-weight: 500;
 }
 
-.type-options {
-	display: flex;
-	gap: 16rpx;
-}
-
-.type-option {
-	flex: 1;
-	text-align: center;
-	padding: 20rpx 0;
-	border: 2rpx solid $app-border;
-	border-radius: 12rpx;
-	font-size: 28rpx;
-	color: $app-text-secondary;
-	transition: all 0.2s;
-}
-
-.type-option.active {
-	border-color: $app-primary;
-	background: $app-primary-bg;
-	color: $app-primary;
-}
-
 .input {
 	font-size: 28rpx;
 	height: 80rpx;
@@ -337,6 +279,11 @@ export default {
 	padding: 0 24rpx;
 }
 
+.picker-wrap.small {
+	height: 72rpx;
+	padding: 0 20rpx;
+}
+
 .picker-text {
 	font-size: 28rpx;
 	color: $app-text;
@@ -358,28 +305,6 @@ export default {
 	margin: 32rpx 0 20rpx;
 	padding-top: 20rpx;
 	border-top: 1rpx solid $app-border;
-}
-
-.template-selector {
-	display: flex;
-	gap: 16rpx;
-	margin-bottom: 16rpx;
-}
-
-.template-btn {
-	flex: 1;
-	text-align: center;
-	padding: 16rpx 0;
-	border: 2rpx solid $app-border;
-	border-radius: 8rpx;
-	font-size: 26rpx;
-	color: $app-text-secondary;
-}
-
-.template-btn.active {
-	border-color: $app-primary;
-	background: $app-primary-bg;
-	color: $app-primary;
 }
 
 .exam-items {
@@ -412,6 +337,50 @@ export default {
 }
 
 .exam-item.selected .app-icon {
+	color: $app-primary;
+}
+
+.cycle-row {
+	display: flex;
+	gap: 16rpx;
+	align-items: center;
+}
+
+.cycle-picker {
+	flex: 1;
+}
+
+.cycle-value {
+	flex: 1;
+	font-size: 28rpx;
+	height: 72rpx;
+	background: $app-bg;
+	border: 2rpx solid $app-border;
+	border-radius: 12rpx;
+	padding: 0 24rpx;
+	color: $app-text;
+	box-sizing: border-box;
+}
+
+.time-slot-options {
+	display: flex;
+	gap: 16rpx;
+}
+
+.time-slot-option {
+	flex: 1;
+	text-align: center;
+	padding: 20rpx 0;
+	border: 2rpx solid $app-border;
+	border-radius: 12rpx;
+	font-size: 28rpx;
+	color: $app-text-secondary;
+	transition: all 0.2s;
+}
+
+.time-slot-option.active {
+	border-color: $app-primary;
+	background: $app-primary-bg;
 	color: $app-primary;
 }
 
