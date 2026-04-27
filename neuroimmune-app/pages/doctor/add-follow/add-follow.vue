@@ -1,6 +1,7 @@
 <template>
 	<view class="container">
 		<view class="card">
+			<!-- 患者选择 -->
 			<view class="form-item">
 				<text class="label">患者</text>
 				<view class="picker-wrap" @click="selectPatient">
@@ -10,52 +11,76 @@
 					<text class="app-icon uniui-arrowright"></text>
 				</view>
 			</view>
+
+			<!-- 随访检查类型 -->
 			<view class="form-item">
-				<text class="label">随访时间</text>
-				<uni-datetime-picker type="datetime" v-model="form.date" :placeholder="'请选择随访时间'" />
-			</view>
-			<view class="form-item">
-				<text class="label">随访/检查项目</text>
-				<input class="input" type="text" placeholder="如：神经功能评估、MRI检查" v-model="form.project" />
+				<text class="label">随访检查类型</text>
+				<picker mode="selector" :range="examTypeOptions" range-key="name" @change="onExamTypeChange">
+					<view class="picker-wrap">
+						<text class="picker-text" :class="{ placeholder: !selectedExamTypeName }">
+							{{ selectedExamTypeName || '请选择随访检查类型' }}
+						</text>
+						<text class="app-icon uniui-arrowright"></text>
+					</view>
+				</picker>
 			</view>
 
-			<!-- 详细信息 -->
+			<!-- 检查项目多选 -->
+			<view class="form-item" v-if="examItemOptions.length > 0">
+				<text class="label">检查项目</text>
+				<view class="checkbox-group">
+					<view
+						class="checkbox-item"
+						:class="{ checked: selectedExamItems.includes(item) }"
+						@click="toggleExamItem(item)"
+						v-for="(item, idx) in examItemOptions"
+						:key="idx"
+					>
+						<text class="checkbox-icon">
+							<text class="app-icon" :class="selectedExamItems.includes(item) ? 'uniui-checkbox-filled' : 'uniui-checkbox'"></text>
+						</text>
+						<text class="checkbox-label">{{ item }}</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 详细信息区域 -->
 			<view class="section-title">详细信息</view>
 
+			<!-- 门诊随访周期 -->
 			<view class="form-item">
-				<text class="label">门诊时间</text>
-				<picker mode="multiSelector" :range="dateTimeRange" @change="onOutpatientTimeChange" @columnchange="onColumnChange">
-					<view class="picker-wrap">
-						<text class="picker-text" :class="{ placeholder: !form.outpatientTime }">
-							{{ form.outpatientTime || '请选择门诊时间' }}
-						</text>
-						<text class="app-icon uniui-calendar"></text>
-					</view>
-				</picker>
+				<text class="label">门诊随访周期</text>
+				<view class="cycle-row">
+					<picker mode="selector" :range="cycleTypeOptions" range-key="label" @change="onCycleTypeChange" class="cycle-picker">
+						<view class="picker-wrap small">
+							<text class="picker-text">{{ cycleTypeOptions[form.cycleTypeIndex]?.label || '请选择' }}</text>
+							<text class="app-icon uniui-arrowright"></text>
+						</view>
+					</picker>
+					<picker mode="selector" :range="cycleValueOptions" @change="onCycleValueChange" class="cycle-picker">
+						<view class="picker-wrap small">
+							<text class="picker-text" :class="{ placeholder: !form.cycleValue }">
+								{{ form.cycleValue || '请选择' }}
+							</text>
+							<text class="app-icon uniui-arrowright"></text>
+						</view>
+					</picker>
+					<picker mode="selector" :range="timeSlotOptions" range-key="label" @change="onTimeSlotChange" class="cycle-picker">
+						<view class="picker-wrap small">
+							<text class="picker-text">{{ timeSlotOptions[form.timeSlotIndex]?.label || '请选择' }}</text>
+							<text class="app-icon uniui-arrowright"></text>
+						</view>
+					</picker>
+				</view>
 			</view>
+
+			<!-- 住院时间 -->
 			<view class="form-item">
 				<text class="label">住院时间</text>
-				<picker mode="date" @change="onHospitalizationChange">
-					<view class="picker-wrap">
-						<text class="picker-text" :class="{ placeholder: !form.hospitalizationTime }">
-							{{ form.hospitalizationTime || '请选择住院时间' }}
-						</text>
-						<text class="app-icon uniui-calendar"></text>
-					</view>
-				</picker>
+				<uni-datetime-picker type="date" v-model="form.hospitalizationTime" :placeholder="'请选择住院时间'" />
 			</view>
-			<view class="form-item">
-				<text class="label">检查项目</text>
-				<textarea class="textarea" placeholder="请输入检查项目，如：血常规、MRI、脑脊液检查等" v-model="form.examinationItems" />
-			</view>
-			<view class="form-item">
-				<text class="label">医院</text>
-				<input class="input" type="text" placeholder="请输入医院名称" v-model="form.hospital" />
-			</view>
-			<view class="form-item">
-				<text class="label">科室</text>
-				<input class="input" type="text" placeholder="请输入科室名称" v-model="form.department" />
-			</view>
+
+			<!-- 备注 -->
 			<view class="form-item">
 				<text class="label">备注</text>
 				<textarea class="textarea" placeholder="选填" v-model="form.notes" />
@@ -69,6 +94,7 @@
 <script>
 import { createFollowUp } from '@/api/followup.js'
 import { getDoctorPatientDetails } from '@/api/relation.js'
+import { getDictByType } from '@/api/dict.js'
 
 export default {
 	data() {
@@ -76,51 +102,64 @@ export default {
 			form: {
 				patientId: '',
 				patientName: '',
-				date: '',
-				project: '',
-				outpatientTime: '',
-				hospitalizationTime: '',
+				followUpExamTypeId: null,
 				examinationItems: '',
-				hospital: '',
-				department: '',
+				cycleTypeIndex: 0,
+				cycleValue: '',
+				timeSlotIndex: 0,
+				hospitalizationTime: '',
 				notes: ''
 			},
 			patients: [],
+			examTypeOptions: [],        // 随访检查类型列表（字典）
+			examItemOptions: [],        // 检查项目选项（从 description 解析）
+			selectedExamItems: [],      // 已选检查项目
 			loading: false,
-			dateTimeRange: [[], [], []]
+			// 周期类型选项
+			cycleTypeOptions: [
+				{ label: '每月', value: 'monthly' },
+				{ label: '每周', value: 'weekly' },
+				{ label: '每季度', value: 'quarterly' }
+			],
+			// 时间段选项
+			timeSlotOptions: [
+				{ label: '上午', value: 'morning' },
+				{ label: '下午', value: 'afternoon' },
+				{ label: '晚上', value: 'evening' }
+			]
 		};
+	},
+	computed: {
+		selectedExamTypeName() {
+			const selected = this.examTypeOptions.find(t => t.id === this.form.followUpExamTypeId);
+			return selected ? selected.name : '';
+		},
+		// 根据周期类型生成周期值选项
+		cycleValueOptions() {
+			const type = this.cycleTypeOptions[this.form.cycleTypeIndex]?.value;
+			if (type === 'monthly') {
+				// 每月1-28号（考虑到部分月份天数）
+				return Array.from({ length: 28 }, (_, i) => `${i + 1}号`);
+			} else if (type === 'weekly') {
+				// 每周周一到周日
+				return ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+			} else if (type === 'quarterly') {
+				// 每季度固定日期
+				return ['1月1日', '4月1日', '7月1日', '10月1日'];
+			}
+			return [];
+		}
 	},
 	onLoad(op) {
 		if (op.patientId) {
 			this.form.patientId = op.patientId;
 			this.form.patientName = op.patientName || '已选患者';
 		}
-		// 初始化默认随访时间为当前时间
-		this.form.date = this.formatDateTime(new Date());
-		this.initDateTimeRange();
 		this.loadPatients();
+		this.loadExamTypes();
 	},
 	methods: {
-		formatDateTime(date) {
-			const y = date.getFullYear();
-			const m = String(date.getMonth() + 1).padStart(2, '0');
-			const d = String(date.getDate()).padStart(2, '0');
-			const h = String(date.getHours()).padStart(2, '0');
-			const min = String(date.getMinutes()).padStart(2, '0');
-			return `${y}-${m}-${d} ${h}:${min}:00`;
-		},
-		initDateTimeRange() {
-			// 初始化日期时间选择器范围
-			const hours = [];
-			for (let i = 8; i <= 18; i++) {
-				hours.push(i + '时');
-			}
-			const minutes = [];
-			for (let i = 0; i < 60; i += 15) {
-				minutes.push(i.toString().padStart(2, '0') + '分');
-			}
-			this.dateTimeRange = [['上午', '下午'], hours, minutes];
-		},
+		// 加载患者列表
 		async loadPatients() {
 			const userInfo = uni.getStorageSync('userInfo') || {};
 			if (!userInfo.id) return;
@@ -133,6 +172,19 @@ export default {
 				console.error('获取患者列表失败:', e);
 			}
 		},
+		// 加载随访检查类型字典
+		async loadExamTypes() {
+			try {
+				const types = await getDictByType('followUpExamType');
+				if (types && types.length) {
+					// 只保留启用的字典项
+					this.examTypeOptions = types.filter(t => t.isActive === 1);
+				}
+			} catch (e) {
+				console.error('获取随访检查类型失败:', e);
+			}
+		},
+		// 选择患者
 		selectPatient() {
 			if (this.patients.length === 0) {
 				uni.showToast({ title: '暂无可选患者', icon: 'none' });
@@ -148,42 +200,61 @@ export default {
 				}
 			});
 		},
-		onOutpatientTimeChange(e) {
-			const val = e.detail.value;
-			const period = this.dateTimeRange[0][val[0]];
-			let hour = parseInt(this.dateTimeRange[1][val[1]]);
-			if (period === '下午' && hour < 12) hour += 12;
-			const minute = this.dateTimeRange[2][val[2]].replace('分', '');
-			this.form.outpatientTime = `${this.form.date ? this.form.date.substring(0, 10) : ''} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+		// 选择随访检查类型
+		onExamTypeChange(e) {
+			const idx = e.detail.value;
+			const selected = this.examTypeOptions[idx];
+			if (selected) {
+				this.form.followUpExamTypeId = selected.id;
+				// 解析 description 中的检查项目（逗号分隔）
+				if (selected.description) {
+					this.examItemOptions = selected.description.split(',').map(s => s.trim()).filter(s => s);
+				} else {
+					this.examItemOptions = [];
+				}
+				// 清空已选项
+				this.selectedExamItems = [];
+				this.form.examinationItems = '';
+			}
 		},
-		onColumnChange(e) {
-			// 列变化处理
+		// 切换检查项目选中状态
+		toggleExamItem(item) {
+			const idx = this.selectedExamItems.indexOf(item);
+			if (idx > -1) {
+				this.selectedExamItems.splice(idx, 1);
+			} else {
+				this.selectedExamItems.push(item);
+			}
+			// 更新表单字段（逗号分隔）
+			this.form.examinationItems = this.selectedExamItems.join(',');
 		},
-		onHospitalizationChange(e) {
-			this.form.hospitalizationTime = e.detail.value;
+		// 选择周期类型
+		onCycleTypeChange(e) {
+			this.form.cycleTypeIndex = e.detail.value;
+			// 切换类型时清空周期值
+			this.form.cycleValue = '';
 		},
+		// 选择周期值
+		onCycleValueChange(e) {
+			this.form.cycleValue = this.cycleValueOptions[e.detail.value];
+		},
+		// 选择时间段
+		onTimeSlotChange(e) {
+			this.form.timeSlotIndex = e.detail.value;
+		},
+		// 提交表单
 		async submit() {
 			if (!this.form.patientId) {
 				uni.showToast({ title: '请选择患者', icon: 'none' });
 				return;
 			}
-			if (!this.form.date) {
-				uni.showToast({ title: '请选择随访时间', icon: 'none' });
-				return;
-			}
-			if (!this.form.project) {
-				uni.showToast({ title: '请输入随访项目', icon: 'none' });
+			if (!this.form.followUpExamTypeId) {
+				uni.showToast({ title: '请选择随访检查类型', icon: 'none' });
 				return;
 			}
 
 			this.loading = true;
 			const userInfo = uni.getStorageSync('userInfo') || {};
-
-			// 确保 date 格式为 YYYY-MM-DD HH:mm:ss
-			let dateStr = this.form.date;
-			if (dateStr && dateStr.length === 10) {
-				dateStr = dateStr + ' 00:00:00';
-			}
 
 			try {
 				await createFollowUp({
@@ -191,15 +262,16 @@ export default {
 					patientName: this.form.patientName,
 					doctorId: userInfo.id,
 					doctorName: userInfo.name,
-					date: dateStr,
-					project: this.form.project,
-					status: 0,
-					outpatientTime: this.form.outpatientTime || null,
-					hospitalizationTime: (this.form.hospitalizationTime && this.form.hospitalizationTime.length === 10 ? this.form.hospitalizationTime + ' 00:00:00' : this.form.hospitalizationTime) || null,
-					examinationItems: this.form.examinationItems,
-					hospital: this.form.hospital,
-					department: this.form.department,
-					notes: this.form.notes
+					followUpExamTypeId: this.form.followUpExamTypeId,
+					examinationItems: this.form.examinationItems || null,
+					outpatientCycleType: this.cycleTypeOptions[this.form.cycleTypeIndex]?.value || null,
+					outpatientCycleValue: this.form.cycleValue || null,
+					outpatientTimeSlot: this.timeSlotOptions[this.form.timeSlotIndex]?.value || null,
+					hospitalizationTime: (this.form.hospitalizationTime && this.form.hospitalizationTime.length === 10
+						? this.form.hospitalizationTime + ' 00:00:00'
+						: this.form.hospitalizationTime) || null,
+					notes: this.form.notes || null,
+					status: 0
 				});
 				uni.showToast({ title: '已保存', icon: 'success' });
 				setTimeout(() => uni.navigateBack(), 800);
@@ -269,6 +341,11 @@ export default {
 	padding: 0 24rpx;
 }
 
+.picker-wrap.small {
+	height: 70rpx;
+	padding: 0 16rpx;
+}
+
 .picker-text {
 	font-size: 30rpx;
 	color: $app-text;
@@ -303,5 +380,58 @@ export default {
 .btn.primary {
 	background: $app-primary;
 	color: #fff;
+}
+
+/* 检查项目多选样式 */
+.checkbox-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16rpx;
+	background: $app-bg;
+	border-radius: 12rpx;
+	padding: 20rpx;
+}
+
+.checkbox-item {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+	padding: 12rpx 20rpx;
+	background: $app-card-bg;
+	border-radius: 8rpx;
+	border: 1rpx solid $app-border;
+}
+
+.checkbox-item.checked {
+	background: rgba($app-primary, 0.1);
+	border-color: $app-primary;
+}
+
+.checkbox-icon {
+	font-size: 28rpx;
+}
+
+.checkbox-icon .app-icon {
+	font-size: 32rpx;
+	color: $app-text-muted;
+}
+
+.checkbox-item.checked .checkbox-icon .app-icon {
+	color: $app-primary;
+}
+
+.checkbox-label {
+	font-size: 26rpx;
+	color: $app-text;
+}
+
+/* 周期组合输入样式 */
+.cycle-row {
+	display: flex;
+	gap: 12rpx;
+}
+
+.cycle-picker {
+	flex: 1;
 }
 </style>

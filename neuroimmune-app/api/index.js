@@ -9,6 +9,7 @@ import auth from './auth'
 import schedule from './schedule'
 import episode from './episode'
 import ocr from './ocr'
+import dict from './dict'
 
 export default {
   patient,
@@ -20,5 +21,6 @@ export default {
   auth,
   schedule,
   episode,
-  ocr
+  ocr,
+  dict
 }
