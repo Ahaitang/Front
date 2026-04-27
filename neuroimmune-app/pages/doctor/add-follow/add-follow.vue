@@ -12,26 +12,37 @@
 				</view>
 			</view>
 
-			<!-- 检查项目多选 -->
+			<!-- 随访检查类型 -->
 			<view class="form-item">
-				<text class="label">检查项目</text>
-				<view class="checkbox-group" v-if="examItemOptions.length > 0">
+				<text class="label">随访检查类型</text>
+				<picker mode="selector" :range="examTypeOptions" range-key="name" @change="onExamTypeChange">
+					<view class="picker-wrap">
+						<text class="picker-text" :class="{ placeholder: !form.followUpExamTypeName }">
+							{{ form.followUpExamTypeName || '请选择类型' }}
+						</text>
+						<text class="app-icon uniui-arrowright"></text>
+					</view>
+				</picker>
+			</view>
+
+			<!-- 检查项目（根据类型动态显示） -->
+			<view class="form-item" v-if="examItemsList.length > 0">
+				<text class="label">检查检验项目</text>
+				<view class="checkbox-group">
 					<view
 						class="checkbox-item"
-						:class="{ checked: selectedExamItems.includes(item.name) }"
-						@click="toggleExamItem(item.name)"
-						v-for="(item, idx) in examItemOptions"
+						:class="{ checked: selectedExamItems.includes(item) }"
+						@click="toggleExamItem(item)"
+						v-for="(item, idx) in examItemsList"
 						:key="idx"
 					>
 						<text class="checkbox-icon">
-							<text class="app-icon" :class="selectedExamItems.includes(item.name) ? 'uniui-checkbox-filled' : 'uniui-checkbox'"></text>
+							<text class="app-icon" :class="selectedExamItems.includes(item) ? 'uniui-checkbox-filled' : 'uniui-checkbox'"></text>
 						</text>
-						<text class="checkbox-label">{{ item.name }}</text>
+						<text class="checkbox-label">{{ item }}</text>
 					</view>
 				</view>
-				<view class="empty-tip" v-else>
-					<text>加载中...</text>
-				</view>
+				<textarea class="textarea" placeholder="已选项目或自定义输入" v-model="form.examinationItems" />
 			</view>
 
 			<!-- 详细信息区域 -->
@@ -122,6 +133,10 @@ export default {
 			form: {
 				patientId: '',
 				patientName: '',
+				// 随访检查类型
+				followUpExamTypeId: null,
+				followUpExamTypeName: '',
+				// 检查项目（中文顿号分隔）
 				examinationItems: '',
 				cycleTypeIndex: 0,
 				cycleValue: '',
@@ -131,8 +146,11 @@ export default {
 				notes: ''
 			},
 			patients: [],
-			examItemOptions: [],      // 检查项目选项（从 examItem 字典获取）
-			selectedExamItems: [],    // 已选检查项目
+			// 随访检查类型选项（从 followUpExamType 字典获取）
+			examTypeOptions: [],
+			// 检查项目列表（根据选中类型的 description 解析）
+			examItemsList: [],
+			selectedExamItems: [],
 			loading: false,
 			// 周期类型选项
 			cycleTypeOptions: [
@@ -163,7 +181,7 @@ export default {
 			this.form.patientName = op.patientName || '已选患者';
 		}
 		this.loadPatients();
-		this.loadExamItems();
+		this.loadExamTypes();
 	},
 	methods: {
 		// 加载患者列表
@@ -179,16 +197,45 @@ export default {
 				console.error('获取患者列表失败:', e);
 			}
 		},
-		// 加载检查项目字典
-		async loadExamItems() {
+		// 加载随访检查类型字典
+		async loadExamTypes() {
 			try {
-				const items = await getDictByType('examItem');
+				const items = await getDictByType('followUpExamType');
 				if (items && items.length) {
 					// 只保留启用的字典项
-					this.examItemOptions = items.filter(t => t.isActive === 1);
+					this.examTypeOptions = items.filter(t => t.isActive === 1);
+					// 默认选中第一个类型
+					if (this.examTypeOptions.length > 0) {
+						this.selectExamType(this.examTypeOptions[0].id);
+					}
 				}
 			} catch (e) {
-				console.error('获取检查项目失败:', e);
+				console.error('获取随访检查类型失败:', e);
+			}
+		},
+		// 选择随访检查类型
+		selectExamType(typeId) {
+			this.form.followUpExamTypeId = typeId;
+			const type = this.examTypeOptions.find(t => t.id === typeId);
+			if (type) {
+				this.form.followUpExamTypeName = type.name;
+				// 解析 description 中的 JSON 数组
+				try {
+					this.examItemsList = JSON.parse(type.description || '[]');
+					// 默认选中所有项目
+					this.selectedExamItems = [...this.examItemsList];
+					this.updateExamItemsText();
+				} catch (e) {
+					this.examItemsList = [];
+					this.selectedExamItems = [];
+				}
+			}
+		},
+		// 随访检查类型下拉变化
+		onExamTypeChange(e) {
+			const index = e.detail.value;
+			if (index >= 0 && index < this.examTypeOptions.length) {
+				this.selectExamType(this.examTypeOptions[index].id);
 			}
 		},
 		// 选择患者
@@ -208,15 +255,18 @@ export default {
 			});
 		},
 		// 切换检查项目选中状态
-		toggleExamItem(itemName) {
-			const idx = this.selectedExamItems.indexOf(itemName);
+		toggleExamItem(item) {
+			const idx = this.selectedExamItems.indexOf(item);
 			if (idx > -1) {
 				this.selectedExamItems.splice(idx, 1);
 			} else {
-				this.selectedExamItems.push(itemName);
+				this.selectedExamItems.push(item);
 			}
-			// 更新表单字段（逗号分隔）
-			this.form.examinationItems = this.selectedExamItems.join(',');
+			this.updateExamItemsText();
+		},
+		// 更新检查项目文本（中文顿号分隔）
+		updateExamItemsText() {
+			this.form.examinationItems = this.selectedExamItems.join('、');
 		},
 		// 选择周期类型
 		onCycleTypeChange(e) {
@@ -270,6 +320,10 @@ export default {
 					patientName: this.form.patientName,
 					doctorId: userInfo.id,
 					doctorName: userInfo.name,
+					// 随访检查类型（新增）
+					followUpExamTypeId: this.form.followUpExamTypeId || null,
+					followUpExamTypeName: this.form.followUpExamTypeName || null,
+					// 检查项目
 					examinationItems: this.form.examinationItems || null,
 					outpatientCycleType: this.currentCycleType || null,
 					outpatientCycleValue: this.form.cycleValue || null,
