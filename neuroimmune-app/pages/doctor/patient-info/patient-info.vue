@@ -4,7 +4,7 @@
 			<image class="avatar" :src="patient.avatar || '/static/component.png'" mode="aspectFill"></image>
 			<view class="meta">
 				<text class="name">{{ patient.name }}</text>
-				<text class="age-gender">{{ patient.age }}岁 {{ patient.gender }}</text>
+				<text class="age-gender">{{ patient.gender }}</text>
 				<text class="disease-tag" v-if="diseaseTypeLabel">{{ diseaseTypeLabel }}</text>
 			</view>
 			<view class="contact-btns">
@@ -30,27 +30,22 @@
 			</view>
 		</view>
 		<view class="quick-actions card">
-			<view class="quick-title">快速操作</view>
-			<view class="quick-grid">
-				<view class="quick-item" @click="navTo('/pages/doctor/add-follow/add-follow?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
-					<view class="quick-icon follow"><text class="app-icon uniui-list"></text></view>
-					<text class="quick-text">创建随访</text>
+			<view class="quick-row">
+				<view class="quick-btn" @click="navTo('/pages/doctor/add-follow/add-follow?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
+					<text class="app-icon uniui-list"></text>
+					<text>创建随访</text>
 				</view>
-				<view class="quick-item" @click="navTo('/pages/doctor/add-medication/add-medication?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
-					<view class="quick-icon med"><text class="app-icon uniui-compose"></text></view>
-					<text class="quick-text">添加用药</text>
+				<view class="quick-btn" @click="navTo('/pages/doctor/add-medication/add-medication?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
+					<text class="app-icon uniui-compose"></text>
+					<text>添加用药</text>
 				</view>
-				<view class="quick-item" @click="navTo('/pages/doctor/upload-record/upload-record?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
-					<view class="quick-icon record"><text class="app-icon uniui-folder-add-filled"></text></view>
-					<text class="quick-text">新增病历</text>
+				<view class="quick-btn" @click="navTo('/pages/doctor/upload-record/upload-record?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
+					<text class="app-icon uniui-folder-add-filled"></text>
+					<text>新增病历</text>
 				</view>
-				<view class="quick-item" @click="navTo('/pages/doctor/add-episode/add-episode?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
-					<view class="quick-icon episode"><text class="app-icon uniui-pulse"></text></view>
-					<text class="quick-text">新增发作</text>
-				</view>
-				<view class="quick-item" @click="copyBasicInfo">
-					<view class="quick-icon copy"><text class="app-icon uniui-paperclip"></text></view>
-					<text class="quick-text">复制信息</text>
+				<view class="quick-btn" @click="navTo('/pages/doctor/add-episode/add-episode?patientId=' + patientId + '&patientName=' + encodeURIComponent(patient.name))">
+					<text class="app-icon uniui-fire-filled"></text>
+					<text>新增发作</text>
 				</view>
 			</view>
 		</view>
@@ -63,30 +58,24 @@
 				<view class="tab" :class="{ active: activeTab === 'episode' }" @click="activeTab = 'episode'">发作记录</view>
 			</view>
 			<view class="tabs-content">
-				<view v-show="activeTab === 'basic'" class="tab-panel">
-					<view class="row"><text class="label">电话</text><text class="value">{{ patient.phone }}</text></view>
-					<view class="row"><text class="label">身份证号</text><text class="value">{{ patient.idCard }}</text></view>
-					<view class="row disease-row">
-						<text class="label">疾病分类</text>
-						<picker mode="selector" :range="diseaseOptions" range-key="label" @change="onDiseaseTypeChange">
-							<view class="picker-box">
-								<text class="picker-text">{{ diseaseTypeLabel || '请选择' }}</text>
-								<text class="app-icon uniui-arrowdown"></text>
+					<view v-show="activeTab === 'basic'" class="tab-panel">
+						<view class="row"><text class="label">姓名</text><text class="value">{{ patient.name }}</text></view>
+						<view class="row"><text class="label">性别</text><text class="value">{{ patient.gender }}</text></view>
+						<view class="row"><text class="label">出生日期</text><text class="value">{{ patient.birthday }}</text></view>
+						<view class="row"><text class="label">手机号码</text><text class="value">{{ patient.phone }}</text></view>
+						<view class="row"><text class="label">身份证号</text><text class="value">{{ patient.idCard }}</text></view>
+						<view class="row disease-section">
+								<text class="label">疾病分类（可多选）</text>
+								<view class="disease-checkboxes">
+									<view class="disease-item" v-for="d in diseaseOptions" :key="d.value" @click="toggleDisease(d.value)">
+										<view class="checkbox" :class="{ checked: patient.diseaseTypes.includes(d.value) }">
+											<text class="app-icon uniui-checkmarkempty" v-if="patient.diseaseTypes.includes(d.value)"></text>
+										</view>
+										<text class="disease-label">{{ d.label }}</text>
+									</view>
+								</view>
 							</view>
-						</picker>
 					</view>
-					<view class="row"><text class="label">民族</text><text class="value">{{ patient.nation }}</text></view>
-					<view class="row"><text class="label">出生日期</text><text class="value">{{ patient.birthday }}</text></view>
-					<view class="row"><text class="label">婚姻状况</text><text class="value">{{ patient.marital }}</text></view>
-					<view class="row"><text class="label">居住地</text><text class="value">{{ patient.address }}</text></view>
-					<view class="row"><text class="label">患者类型</text><text class="value">{{ patient.patientType }}</text></view>
-					<view class="copy-btn-row">
-						<button class="copy-btn" @click="copyBasicInfo">
-							<text class="app-icon uniui-paperclip"></text>
-							<text>复制基本信息</text>
-						</button>
-					</view>
-				</view>
 				<view v-show="activeTab === 'records'" class="tab-panel">
 					<view class="records-section">
 						<view class="section-header-row">
@@ -162,7 +151,7 @@
 					<view class="episode-item" v-for="(item, i) in episodeList" :key="i" @click="showEpisodeDetail(item)">
 						<view class="episode-header">
 							<view class="episode-icon">
-								<text class="app-icon uniui-pulse"></text>
+								<text class="app-icon uniui-fire-filled"></text>
 							</view>
 							<view class="episode-info">
 								<text class="episode-title">{{ item.symptomType || '疾病发作' }}</text>
@@ -199,27 +188,22 @@ export default {
 			activeTab: 'basic',
 			patientId: '',
 			diseaseOptions: [
-				{ label: 'MS（多发性硬化）', value: 'MS' },
-				{ label: 'NMOSD（视神经脊髓炎）', value: 'NMOSD' },
-				{ label: 'MG（重症肌无力）', value: 'MG' },
-				{ label: 'MOGAD（MOG抗体病）', value: 'MOGAD' },
-				{ label: '自身免疫性脑炎', value: '自身免疫性脑炎' },
-				{ label: 'GBS（格林-巴利综合征）', value: 'GBS' },
-				{ label: 'CIDP（慢性炎性脱髓鞘性多发性神经病）', value: 'CIDP' },
-				{ label: '其它疾病', value: '其它疾病' }
-			],
+					{ label: 'MS（多发性硬化）', value: 'MS' },
+					{ label: 'NMOSD（视神经脊髓炎）', value: 'NMOSD' },
+					{ label: 'MG（重症肌无力）', value: 'MG' },
+					{ label: 'MOGAD（MOG抗体病）', value: 'MOGAD' },
+					{ label: '自身免疫性脑炎', value: 'AUTO_ENCEPHALITIS' },
+					{ label: 'GBS（格林-巴利综合征）', value: 'GBS' },
+					{ label: 'CIDP（慢性炎性脱髓鞘性多发性神经病）', value: 'CIDP' },
+					{ label: '其它疾病', value: 'OTHER' }
+				],
 			patient: {
 				name: '',
-				age: '',
 				gender: '',
+				birthday: '',
 				phone: '',
 				idCard: '',
-				diseaseType: '',
-				nation: '',
-				birthday: '',
-				marital: '',
-				address: '',
-				patientType: '',
+				diseaseTypes: [],
 				followUpCount: 0,
 				medicationCount: 0,
 				recordCount: 0,
@@ -229,16 +213,15 @@ export default {
 			medicationList: [],
 			hospitalRecords: [],
 			externalRecords: [],
-			episodeList: []
+			episodeList: [],
+				// 详情弹窗相关
+				selectedFollowUp: null,
+				selectedMedication: null,
+				followUpPopupVisible: false,
+				medicationPopupVisible: false
 		};
 	},
-	computed: {
-		diseaseTypeLabel() {
-			if (!this.patient.diseaseType) return '';
-			const found = this.diseaseOptions.find(d => d.value === this.patient.diseaseType);
-			return found ? found.label : this.patient.diseaseType;
-		}
-	},
+	
 	onLoad(op) {
 		if (op.id) this.patientId = op.id;
 		else this.patientId = '1';
@@ -250,18 +233,12 @@ export default {
 				const res = await getPatientById(this.patientId);
 				if (res) {
 					this.patient = {
-						...res,
 						name: res.name || '患者',
-						age: res.age || 0,
 						gender: res.gender === 'male' ? '男' : (res.gender === 'female' ? '女' : res.gender || '未知'),
+						birthday: res.birthday || '',
 						phone: res.phone || '',
 						idCard: res.idCard || '',
-						diseaseType: res.diseaseType || '',
-						nation: res.nation || '汉族',
-						birthday: res.birthday || '',
-						marital: res.marital || '',
-						address: res.address || '',
-						patientType: res.patientType || '门诊患者',
+						diseaseTypes: res.diseaseTypes || [],
 						followUpCount: 0,
 						medicationCount: 0,
 						recordCount: 0,
@@ -413,7 +390,7 @@ export default {
 性别：${this.patient.gender}
 年龄：${this.patient.age}岁
 电话：${this.patient.phone}
-疾病分类：${this.patient.diseaseType || '未分类'}
+疾病分类：${(this.patient.diseaseTypes || []).join('、') || '未分类'}
 身份证号：${this.patient.idCard || '未填写'}
 居住地：${this.patient.address || '未填写'}`;
 
@@ -485,18 +462,19 @@ export default {
 			})
 		},
 		// 疾病分类变更
-		async onDiseaseTypeChange(e) {
-			const selected = this.diseaseOptions[e.detail.value]
-			const newType = selected.value
-			if (newType === this.patient.diseaseType) return
-
+		async toggleDisease(value) {
+			const index = this.patient.diseaseTypes.indexOf(value);
+			if (index > -1) {
+				this.patient.diseaseTypes.splice(index, 1);
+			} else {
+				this.patient.diseaseTypes.push(value);
+			}
 			try {
-				await updatePatient(this.patientId, { diseaseType: newType })
-				this.patient.diseaseType = newType
-				uni.showToast({ title: '已更新', icon: 'success' })
+				await updatePatient(this.patientId, { diseaseTypes: this.patient.diseaseTypes });
+				uni.showToast({ title: '已更新', icon: 'success' });
 			} catch (err) {
-				console.error('更新疾病分类失败:', err)
-				uni.showToast({ title: '更新失败', icon: 'none' })
+				console.error('更新疾病分类失败:', err);
+				uni.showToast({ title: '更新失败', icon: 'none' });
 			}
 		},
 		// 添加病历
@@ -634,50 +612,40 @@ export default {
 	margin-top: 8rpx;
 }
 
-.quick-title {
-	font-size: 28rpx;
-	font-weight: bold;
-	color: $app-text;
-	margin-bottom: 20rpx;
+.quick-actions {
+	padding: 20rpx 0;
 }
 
-.quick-grid {
+.quick-row {
 	display: flex;
-	justify-content: space-around;
-	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 12rpx;
 }
 
-.quick-item {
+.quick-btn {
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	width: 33%;
-	margin-bottom: 20rpx;
+	padding: 16rpx 8rpx;
+	background: #fff;
+	border-radius: 12rpx;
+	transition: all 0.2s;
 }
 
-.quick-icon {
-	width: 80rpx;
-	height: 80rpx;
-	border-radius: 20rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-bottom: 12rpx;
+.quick-btn:active {
+	transform: scale(0.95);
+	background: #f5f5f5;
 }
 
-.quick-icon .app-icon {
-	font-size: 40rpx;
-	color: #fff;
+.quick-btn .app-icon {
+	font-size: 36rpx;
+	margin-bottom: 8rpx;
+	color: $app-primary;
 }
 
-.quick-icon.follow { background: $app-primary; }
-.quick-icon.med { background: #EC4899; }
-.quick-icon.record { background: #6366F1; }
-.quick-icon.episode { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); }
-.quick-icon.copy { background: #8B5CF6; }
-
-.quick-text {
-	font-size: 24rpx;
+.quick-btn text:last-child {
+	font-size: 22rpx;
 	color: $app-text;
 }
 
@@ -898,30 +866,46 @@ export default {
 	color: #fff;
 }
 
-.disease-row {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	.picker-box {
+/* 疾病多选样式 */
+	.disease-section {
+		margin-bottom: 32rpx;
+	}
+	.disease-checkboxes {
+		display: flex;
+		flex-direction: column;
+		gap: 16rpx;
+		margin-top: 12rpx;
+	}
+	.disease-item {
 		display: flex;
 		align-items: center;
-		gap: 8rpx;
-		padding: 12rpx 24rpx;
+		gap: 16rpx;
+		padding: 16rpx 20rpx;
 		background: $app-bg;
-		border: 2rpx solid $app-border;
-		border-radius: 12rpx;
-		min-width: 300rpx;
+		border-radius: $app-radius-sm;
 	}
-	.picker-text {
+	.checkbox {
+		width: 40rpx;
+		height: 40rpx;
+		border: 2rpx solid $app-border;
+		border-radius: 8rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: $app-card-bg;
+	}
+	.checkbox.checked {
+		background: $app-primary;
+		border-color: $app-primary;
+	}
+	.checkbox.checked .app-icon {
+		color: #fff;
+		font-size: 24rpx;
+	}
+	.disease-label {
 		font-size: 28rpx;
 		color: $app-text;
-		flex: 1;
 	}
-	.app-icon {
-		font-size: 24rpx;
-		color: $app-text-muted;
-	}
-}
 
 .section-header-row {
 	display: flex;
