@@ -804,7 +804,7 @@ const calculateAge = (birthDate: string | undefined) => {
             </div>
             <el-button type="primary" :icon="Plus" @click="openAddRecordDialog">新增病历</el-button>
           </div>
-          <el-table :data="records" stripe v-loading="recordsLoading" empty-text="暂无病历记录">
+          <el-table :data="records" stripe v-loading="recordsLoading" empty-text="暂无病历记录" class="clickable-table" @row-click="(row: MedicalRecord) => handleRowClick(row, 'record')">
             <el-table-column prop="type" label="类型" width="100">
               <template #default="{ row }">
                 <el-tag size="small" effect="light">{{ row.type }}</el-tag>
@@ -817,8 +817,8 @@ const calculateAge = (birthDate: string | undefined) => {
             <el-table-column prop="doctorName" label="医生" width="100" />
             <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="openEditRecordDialog(row)">编辑</el-button>
-                <el-button v-if="row.status === 0" type="danger" link size="small" @click="cancelRecordConfirm(row)">删除</el-button>
+                <el-button type="primary" link size="small" @click.stop="openEditRecordDialog(row)">编辑</el-button>
+                <el-button v-if="row.status === 0" type="danger" link size="small" @click.stop="cancelRecordConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -833,7 +833,7 @@ const calculateAge = (birthDate: string | undefined) => {
             </div>
             <el-button type="primary" :icon="Plus" @click="openAddFollowUpDialog">新增随访</el-button>
           </div>
-          <el-table :data="followUps" stripe v-loading="followUpsLoading" empty-text="暂无随访记录">
+          <el-table :data="followUps" stripe v-loading="followUpsLoading" empty-text="暂无随访记录" class="clickable-table" @row-click="(row: FollowUp) => handleRowClick(row, 'followup')">
             <el-table-column prop="followUpExamTypeName" label="检查类型" width="140">
               <template #default="{ row }">
                 <el-tag type="primary" size="small" effect="plain">{{ row.followUpExamTypeName || '-' }}</el-tag>
@@ -859,8 +859,8 @@ const calculateAge = (birthDate: string | undefined) => {
             <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
             <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="openEditFollowUpDialog(row)">编辑</el-button>
-                <el-button v-if="row.status === 0" type="danger" link size="small" @click="cancelFollowUpConfirm(row)">删除</el-button>
+                <el-button type="primary" link size="small" @click.stop="openEditFollowUpDialog(row)">编辑</el-button>
+                <el-button v-if="row.status === 0" type="danger" link size="small" @click.stop="cancelFollowUpConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -875,7 +875,7 @@ const calculateAge = (birthDate: string | undefined) => {
             </div>
             <el-button type="primary" :icon="Plus" @click="openAddEpisodeDialog">新增发作</el-button>
           </div>
-          <el-table :data="episodes" stripe v-loading="episodesLoading" empty-text="暂无发作记录">
+          <el-table :data="episodes" stripe v-loading="episodesLoading" empty-text="暂无发作记录" class="clickable-table" @row-click="(row: DiseaseEpisode) => handleRowClick(row, 'episode')">
             <el-table-column prop="episodeNumber" label="发作次数" width="100">
               <template #default="{ row }">
                 <el-tag type="warning" size="small" effect="light">第{{ row.episodeNumber }}次</el-tag>
@@ -888,8 +888,8 @@ const calculateAge = (birthDate: string | undefined) => {
             <el-table-column prop="hospital" label="医院" min-width="120" show-overflow-tooltip />
             <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="openEditEpisodeDialog(row)">编辑</el-button>
-                <el-button type="danger" link size="small" @click="deleteEpisodeConfirm(row)">删除</el-button>
+                <el-button type="primary" link size="small" @click.stop="openEditEpisodeDialog(row)">编辑</el-button>
+                <el-button type="danger" link size="small" @click.stop="deleteEpisodeConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -904,7 +904,7 @@ const calculateAge = (birthDate: string | undefined) => {
             </div>
             <el-button type="primary" :icon="Plus" @click="openAddMedicationDialog">新增用药</el-button>
           </div>
-          <el-table :data="medications" stripe v-loading="medicationsLoading" empty-text="暂无用药记录">
+          <el-table :data="medications" stripe v-loading="medicationsLoading" empty-text="暂无用药记录" class="clickable-table" @row-click="(row: Medication) => handleRowClick(row, 'medication')">
             <el-table-column prop="medicationName" label="药品名称" min-width="160" show-overflow-tooltip />
             <el-table-column label="剂量" width="100">
               <template #default="{ row }">
@@ -927,8 +927,8 @@ const calculateAge = (birthDate: string | undefined) => {
             </el-table-column>
             <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="openEditMedicationDialog(row)">编辑</el-button>
-                <el-button v-if="getActualMedicationStatus(row) === 0" type="danger" link size="small" @click="cancelMedicationConfirm(row)">删除</el-button>
+                <el-button type="primary" link size="small" @click.stop="openEditMedicationDialog(row)">编辑</el-button>
+                <el-button v-if="getActualMedicationStatus(row) === 0" type="danger" link size="small" @click.stop="cancelMedicationConfirm(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
