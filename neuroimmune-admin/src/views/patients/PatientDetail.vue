@@ -685,6 +685,49 @@ const goBack = () => {
   router.push('/patients')
 }
 
+// ========== 详情查看相关操作 ==========
+const handleRowClick = (row: any, type: 'record' | 'followup' | 'episode' | 'medication') => {
+  switch (type) {
+    case 'record':
+      viewingRecord.value = { ...row }
+      break
+    case 'followup':
+      viewingFollowUp.value = { ...row }
+      break
+    case 'episode':
+      viewingEpisode.value = { ...row }
+      break
+    case 'medication':
+      viewingMedication.value = { ...row }
+      break
+  }
+  detailDialogType.value = type
+  detailDialogVisible.value = true
+}
+
+// 从详情切换到编辑
+const switchToEdit = () => {
+  detailDialogVisible.value = false
+  switch (detailDialogType.value) {
+    case 'record':
+      openEditRecordDialog(viewingRecord.value as MedicalRecord)
+      break
+    case 'followup':
+      openEditFollowUpDialog(viewingFollowUp.value as FollowUp)
+      break
+    case 'episode':
+      openEditEpisodeDialog(viewingEpisode.value as DiseaseEpisode)
+      break
+    case 'medication':
+      openEditMedicationDialog(viewingMedication.value as Medication)
+      break
+  }
+}
+
+const closeDetailDialog = () => {
+  detailDialogVisible.value = false
+}
+
 const formatDate = (date: string) => date || '-'
 
 // 年龄计算函数
