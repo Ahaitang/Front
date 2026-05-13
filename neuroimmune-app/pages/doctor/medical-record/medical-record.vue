@@ -36,7 +36,7 @@
 						<view class="record-type-row">
 							<text class="type-tag">{{ item.type || '门诊病历' }}</text>
 							<view class="episode-link" v-if="item.relatedEpisodeId" @click.stop="viewEpisode(item)">
-								<text class="app-icon uniui-pulse"></text>
+								<text class="app-icon uniui-fire-filled"></text>
 								<text class="link-text">关联发作</text>
 							</view>
 						</view>

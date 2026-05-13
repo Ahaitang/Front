@@ -25,7 +25,7 @@ const request = (options) => {
           if (data.code === 200 || data.code === 0) {
             resolve(data.data)
           } else {
-            uni.showToast({ title: data.message || '请求失败', icon: 'none' })
+            uni.showToast({ title: data.message || data.msg || '请求失败', icon: 'none' })
             reject(data)
           }
         } else if (res.statusCode === 401) {
@@ -88,7 +88,7 @@ export const uploadFile = (filePath) => {
           if (data.code === 200 || data.code === 0) {
             resolve(data.data)
           } else {
-            reject(new Error(data.message || '上传失败'))
+            reject(new Error(data.message || data.msg || '上传失败'))
           }
         } else {
           reject(new Error('上传失败'))

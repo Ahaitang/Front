@@ -57,17 +57,32 @@
 			<text class="footer-text">和</text>
 			<text class="footer-link">《隐私政策》</text>
 		</view>
+
+		<!-- 医生绑定弹窗 -->
+		<DoctorBindModal
+			:visible="showDoctorBind"
+			:patientId="currentPatientId"
+			@close="showDoctorBind = false"
+			@bind-success="onBindSuccess"
+			@skip="showDoctorBind = false"
+		/>
 	</view>
 </template>
 
 <script>
-import { login } from '@/api/auth.js'
+import { login, getPatientDoctor } from '@/api/auth.js'
+import DoctorBindModal from '@/components/DoctorBindModal.vue'
 
 export default {
+	components: {
+		DoctorBindModal
+	},
 	data() {
 		return {
 			form: { phone: '', password: '', role: 'patient' },
-			loading: false
+			loading: false,
+			showDoctorBind: false,
+			currentPatientId: 0
 		};
 	},
 	onLoad() {
@@ -90,19 +105,69 @@ export default {
 					role: this.form.role
 				});
 				if (res && res.token) {
+					if (!res.role) {
+						uni.showToast({ title: '登录失败：后端未返回角色信息', icon: 'none' });
+						return;
+					}
 					uni.setStorageSync('token', res.token);
 					uni.setStorageSync('userInfo', res.user || {});
-					uni.setStorageSync('role', res.role || this.form.role);
+					uni.setStorageSync('role', res.role);
 					uni.showToast({ title: '登录成功', icon: 'success' });
-					setTimeout(() => {
-						uni.switchTab({ url: '/pages/index/index' });
-					}, 500);
+
+					// 患者登录时检查医生绑定状态
+					if (res.role === 'patient') {
+						this.currentPatientId = res.user?.id;
+						if (this.currentPatientId) {
+							await this.checkDoctorBinding();
+						}
+					} else {
+						// 医生登录直接跳转
+						setTimeout(() => {
+							uni.switchTab({ url: '/pages/index/index' });
+						}, 500);
+					}
 				}
 			} catch (e) {
 				uni.showToast({ title: '登录失败，请检查账号密码', icon: 'none' });
 			} finally {
 				this.loading = false;
 			}
+		},
+		async checkDoctorBinding() {
+			try {
+				const relation = await getPatientDoctor(this.currentPatientId);
+				// bindStatus: 0-待审核, 1-已确认, null-未绑定
+				if (!relation) {
+					// 未绑定医生，显示选择弹窗
+					this.showDoctorBind = true;
+				} else if (relation.bindStatus === 0) {
+					// 待审核状态，提示用户等待
+					uni.showToast({ title: '绑定申请正在审核中，请等待医生确认', icon: 'none', duration: 2000 });
+					setTimeout(() => {
+						uni.switchTab({ url: '/pages/index/index' });
+					}, 1500);
+				} else if (relation.bindStatus === 1) {
+					// 已绑定医生，直接跳转
+					setTimeout(() => {
+						uni.switchTab({ url: '/pages/index/index' });
+					}, 500);
+				} else {
+					// 其他状态（如被拒绝后重新选择）
+					this.showDoctorBind = true;
+				}
+			} catch (e) {
+				// 检查失败也跳转首页，让用户在首页再处理
+				console.error('检查医生绑定状态失败:', e);
+				setTimeout(() => {
+					uni.switchTab({ url: '/pages/index/index' });
+				}, 500);
+			}
+		},
+		onBindSuccess() {
+			// 绑定成功后跳转首页
+			setTimeout(() => {
+				uni.switchTab({ url: '/pages/index/index' });
+			}, 500);
 		},
 		navTo(url) {
 			uni.navigateTo({ url });

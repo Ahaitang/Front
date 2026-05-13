@@ -3,8 +3,8 @@
  * 统一管理API请求
  */
 
-// API基础地址（本地开发用 localhost；真机/小程序模拟器需改为本机局域网 IP，如 http://192.168.x.x:8080/api/v1）
-const BASE_URL = 'http://localhost:8080/api/v1'
+// API基础地址（线上环境）
+const BASE_URL = 'https://api.ahaitang.top:8443/api/v1'
 
 /**
  * 统一请求方法

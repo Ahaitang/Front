@@ -122,13 +122,9 @@ export default {
 	methods: {
 		async loadExamTypes() {
 			try {
-				const res = await getDictByType('followUpExamType');
-				if (res && res.data) {
-					this.examTypeOptions = res.data.map(item => ({
-						id: item.id,
-						name: item.name,
-						items: item.remark ? item.remark.split(',').map(s => s.trim()).filter(s => s) : []
-					}));
+				const items = await getDictByType('followUpExamType');
+				if (items && items.length) {
+					this.examTypeOptions = items.filter(t => t.isActive === 1);
 				}
 			} catch (e) {
 				console.error('加载随访检查类型失败:', e);
@@ -140,10 +136,15 @@ export default {
 			if (selected) {
 				this.form.followUpExamTypeId = selected.id;
 				this.form.followUpExamTypeName = selected.name;
-				this.examItemsList = selected.items || [];
-				// 默认选中所有检查项目
-				this.selectedExamItems = [...this.examItemsList];
-				this.updateExamItems();
+				// 解析 description 中的 JSON 数组
+				try {
+					this.examItemsList = JSON.parse(selected.description || '[]');
+					this.selectedExamItems = [...this.examItemsList];
+					this.updateExamItems();
+				} catch (parseErr) {
+					this.examItemsList = [];
+					this.selectedExamItems = [];
+				}
 			}
 		},
 		toggleExamItem(item) {

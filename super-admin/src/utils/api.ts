@@ -6,7 +6,7 @@ export const authApi = {
 }
 
 export const onlineApi = {
-  list: (params?: { module?: string; role?: string }) => request.post('/online/list', params || {}),
+  list: (params?: { module?: string; role?: string }) => request.get('/online/list', { params }),
   count: () => request.post('/online/count', {}),
   kick: (params: { userId: number; role: string; module: string; addToBlacklist?: boolean; banHours?: number }) => request.post('/online/kick', params)
 }

@@ -58,13 +58,8 @@
 			</view>
 
 			<view class="form-item">
-				<text class="label">开始日期</text>
-				<picker mode="date" :value="form.date" @change="onDateChange">
-					<view class="picker-wrap">
-						<text class="picker-text">{{ form.date || '请选择日期' }}</text>
-						<text class="app-icon uniui-calendar"></text>
-					</view>
-				</picker>
+				<text class="label">开始时间</text>
+				<uni-datetime-picker type="datetime" v-model="form.date" :placeholder="'请选择开始时间'" />
 			</view>
 
 			<view class="form-item">
@@ -115,14 +110,17 @@ export default {
 		this.loadPatients();
 		// 默认今天
 		const today = new Date();
-		this.form.date = this.formatDate(today);
+		this.form.date = this.formatDateTime(today);
 	},
 	methods: {
-		formatDate(date) {
+		formatDateTime(date) {
 			const y = date.getFullYear();
 			const m = String(date.getMonth() + 1).padStart(2, '0');
 			const d = String(date.getDate()).padStart(2, '0');
-			return `${y}-${m}-${d}`;
+			const h = String(date.getHours()).padStart(2, '0');
+			const min = String(date.getMinutes()).padStart(2, '0');
+			const s = String(date.getSeconds()).padStart(2, '0');
+			return `${y}-${m}-${d} ${h}:${min}:${s}`;
 		},
 		async loadPatients() {
 			const userInfo = uni.getStorageSync('userInfo') || {};
@@ -163,9 +161,6 @@ export default {
 			this.routeIndex = e.detail.value;
 			this.form.route = this.routeOptions[this.routeIndex];
 		},
-		onDateChange(e) {
-			this.form.date = e.detail.value;
-		},
 		async submit() {
 			if (!this.form.patientId) {
 				uni.showToast({ title: '请选择患者', icon: 'none' });
@@ -191,7 +186,7 @@ export default {
 					frequency: this.form.frequency,
 					route: this.form.route,
 					duration: this.form.duration,
-					date: (this.form.date && this.form.date.length === 10 ? this.form.date + ' 00:00:00' : this.form.date),
+					date: this.form.date,
 					notes: this.form.notes
 				});
 				uni.showToast({ title: '保存成功', icon: 'success' });

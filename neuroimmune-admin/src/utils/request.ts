@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 
 const instance: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  baseURL: '/api/v1',
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
@@ -19,7 +19,7 @@ instance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
-    // 注意：后端已改为使用 SecurityContext 获取用户信息，前端不再需要发送 X-User-Role 和 X-User-Id
+    // 后端已改为使用 SecurityContext 获取用户信息，前端不再发送角色和用户ID头。
 
     return config
   },
@@ -35,12 +35,13 @@ instance.interceptors.response.use(
     // 后端返回格式: { code, message, data }
     // 如果是 Result 格式，提取 data 字段
     if (result && typeof result === 'object' && 'code' in result && 'data' in result) {
+      const message = result.message || result.msg || '请求失败'
       if (result.code === 200) {
         return result.data
       } else {
         // 业务错误
-        ElMessage.error(result.message || '请求失败')
-        return Promise.reject(new Error(result.message || '请求失败'))
+        ElMessage.error(message)
+        return Promise.reject(new Error(message))
       }
     }
     return result
@@ -58,7 +59,7 @@ instance.interceptors.response.use(
     } else if (error.response?.status === 500) {
       ElMessage.error('服务器内部错误')
     } else {
-      ElMessage.error(error.response?.data?.message || '请求失败')
+      ElMessage.error(error.response?.data?.message || error.response?.data?.msg || '请求失败')
     }
     return Promise.reject(error.response?.data || error)
   }

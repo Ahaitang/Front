@@ -11,13 +11,8 @@
 			</view>
 
 			<view class="form-item">
-				<text class="form-label">就诊日期</text>
-				<picker mode="date" :value="form.date" @change="onDateChange">
-					<view class="picker-input">
-						<text class="picker-value">{{ form.date || '请选择日期' }}</text>
-						<text class="app-icon uniui-arrowright"></text>
-					</view>
-				</picker>
+				<text class="form-label">就诊时间</text>
+				<uni-datetime-picker type="datetime" v-model="form.date" :placeholder="'请选择就诊时间'" />
 			</view>
 
 			<view class="form-item">
@@ -99,17 +94,17 @@ export default {
 	onLoad() {
 		// 默认今天的日期
 		const today = new Date()
-		this.form.date = this.formatDate(today)
+		this.form.date = this.formatDateTime(today)
 	},
 	methods: {
-		formatDate(date) {
+		formatDateTime(date) {
 			const y = date.getFullYear()
 			const m = String(date.getMonth() + 1).padStart(2, '0')
 			const d = String(date.getDate()).padStart(2, '0')
-			return `${y}-${m}-${d}`
-		},
-		onDateChange(e) {
-			this.form.date = e.detail.value
+			const h = String(date.getHours()).padStart(2, '0')
+			const min = String(date.getMinutes()).padStart(2, '0')
+			const s = String(date.getSeconds()).padStart(2, '0')
+			return `${y}-${m}-${d} ${h}:${min}:${s}`
 		},
 		chooseImage() {
 			uni.chooseImage({
@@ -192,7 +187,7 @@ export default {
 
 				const data = {
 					type: this.form.type,
-					date: this.form.date + ' 00:00:00',
+					date: this.form.date,
 					hospital: this.form.hospital,
 					department: this.form.department,
 					doctorName: this.form.doctorName,

@@ -15,8 +15,7 @@ import {
   getAllDoctors,
   getCommonDictByType,
   DICT_TYPES,
-  savePatient,
-  getCommonDictByType as getGenderDict
+  savePatient
 } from '@/api'
 import type { Doctor, Patient, FollowUp, Medication, CommonDict } from '@/api'
 
@@ -59,31 +58,42 @@ const saveLoading = ref(false)
 
 // 字典选项
 const followUpTypeOptions = ref<CommonDict[]>([])
-const examTypeOptions = ref<CommonDict[]>([])  // 新增
-const cycleTypeOptions = ref<CommonDict[]>([])  // 新增
-const timeSlotOptions = ref<CommonDict[]>([])   // 新增
+const examTypeOptions = ref<CommonDict[]>([])  // 随访检查类型
+const timeSlotOptions = ref<CommonDict[]>([])   // 时间段
 const unitOptions = ref<CommonDict[]>([])
 const frequencyOptions = ref<CommonDict[]>([])
 const routeOptions = ref<CommonDict[]>([])
-const examItemsList = ref<string[]>([])         // 新增：检查项目列表
-const selectedExamItems = ref<string[]>([])     // 新增：已选检查项目
+const examItemsList = ref<string[]>([])         // 检查项目列表
+const selectedExamItems = ref<string[]>([])     // 已选检查项目
+
+// 门诊周期类型选项（本地固定）
+const cycleTypeOptions = [
+  { value: 'monthly', label: '每月' },
+  { value: 'weekly', label: '每周' },
+  { value: 'quarterly', label: '每季度' }
+]
+
+// 时间段选项（本地固定，备用）
+const timeSlotOptionsList = [
+  { value: 'morning', label: '上午' },
+  { value: 'afternoon', label: '下午' },
+  { value: 'evening', label: '晚上' }
+]
 
 // 加载字典
 const loadDicts = async () => {
   try {
-    const [followUpTypes, examTypes, cycleTypes, timeSlots, units, frequencies, routes] = await Promise.all([
+    const [followUpTypes, examTypes, timeSlots, units, frequencies, routes] = await Promise.all([
       getCommonDictByType(DICT_TYPES.FOLLOW_UP_TYPE),
-      getCommonDictByType(DICT_TYPES.FOLLOW_UP_EXAM_TYPE),  // 新增
-      getCommonDictByType(DICT_TYPES.OUTPATIENT_CYCLE_TYPE), // 新增
-      getCommonDictByType(DICT_TYPES.TIME_SLOT),            // 新增
+      getCommonDictByType(DICT_TYPES.FOLLOW_UP_EXAM_TYPE),
+      getCommonDictByType(DICT_TYPES.TIME_SLOT),
       getCommonDictByType(DICT_TYPES.MEDICATION_UNIT),
       getCommonDictByType(DICT_TYPES.FREQUENCY),
       getCommonDictByType(DICT_TYPES.ROUTE)
     ])
     followUpTypeOptions.value = followUpTypes
-    examTypeOptions.value = examTypes        // 新增
-    cycleTypeOptions.value = cycleTypes      // 新增
-    timeSlotOptions.value = timeSlots        // 新增
+    examTypeOptions.value = examTypes
+    timeSlotOptions.value = timeSlots
     unitOptions.value = units
     frequencyOptions.value = frequencies
     routeOptions.value = routes
@@ -233,16 +243,16 @@ const openAddFollowUpDialog = () => {
     doctorId: Number(doctorId.value),
     doctorName: doctor.value?.name || '',
     // 新字段
-    followUpExamTypeId: examTypeOptions.value[0]?.id || null,
-    followUpExamTypeName: examTypeOptions.value[0]?.name || '',
+    followUpExamTypeId: examTypeOptions.value[0]?.id ?? undefined,
+    followUpExamTypeName: examTypeOptions.value[0]?.name ?? '',
     examinationItems: '',
     outpatientCycleType: 'monthly',
     outpatientCycleValue: '',
     outpatientTimeSlot: 'morning',
-    hospitalizationTime: '',
+    hospitalizationTime: undefined,
     notes: '',
     // 保留字段
-    patientId: null,
+    patientId: undefined,
     patientName: '',
     status: 0
   }
@@ -301,7 +311,7 @@ const saveFollowUpSubmit = async () => {
       // 住院时间格式化
       hospitalizationTime: followUpForm.value.hospitalizationTime
         ? `${followUpForm.value.hospitalizationTime} 00:00:00`
-        : null
+        : undefined
     }
     await saveFollowUp(submitData)
     ElMessage.success(followUpDialogType.value === 'add' ? '添加成功' : '保存成功')
@@ -665,7 +675,7 @@ const calculateAge = (birthDate: string | undefined) => {
     </div>
 
     <!-- 随访编辑对话框 -->
-    <el-dialog v-model="followUpDialogVisible" :title="followUpDialogType === 'add' ? '新增随访' : '编辑随访'" width="600px">
+    <el-dialog v-model="followUpDialogVisible" :title="followUpDialogType === 'add' ? '新增随访' : '编辑随访'" width="650px">
       <el-form :model="followUpForm" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -676,13 +686,17 @@ const calculateAge = (birthDate: string | undefined) => {
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="随访检查类型">
-              <el-select v-model="followUpForm.followUpExamTypeId" style="width: 100%" @change="handleExamTypeChange">
-                <el-option v-for="t in examTypeOptions" :key="t.id" :label="t.name" :value="t.id" />
-              </el-select>
+            <el-form-item label="随访医生">
+              <el-input :value="doctor?.name" disabled />
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-form-item label="随访检查类型" required>
+          <el-select v-model="followUpForm.followUpExamTypeId" style="width: 100%" @change="handleExamTypeChange">
+            <el-option v-for="t in examTypeOptions" :key="t.id" :label="t.name" :value="t.id" />
+          </el-select>
+        </el-form-item>
 
         <el-form-item label="检查项目">
           <div class="exam-checkboxes" v-if="examItemsList.length > 0">
@@ -697,7 +711,7 @@ const calculateAge = (birthDate: string | undefined) => {
           <el-col :span="8">
             <el-form-item label="门诊周期">
               <el-select v-model="followUpForm.outpatientCycleType" style="width: 100%">
-                <el-option v-for="c in cycleTypeOptions" :key="c.id" :label="c.name" :value="c.code" />
+                <el-option v-for="c in cycleTypeOptions" :key="c.value" :label="c.label" :value="c.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -709,7 +723,7 @@ const calculateAge = (birthDate: string | undefined) => {
           <el-col :span="8">
             <el-form-item label="时间段">
               <el-select v-model="followUpForm.outpatientTimeSlot" style="width: 100%">
-                <el-option v-for="s in timeSlotOptions" :key="s.id" :label="s.name" :value="s.code" />
+                <el-option v-for="s in timeSlotOptionsList" :key="s.value" :label="s.label" :value="s.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -721,7 +735,7 @@ const calculateAge = (birthDate: string | undefined) => {
               <el-date-picker v-model="followUpForm.hospitalizationTime" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="followUpDialogType === 'edit'">
             <el-form-item label="状态">
               <el-select v-model="followUpForm.status" style="width: 100%">
                 <el-option label="待随访" :value="0" />

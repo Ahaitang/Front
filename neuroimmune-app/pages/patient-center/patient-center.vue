@@ -59,7 +59,7 @@
 					</view>
 					<view class="menu-item" @click="navTo('/pages/doctor/episode-list/episode-list')">
 						<view class="menu-icon episode">
-							<text class="app-icon uniui-pulse"></text>
+							<text class="app-icon uniui-fire-filled"></text>
 						</view>
 						<text class="menu-label">发作记录</text>
 						<text class="app-icon muted uniui-arrowright"></text>
@@ -92,32 +92,38 @@
 			<view class="my-card card">
 				<image class="my-avatar" :src="userInfo.avatar || '/static/component.png'" mode="aspectFill"></image>
 				<view class="my-name-row">
-					<text class="my-name">{{ userInfo.name || '张哲瀚' }}</text>
+					<text class="my-name">{{ userInfo.name || '未登录' }}</text>
 					<view class="auth-tag" v-if="userInfo.isRealAuth"><text>已实名</text></view>
-					<view class="my-badge" v-else></view>
 				</view>
-				<text class="my-id">ID: {{ userInfo.id || '未登录' }}</text>
-				<text class="my-meta">{{ userInfo.gender || '男' }} | {{ userInfo.age || '45' }}岁</text>
+				<text class="my-id">ID: {{ userInfo.id || '--' }}</text>
+				<text class="my-meta">{{ userInfo.gender || '--' }} | {{ calculatedAge }}岁 | {{ formattedBirthDate }}</text>
+
+				<!-- 状态卡片：实名认证 + 绑定医生 -->
+				<view class="status-cards">
+					<view class="status-item" >
+						<text class="app-icon status-icon" :class="userInfo.isRealAuth ? 'uniui-checkbox-filled success' : 'uniui-circle warn'"></text>
+						<view class="status-content">
+							<text class="status-label">实名认证</text>
+							<text class="status-value" :class="userInfo.isRealAuth ? 'success' : 'warn'">{{ userInfo.isRealAuth ? '已认证' : '未认证' }}</text>
+						</view>
+					</view>
+					<view class="status-divider"></view>
+					<view class="status-item" >
+						<text class="app-icon status-icon" :class="doctorBound ? 'uniui-checkbox-filled success' : 'uniui-circle warn'"></text>
+						<view class="status-content">
+							<text class="status-label">绑定医生</text>
+							<text class="status-value" :class="doctorBound ? 'success' : 'warn'">{{ doctorName || '未绑定' }}</text>
+						</view>
+					</view>
+				</view>
+
 				<text class="edit-icon" @click="navTo('/pages/patient/my-info/my-info')"><text class="app-icon sm uniui-compose"></text> 编辑</text>
 			</view>
+
 			<view class="menu-list card">
 				<view class="menu-item" @click="navTo('/pages/patient/my-info/my-info')">
 					<text class="menu-label"><text class="app-icon muted uniui-person-filled"></text> 个人资料</text>
 					<text class="app-icon sm muted uniui-arrowright"></text>
-				</view>
-				<view class="menu-item" @click="navTo('/pages/patient/real-auth/real-auth')">
-					<text class="menu-label"><text class="app-icon muted uniui-auth-filled"></text> 实名认证</text>
-					<view class="menu-right">
-						<text class="menu-status" :class="userInfo.isRealAuth ? 'ok' : 'warn'">{{ userInfo.isRealAuth ? '已认证' : '未认证' }}</text>
-						<text class="app-icon sm muted uniui-arrowright"></text>
-					</view>
-				</view>
-				<view class="menu-item" @click="navTo('/pages/patient/real-auth/real-auth')">
-					<text class="menu-label"><text class="app-icon muted uniui-staff-filled"></text> 绑定医生</text>
-					<view class="menu-right">
-						<text class="menu-status" :class="doctorBound ? 'ok' : 'warn'">{{ doctorBound ? '已绑定' : '未绑定' }}</text>
-						<text class="app-icon sm muted uniui-arrowright"></text>
-					</view>
 				</view>
 			</view>
 			<view class="menu-list card">
@@ -134,7 +140,7 @@
 					<text class="app-icon sm muted uniui-arrowright"></text>
 				</view>
 				<view class="menu-item" @click="navTo('/pages/patient/disease-episode/disease-episode')">
-					<text class="menu-label"><text class="app-icon muted uniui-pulse"></text> 疾病发作记录</text>
+					<text class="menu-label"><text class="app-icon muted uniui-fire-filled"></text> 疾病发作记录</text>
 					<text class="app-icon sm muted uniui-arrowright"></text>
 				</view>
 			</view>
@@ -172,6 +178,7 @@ export default {
 		return {
 			userInfo: {},
 			doctorBound: false,
+			doctorName: '',
 			// 患者端统计数据
 			stats: { followUpCount: 0, medicationCount: 0 }
 		}
@@ -179,11 +186,33 @@ export default {
 	computed: {
 		isDoctor() {
 			return (uni.getStorageSync('role') || 'patient') === 'doctor'
+		},
+		// 格式化出生日期（只显示日期部分）
+		formattedBirthDate() {
+			const birthDate = this.userInfo.birthDate
+			if (!birthDate) return '--'
+			return birthDate.split(' ')[0]
+		},
+		// 根据出生日期计算年龄
+		calculatedAge() {
+			const birthDate = this.userInfo.birthDate
+			if (!birthDate) return '--'
+			// 处理日期格式（可能带时分秒）
+			const dateStr = birthDate.split(' ')[0]
+			const birth = new Date(dateStr)
+			const today = new Date()
+			let age = today.getFullYear() - birth.getFullYear()
+			const monthDiff = today.getMonth() - birth.getMonth()
+			if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+				age--
+			}
+			return age >= 0 ? age : '--'
 		}
 	},
 	onLoad() {
 		this.userInfo = uni.getStorageSync('userInfo') || {}
 		this.doctorBound = !!uni.getStorageSync('doctorBound')
+		this.doctorName = uni.getStorageSync('doctorName') || ''
 		// 根据角色动态设置导航栏标题
 		if (this.isDoctor) {
 			uni.setNavigationBarTitle({ title: '我的' })
@@ -198,6 +227,7 @@ export default {
 		}
 		this.userInfo = uni.getStorageSync('userInfo') || {}
 		this.doctorBound = !!uni.getStorageSync('doctorBound')
+		this.doctorName = uni.getStorageSync('doctorName') || ''
 		this.loadData()
 		// 从后端刷新实名状态
 		this.refreshRealAuthStatus()
@@ -230,9 +260,13 @@ export default {
 					if (res) {
 						// 更新实名状态（根据后端计算结果）
 						this.userInfo.isRealAuth = res.isRealAuth
+						this.userInfo.birthDate = res.birthDate
+						this.userInfo.gender = res.gender
 						uni.setStorageSync('userInfo', {
 							...userInfo,
-							isRealAuth: res.isRealAuth
+							isRealAuth: res.isRealAuth,
+							birthDate: res.birthDate,
+							gender: res.gender
 						})
 					}
 				} catch (e) {
@@ -252,6 +286,7 @@ export default {
 						uni.removeStorageSync('userInfo')
 						uni.removeStorageSync('role')
 						uni.removeStorageSync('doctorBound')
+						uni.removeStorageSync('doctorName')
 						uni.showToast({ title: '已退出登录', icon: 'success' })
 						setTimeout(() => {
 							uni.reLaunch({ url: '/pages/login/login' })
@@ -468,18 +503,10 @@ export default {
 	margin-right: $app-spacing-sm;
 }
 
-.my-badge {
-	width: 24rpx;
-	height: 24rpx;
-	border-radius: 50%;
-	background: $app-success;
-}
-
 .auth-tag {
 	background: rgba(255,255,255,0.2);
 	border-radius: 8rpx;
 	padding: 8rpx 16rpx;
-	margin-left: $app-spacing-sm;
 }
 
 .auth-tag text {
@@ -500,6 +527,68 @@ export default {
 	color: rgba(255,255,255,0.85);
 	margin-top: 8rpx;
 	display: block;
+}
+
+/* 状态卡片 */
+.status-cards {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 24rpx;
+	padding: 20rpx 32rpx;
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 16rpx;
+	width: 100%;
+}
+
+.status-item {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	flex: 1;
+	justify-content: center;
+}
+
+.status-divider {
+	width: 1rpx;
+	height: 40rpx;
+	background: rgba(255, 255, 255, 0.3);
+}
+
+.status-icon {
+	font-size: 36rpx !important;
+}
+
+.status-icon.success {
+	color: #10B981 !important;
+}
+
+.status-icon.warn {
+	color: #F59E0B !important;
+}
+
+.status-content {
+	display: flex;
+	flex-direction: column;
+}
+
+.status-label {
+	font-size: 24rpx;
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.status-value {
+	font-size: 28rpx;
+	font-weight: 500;
+	color: #fff;
+}
+
+.status-value.success {
+	color: #10B981;
+}
+
+.status-value.warn {
+	color: #F59E0B;
 }
 
 .edit-icon {

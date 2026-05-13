@@ -11,7 +11,10 @@ import {
   getAllDoctors,
   getCommonDictByType,
   DICT_TYPES,
-  bindPatientDoctor
+  bindPatientDoctor,
+  unbindPatientDoctor,
+  confirmRelation,
+  rejectRelation
 } from '@/api'
 import { exportToExcel } from '@/utils/export'
 import type { Patient, Doctor, CommonDict } from '@/api'
@@ -23,7 +26,8 @@ const searchForm = ref({
   gender: '',
   isRealAuth: '',
   doctorId: '',
-  diseaseType: ''
+  diseaseType: '',
+  bindStatus: ''
 })
 
 const tableData = ref<Patient[]>([])
@@ -75,7 +79,8 @@ const loadData = async () => {
       gender: searchForm.value.gender,
       isRealAuth: searchForm.value.isRealAuth === 'true' ? true : searchForm.value.isRealAuth === 'false' ? false : undefined,
       doctorId: searchForm.value.doctorId ? Number(searchForm.value.doctorId) : undefined,
-      type: searchForm.value.diseaseType || undefined
+      type: searchForm.value.diseaseType || undefined,
+      bindStatus: searchForm.value.bindStatus ? Number(searchForm.value.bindStatus) : undefined
     }
     const res = await getPatientList(params)
     if (res) {
@@ -129,7 +134,8 @@ const handleReset = () => {
     gender: '',
     isRealAuth: '',
     doctorId: '',
-    diseaseType: ''
+    diseaseType: '',
+    bindStatus: ''
   }
   handleSearch()
 }
@@ -145,6 +151,7 @@ const handleSizeChange = (size: number) => {
   loadData()
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const viewPatient = (row: Patient) => {
   currentPatient.value = { ...row }
   selectedDoctorId.value = row.doctorId ?? undefined
@@ -230,11 +237,25 @@ const savePatientSubmit = async () => {
     }
     const newPatientId = await savePatient(submitData)
 
-    // 如果选择了医生，绑定医患关系
-    // 新增时用返回的 ID，编辑时用原有的 ID
-    const patientId = newPatientId || currentPatient.value.id
-    if (selectedDoctorId.value && patientId) {
-      await bindPatientDoctor(patientId, selectedDoctorId.value, 'admin', '后台编辑')
+    // 处理医患关系变更
+    const patientId: number | undefined = typeof newPatientId === 'number' ? newPatientId : currentPatient.value.id
+    const oldDoctorId = currentPatient.value.doctorId
+    const newDoctorId = selectedDoctorId.value
+
+    if (patientId) {
+      // 情况1：原来有绑定，现在清空或换了医生 → 先解绑
+      if (oldDoctorId && (newDoctorId !== oldDoctorId)) {
+        try {
+          await unbindPatientDoctor(patientId, oldDoctorId)
+        } catch (e) {
+          console.error('解绑失败:', e)
+        }
+      }
+
+      // 情况2：选择了新医生 → 绑定
+      if (newDoctorId) {
+        await bindPatientDoctor(patientId, newDoctorId, 'admin', '后台编辑')
+      }
     }
 
     ElMessage.success(dialogType.value === 'add' ? '添加成功' : '保存成功')
@@ -374,6 +395,44 @@ const handleExport = () => {
   }))
   exportToExcel(exportData, '患者列表')
 }
+
+// 审核绑定关系（合并通过/拒绝为一个按钮）
+const handleAuditBind = (row: Patient) => {
+  if (!row.relationId) {
+    ElMessage.error('无法获取绑定关系ID')
+    return
+  }
+  ElMessageBox.confirm(
+    `患者 "${row.name}" 申请绑定医生 "${row.doctorName || '未知'}"，请选择审核结果`,
+    '绑定审核',
+    {
+      confirmButtonText: '通过',
+      cancelButtonText: '拒绝',
+      distinguishCancelAndClose: true,
+      type: 'info'
+    }
+  ).then(async () => {
+    // 点击"通过"
+    try {
+      await confirmRelation(row.relationId!)
+      ElMessage.success('已通过绑定申请')
+      loadData()
+    } catch (e) {
+      ElMessage.error('审核失败')
+    }
+  }).catch(async (action: string) => {
+    // 点击"拒绝"（action === 'cancel'）或"关闭"（action === 'close'）
+    if (action === 'cancel') {
+      try {
+        await rejectRelation(row.relationId!)
+        ElMessage.success('已拒绝绑定申请')
+        loadData()
+      } catch (e) {
+        ElMessage.error('审核失败')
+      }
+    }
+  })
+}
 </script>
 
 <template>
@@ -434,6 +493,14 @@ const handleExport = () => {
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="绑定状态">
+          <el-select v-model="searchForm.bindStatus" clearable placeholder="全部" style="width: 120px">
+            <el-option label="已确认" value="1" />
+            <el-option label="待审核" value="0" />
+            <el-option label="已拒绝" value="2" />
+            <el-option label="未绑定" value="-1" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
@@ -461,6 +528,17 @@ const handleExport = () => {
         <el-table-column label="主治医生" min-width="100">
           <template #default="{ row }">
             <span :class="row.doctorName ? '' : 'text-muted'">{{ row.doctorName || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="绑定状态" min-width="100">
+          <template #default="{ row }">
+            <template v-if="row.doctorName">
+              <el-tag v-if="row.bindStatus === 1" type="success" size="small" effect="light">已确认</el-tag>
+              <el-tag v-else-if="row.bindStatus === 0" type="warning" size="small" effect="light">待审核</el-tag>
+              <el-tag v-else-if="row.bindStatus === 2" type="danger" size="small" effect="light">已拒绝</el-tag>
+              <el-tag v-else type="info" size="small" effect="light">未知</el-tag>
+            </template>
+            <span v-else class="text-muted">未绑定</span>
           </template>
         </el-table-column>
         <el-table-column label="疾病类型" min-width="120">
@@ -493,12 +571,14 @@ const handleExport = () => {
             <span class="text-secondary">{{ formatDate(row.updateTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="success" link size="small" @click="viewPatientDetail(row)">详情</el-button>
             <el-button type="primary" link size="small" @click="editPatient(row)">编辑</el-button>
             <el-button type="warning" link size="small" @click="openPasswordDialog(row)">改密</el-button>
             <el-button type="danger" link size="small" @click="deletePatient(row)">删除</el-button>
+            <!-- 待审核状态显示审核按钮 -->
+            <el-button v-if="row.bindStatus === 0 && row.relationId" type="info" link size="small" @click="handleAuditBind(row)">审核</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -564,33 +644,37 @@ const handleExport = () => {
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="主治医生">
-                <el-select v-model="selectedDoctorId" style="width: 100%" clearable>
-                  <el-option
-                    v-for="doc in doctors"
-                    :key="doc.id"
-                    :label="`${doc.name} - ${doc.title}`"
-                    :value="doc.id"
-                  />
-                </el-select>
+              <el-form-item label="身份证号">
+                <el-input v-model="currentPatient.idCard" placeholder="18位身份证号" maxlength="18" :disabled="dialogType === 'view'" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="实名状态">
-                <el-tag :type="currentPatient.isRealAuth ? 'success' : 'warning'" size="small" effect="light">
-                  {{ currentPatient.isRealAuth ? '已实名' : '未实名' }}
-                </el-tag>
-                <span class="status-hint">（根据身份证号自动判断）</span>
+              <el-form-item label="主治医生">
+                <el-select v-model="selectedDoctorId" style="width: 100%" clearable :disabled="dialogType === 'view'">
+                  <el-option
+                    v-for="doc in doctors"
+                    :key="doc.id"
+                    :label="`${doc.name} - ${doc.title || '医生'}`"
+                    :value="doc.id"
+                  />
+                </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="随访状态">
-                <el-tag :type="currentPatient.hasFollowUp ? 'warning' : 'info'" size="small" effect="light">
-                  {{ currentPatient.hasFollowUp ? '待随访' : '正常' }}
-                </el-tag>
-                <span class="status-hint">（根据随访记录自动判断）</span>
+              <el-form-item label="绑定状态">
+                <template v-if="dialogType !== 'add' && currentPatient.doctorName">
+                  <el-tag v-if="currentPatient.bindStatus === 1" type="success" size="small">已确认</el-tag>
+                  <el-tag v-else-if="currentPatient.bindStatus === 0" type="warning" size="small">待审核</el-tag>
+                  <el-tag v-else-if="currentPatient.bindStatus === 2" type="danger" size="small">已拒绝</el-tag>
+                  <el-tag v-else type="info" size="small">未知</el-tag>
+                </template>
+                <span v-else-if="dialogType !== 'add'" class="text-muted">未绑定</span>
+                <span v-else>-</span>
+                <span v-if="dialogType === 'edit' && selectedDoctorId !== currentPatient.doctorId" class="status-hint">
+                  （更换需审核）
+                </span>
               </el-form-item>
             </el-col>
           </el-row>

@@ -34,13 +34,8 @@
 
 			<!-- 就诊日期 -->
 			<view class="section">
-				<text class="section-title">就诊日期 <text class="required">*</text></text>
-				<picker mode="date" :value="form.date" @change="onDateChange">
-					<view class="picker-input">
-						<text class="picker-value">{{ form.date || '请选择日期' }}</text>
-						<text class="app-icon uniui-arrowright"></text>
-					</view>
-				</picker>
+				<text class="section-title">就诊时间 <text class="required">*</text></text>
+				<uni-datetime-picker type="datetime" v-model="form.date" :placeholder="'请选择就诊时间'" />
 			</view>
 
 			<!-- 医院 -->
@@ -183,7 +178,7 @@ export default {
 		this.loadPatients()
 		// 设置默认日期
 		const today = new Date()
-		this.form.date = this.formatDate(today)
+		this.form.date = this.formatDateTime(today)
 		// 如果传入了 patientId，自动选中
 		if (options.patientId) {
 			this.form.patientId = parseInt(options.patientId)
@@ -191,11 +186,14 @@ export default {
 		}
 	},
 	methods: {
-		formatDate(date) {
+		formatDateTime(date) {
 			const y = date.getFullYear()
 			const m = String(date.getMonth() + 1).padStart(2, '0')
 			const d = String(date.getDate()).padStart(2, '0')
-			return `${y}-${m}-${d}`
+			const h = String(date.getHours()).padStart(2, '0')
+			const min = String(date.getMinutes()).padStart(2, '0')
+			const s = String(date.getSeconds()).padStart(2, '0')
+			return `${y}-${m}-${d} ${h}:${min}:${s}`
 		},
 		async loadPatients() {
 			try {
@@ -231,9 +229,6 @@ export default {
 		},
 		onTypeChange(e) {
 			this.typeIndex = e.detail.value
-		},
-		onDateChange(e) {
-			this.form.date = e.detail.value
 		},
 		chooseImage() {
 			uni.chooseImage({

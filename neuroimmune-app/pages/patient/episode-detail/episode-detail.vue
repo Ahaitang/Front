@@ -70,6 +70,84 @@
 			</view>
 		</view>
 
+		<!-- 病历详情弹窗 -->
+		<uni-popup ref="recordDetailPopup" type="bottom" :safe-area="true" background-color="transparent">
+			<view class="detail-popup">
+				<view class="popup-header">
+					<text class="popup-title">病历详情</text>
+					<view class="popup-close" @click="closeRecordDetail">
+						<uni-icons type="close" size="24" color="#9CA3AF"></uni-icons>
+					</view>
+				</view>
+
+				<view class="popup-body">
+					<!-- 基本信息 -->
+					<view class="detail-section">
+						<view class="detail-row">
+							<text class="detail-label">就诊日期</text>
+							<text class="detail-value">{{ recordDetail.date || '未知' }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">病历类型</text>
+							<text class="detail-value">{{ recordDetail.type || '门诊病历' }}</text>
+						</view>
+						<view class="detail-row" v-if="recordDetail.hospital">
+							<text class="detail-label">就诊医院</text>
+							<text class="detail-value highlight">{{ recordDetail.hospital }}</text>
+						</view>
+						<view class="detail-row" v-if="recordDetail.department">
+							<text class="detail-label">科室</text>
+							<text class="detail-value">{{ recordDetail.department }}</text>
+						</view>
+						<view class="detail-row" v-if="recordDetail.doctorName">
+							<text class="detail-label">医生</text>
+							<text class="detail-value">{{ recordDetail.doctorName }}</text>
+						</view>
+					</view>
+
+					<!-- 诊断信息 -->
+					<view class="detail-section" v-if="recordDetail.diagnosis">
+						<view class="section-label-row">
+							<uni-icons type="medal" size="18" color="#0891B2"></uni-icons>
+							<text class="section-label-text">诊断结果</text>
+						</view>
+						<view class="diagnosis-box">
+							<text class="diagnosis-text">{{ recordDetail.diagnosis }}</text>
+						</view>
+					</view>
+
+					<!-- 病历内容 -->
+					<view class="detail-section">
+						<view class="section-label-row">
+							<uni-icons type="list" size="18" color="#0891B2"></uni-icons>
+							<text class="section-label-text">病历内容</text>
+						</view>
+						<view class="content-box">
+							<text class="content-text">{{ recordDetail.content || recordDetail.notes || '暂无内容' }}</text>
+						</view>
+					</view>
+
+					<!-- 附件图片 -->
+					<view class="detail-section" v-if="recordDetail.attachments">
+						<view class="section-label-row">
+							<uni-icons type="image" size="18" color="#0891B2"></uni-icons>
+							<text class="section-label-text">附件图片</text>
+						</view>
+						<view class="attachment-grid">
+							<image
+								v-for="(img, idx) in recordDetail.attachments.split(',')"
+								:key="idx"
+								:src="img"
+								mode="aspectFill"
+								class="attachment-img"
+								@click="previewImage(img, recordDetail.attachments)"
+							/>
+						</view>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
+
 		<!-- 上传病历弹窗 -->
 		<view class="upload-modal" v-if="showModal" @click="closeModal">
 			<view class="modal-content" @click.stop>
@@ -162,7 +240,20 @@ export default {
 			selectedType: '门诊病历',
 			recordDate: '',
 			uploadImages: [],
-			loading: false
+			loading: false,
+			// 病历详情数据
+			recordDetail: {
+				id: '',
+				date: '',
+				type: '',
+				hospital: '',
+				department: '',
+				doctorName: '',
+				diagnosis: '',
+				content: '',
+				notes: '',
+				attachments: ''
+			}
 		}
 	},
 	onLoad(options) {
@@ -220,7 +311,11 @@ export default {
 						date: this.formatDateStr(r.date),
 						diagnosis: r.diagnosis || '',
 						content: r.content || '',
-						attachments: r.attachments || ''
+						notes: r.notes || '',
+						attachments: r.attachments || '',
+						hospital: r.hospital || '',
+						department: r.department || '',
+						doctorName: r.doctorName || ''
 					}))
 				}
 			} catch (e) {
@@ -310,16 +405,23 @@ export default {
 			}
 		},
 		viewRecord(item) {
-			// 显示病历详情
-			let content = `类型：${item.type}\n日期：${item.date}\n`
-			if (item.diagnosis) content += `诊断：${item.diagnosis}\n`
-			content += `\n${item.content || '暂无内容'}`
-
-			uni.showModal({
-				title: '病历详情',
-				content: content,
-				showCancel: false
-			})
+			// 使用弹窗展示病历详情
+			this.recordDetail = {
+				id: item.id,
+				date: item.date,
+				type: item.type,
+				hospital: item.hospital,
+				department: item.department,
+				doctorName: item.doctorName,
+				diagnosis: item.diagnosis,
+				content: item.content,
+				notes: item.notes,
+				attachments: item.attachments
+			}
+			this.$refs.recordDetailPopup.open()
+		},
+		closeRecordDetail() {
+			this.$refs.recordDetailPopup.close()
 		},
 		previewImage(current, attachments) {
 			const urls = attachments.split(',').filter(url => url)
@@ -508,6 +610,120 @@ export default {
 	width: 60rpx;
 	height: 60rpx;
 	border-radius: 8rpx;
+}
+
+/* 病历详情弹窗 */
+.detail-popup {
+	background: $app-card-bg;
+	border-radius: 32rpx 32rpx 0 0;
+	max-height: 80vh;
+	overflow: hidden;
+}
+
+.popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 32rpx;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.popup-title {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: $app-text;
+}
+
+.popup-close {
+	padding: 8rpx;
+}
+
+.popup-body {
+	padding: 24rpx 32rpx;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+.detail-section {
+	margin-bottom: 24rpx;
+}
+
+.detail-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.detail-row:last-child {
+	border-bottom: none;
+}
+
+.detail-label {
+	font-size: 28rpx;
+	color: $app-text-muted;
+}
+
+.detail-value {
+	font-size: 28rpx;
+	color: $app-text;
+	font-weight: 500;
+}
+
+.detail-value.highlight {
+	color: $app-primary;
+}
+
+.section-label-row {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	margin-bottom: 16rpx;
+}
+
+.section-label-text {
+	font-size: 30rpx;
+	font-weight: 600;
+	color: $app-text;
+}
+
+.diagnosis-box {
+	background: $app-primary-bg;
+	border-radius: $app-radius;
+	padding: 20rpx;
+	border-left: 6rpx solid $app-primary;
+}
+
+.diagnosis-text {
+	font-size: 28rpx;
+	color: $app-text;
+	line-height: 1.6;
+}
+
+.content-box {
+	background: $app-hover-bg;
+	border-radius: $app-radius;
+	padding: 20rpx;
+}
+
+.content-text {
+	font-size: 28rpx;
+	color: $app-text-secondary;
+	line-height: 1.8;
+}
+
+.attachment-grid {
+	display: flex;
+	gap: 16rpx;
+	flex-wrap: wrap;
+}
+
+.attachment-img {
+	width: 180rpx;
+	height: 180rpx;
+	border-radius: $app-radius;
+	border: 2rpx solid $app-border;
 }
 
 /* 上传弹窗 */

@@ -29,7 +29,7 @@ export default defineConfig({
     strictPort: true, // 如果端口被占用，直接报错而不是自动切换
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://192.168.1.2:8080',
         changeOrigin: true
       }
     }

@@ -84,7 +84,7 @@ export default {
 					if (patient) {
 						this.form.name = patient.name || '';
 						this.form.gender = patient.gender || '';
-						this.form.birthDate = patient.birthDate || '';
+						this.form.birthDate = patient.birthDate ? patient.birthDate.split(' ')[0] : '';
 						this.form.phone = patient.phone || '';
 						this.form.idCard = patient.idCard || '';
 						this.form.avatar = patient.avatar || '';
@@ -175,17 +175,20 @@ export default {
 				return;
 			}
 
-			try {
-				// 同步到后端
-				await updatePatient(userInfo.id, {
-					name: this.form.name,
-					gender: this.form.gender,
-					birthDate: this.form.birthDate,
-					phone: this.form.phone,
-					idCard: this.form.idCard,
-					avatar: this.form.avatar,
-					diseaseTypes: this.form.diseaseTypes
-				});
+				try {
+					// 同步到后端 - 日期格式补充时分秒
+					const birthDateFormatted = this.form.birthDate
+						? (this.form.birthDate.includes(" ") ? this.form.birthDate : this.form.birthDate + " 00:00:00")
+						: null;
+					await updatePatient(userInfo.id, {
+						name: this.form.name,
+						gender: this.form.gender,
+						birthDate: birthDateFormatted,
+						phone: this.form.phone,
+						idCard: this.form.idCard,
+						avatar: this.form.avatar,
+						diseaseTypes: this.form.diseaseTypes
+					});
 
 				// 更新本地存储
 				uni.setStorageSync('userInfo', {

@@ -38,7 +38,7 @@
 				<text class="app-icon uniui-calendar"></text>
 				<text>{{ showAll ? '暂无随访记录' : '当日暂无随访安排' }}</text>
 			</view>
-			<view class="follow-item card" v-for="(item, i) in filteredFollowList" :key="i" @click="viewFollowDetail(item)">
+			<view class="follow-item card" v-for="(item, i) in filteredFollowList" :key="item.id || i" @click="viewFollowDetail(item)">
 				<view class="follow-left">
 					<view class="follow-icon" :class="item.statusClass">
 						<text class="app-icon uniui-notification-filled"></text>
@@ -63,6 +63,48 @@
 		<!-- 日历弹窗 -->
 		<uni-calendar ref="calendar" :insert="false" @confirm="onCalendarConfirm" />
 
+		<!-- 随访详情弹窗 -->
+		<uni-popup ref="detailPopup" type="bottom" :safe-area="true">
+			<view class="detail-popup">
+				<view class="popup-header">
+					<text class="popup-title">随访详情</text>
+					<text class="popup-close" @click="closeDetailPopup">×</text>
+				</view>
+				<view class="popup-body" v-if="selectedFollow">
+					<view class="detail-card">
+						<view class="detail-row">
+							<text class="detail-label">随访类型</text>
+							<text class="detail-value">{{ selectedFollow.followUpExamTypeName || '随访' }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedFollow.outpatientCycleType">
+							<text class="detail-label">门诊周期</text>
+							<text class="detail-value">{{ formatCycleText(selectedFollow) }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedFollow.hospitalizationTime">
+							<text class="detail-label">住院时间</text>
+							<text class="detail-value">{{ formatDate(new Date(selectedFollow.hospitalizationTime)) }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">检查项目</text>
+							<text class="detail-value">{{ selectedFollow.examinationItems || '无' }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedFollow.doctorName">
+							<text class="detail-label">随访医生</text>
+							<text class="detail-value">{{ selectedFollow.doctorName }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">随访状态</text>
+							<text class="detail-value" :class="getStatusClass(selectedFollow.status)">{{ getStatusText(selectedFollow.status) }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedFollow.notes">
+							<text class="detail-label">备注</text>
+							<text class="detail-value notes">{{ selectedFollow.notes }}</text>
+						</view>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
+
 		<!-- 添加按钮 -->
 		<view class="add-btn" @click="goToAdd">
 			<text class="app-icon uniui-plus"></text>
@@ -83,7 +125,9 @@ export default {
 			weekLabels: ['一', '二', '三', '四', '五', '六', '日'],
 			baseOffset: 0,
 			showAll: false,
-			followList: []
+			followList: [],
+			selectedFollow: null,
+			highlightId: null
 		};
 	},
 	computed: {
@@ -94,15 +138,34 @@ export default {
 			return `${first.date.substring(5)} - ${last.date.substring(5)}`;
 		},
 		filteredFollowList() {
-			return this.followList.map(f => ({
+			let list = this.followList;
+
+			// 如果不是查看全部，则按选中日期筛选
+			if (!this.showAll) {
+				list = list.filter(item => this.isFollowUpOnDate(item, this.selectedDate));
+			}
+
+			// 调试日志
+			console.log('=== 随访列表调试 ===');
+			console.log('followList总数:', this.followList.length);
+			console.log('筛选后数量:', list.length);
+			console.log('showAll:', this.showAll);
+			console.log('selectedDate:', this.selectedDate);
+			console.log('followList数据:', this.followList);
+
+			return list.map(f => ({
 				...f,
 				statusText: this.getStatusText(f.status),
 				statusClass: this.getStatusClass(f.status)
 			}));
 		}
 	},
-	onLoad() {
+	onLoad(options) {
 		this.initWeekDays();
+		if (options && options.highlight) {
+			this.highlightId = parseInt(options.highlight);
+			this.showAll = true;
+		}
 	},
 	onShow() {
 		this.loadData();
@@ -244,6 +307,45 @@ export default {
 			};
 			return map[status] || 'status-pending';
 		},
+		// 判断随访是否在指定日期
+		isFollowUpOnDate(item, dateStr) {
+			// 门诊周期随访判断
+			let outpatientMatch = false;
+			if (item.outpatientCycleType) {
+				const selected = new Date(dateStr);
+				const value = parseInt(item.outpatientCycleValue) || 0;
+
+				if (item.outpatientCycleType === 'weekly') {
+					const selectedDayOfWeek = selected.getDay();
+					const targetDay = value === 7 ? 0 : value;
+					outpatientMatch = selectedDayOfWeek === targetDay;
+				} else if (item.outpatientCycleType === 'monthly') {
+					outpatientMatch = selected.getDate() === value;
+				} else if (item.outpatientCycleType === 'quarterly') {
+					outpatientMatch = selected.getDate() === value;
+				}
+			}
+
+			// 住院时间判断
+			let hospitalMatch = false;
+			if (item.hospitalizationTime) {
+				const hospDate = this.formatDate(new Date(item.hospitalizationTime));
+				hospitalMatch = hospDate === dateStr;
+			}
+
+			// 如果两者都有，满足任一条件即显示
+			// 如果只有门诊周期，按门诊匹配
+			// 如果只有住院时间，按住院匹配
+			// 如果都没有，默认显示
+			if (item.outpatientCycleType && item.hospitalizationTime) {
+				return outpatientMatch || hospitalMatch;
+			} else if (item.outpatientCycleType) {
+				return outpatientMatch;
+			} else if (item.hospitalizationTime) {
+				return hospitalMatch;
+			}
+			return true;
+		},
 		async loadData() {
 			try {
 				const allFollowRes = await getFollowUpList({ pageNum: 1, pageSize: 100 });
@@ -263,16 +365,28 @@ export default {
 						status: f.status,
 						notes: f.notes || ''
 					}));
+
+					// 如果有 highlightId，自动打开对应详情
+					if (this.highlightId) {
+						const targetItem = this.followList.find(f => f.id === this.highlightId);
+						if (targetItem) {
+							this.$nextTick(() => {
+								this.viewFollowDetail(targetItem);
+							});
+						}
+						this.highlightId = null;
+					}
 				}
 			} catch (e) {
 				console.error('加载随访信息失败:', e);
 			}
 		},
 		viewFollowDetail(item) {
-			uni.showToast({
-				title: item.followUpExamTypeName || '随访详情',
-				icon: 'none'
-			});
+			this.selectedFollow = item;
+			this.$refs.detailPopup.open();
+		},
+		closeDetailPopup() {
+			this.$refs.detailPopup.close();
 		},
 		goToAdd() {
 			uni.navigateTo({
@@ -587,5 +701,84 @@ export default {
 .add-btn .app-icon {
 	font-size: 52rpx;
 	color: #fff;
+}
+
+/* 详情弹窗 */
+.detail-popup {
+	background: $app-card-bg;
+	border-radius: 24rpx 24rpx 0 0;
+	max-height: 70vh;
+}
+
+.popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 24rpx 32rpx;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.popup-title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: $app-text;
+}
+
+.popup-close {
+	font-size: 48rpx;
+	color: $app-text-muted;
+	line-height: 1;
+}
+
+.popup-body {
+	padding: 24rpx 32rpx;
+}
+
+.detail-card {
+	background: $app-bg;
+	border-radius: $app-radius;
+	padding: 20rpx;
+}
+
+.detail-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	padding: 16rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.detail-row:last-child {
+	border-bottom: none;
+}
+
+.detail-label {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	min-width: 140rpx;
+}
+
+.detail-value {
+	font-size: 28rpx;
+	color: $app-text;
+	flex: 1;
+	text-align: right;
+}
+
+.detail-value.status-pending {
+	color: $app-warning;
+}
+
+.detail-value.status-completed {
+	color: $app-success;
+}
+
+.detail-value.status-cancelled {
+	color: #9CA3AF;
+}
+
+.detail-value.notes {
+	text-align: left;
+	word-break: break-all;
 }
 </style>

@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Warning, Delete, DocumentCopy } from '@element-plus/icons-vue'
-import { getEpisodeList, deleteEpisode, getPatientList, getCommonDictByType, DICT_TYPES, getRecordList } from '@/api'
+import { Warning, DocumentCopy } from '@element-plus/icons-vue'
+import { getEpisodeList, deleteEpisode, getPatientList, getRecordList } from '@/api'
 import { exportToExcel } from '@/utils/export'
-import type { DiseaseEpisode, Patient, CommonDict, MedicalRecord } from '@/api'
-
-const router = useRouter()
+import type { DiseaseEpisode, Patient, MedicalRecord } from '@/api'
 
 const searchForm = ref({
   keyword: '',
@@ -107,8 +104,7 @@ const viewEpisode = async (row: DiseaseEpisode) => {
     const res = await getRecordList({
       pageNum: 1,
       pageSize: 100,
-      patientId: row.patientId,
-      relatedEpisodeId: row.id
+      patientId: row.patientId
     })
     relatedRecords.value = res?.list || []
   } catch (e) {
@@ -146,12 +142,6 @@ const viewRecord = (record: MedicalRecord) => {
     recordImages.value = []
   }
   recordDetailVisible.value = true
-}
-
-// 预览图片
-const previewImage = (url: string) => {
-  previewImageUrl.value = url
-  imagePreviewVisible.value = true
 }
 
 const formatDate = (date: string) => {

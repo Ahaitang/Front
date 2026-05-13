@@ -27,18 +27,18 @@ export const getAdminInfo = (id) => {
 }
 
 // 修改管理员密码
-export const updateAdminPassword = (id, password) => {
-  return put(`/neuroimmune/admin/${id}/password`, { password })
+export const updateAdminPassword = (id, password, oldPassword) => {
+  return put(`/neuroimmune/admin/${id}/password`, { password, oldPassword })
 }
 
 // 修改患者密码
-export const updatePatientPassword = (id, password) => {
-  return put(`/neuroimmune/patients/${id}/password`, { password })
+export const updatePatientPassword = (id, password, oldPassword) => {
+  return put(`/neuroimmune/patients/${id}/password`, { password, oldPassword })
 }
 
 // 修改医生密码
-export const updateDoctorPassword = (id, password) => {
-  return put(`/neuroimmune/doctors/${id}/password`, { password })
+export const updateDoctorPassword = (id, password, oldPassword) => {
+  return put(`/neuroimmune/doctors/${id}/password`, { password, oldPassword })
 }
 
 // 患者注册
@@ -53,7 +53,17 @@ export const checkPhoneExists = (phone) => {
 
 // 获取可绑定的医生列表
 export const getDoctorListForRegister = () => {
-  return get('/neuroimmune/doctors', { all: true })
+  return get('/neuroimmune/relation/doctors')
+}
+
+// 获取患者当前绑定的医生
+export const getPatientDoctor = (patientId) => {
+  return get(`/neuroimmune/relation/patient/${patientId}/doctor`)
+}
+
+// 患者绑定医生
+export const bindDoctor = (data) => {
+  return post('/neuroimmune/relation/bind', data)
 }
 
 // 获取医生待确认患者列表
@@ -89,6 +99,8 @@ export default {
   register,
   checkPhoneExists,
   getDoctorListForRegister,
+  getPatientDoctor,
+  bindDoctor,
   getPendingPatients,
   getConfirmedPatients,
   getRejectedPatients,

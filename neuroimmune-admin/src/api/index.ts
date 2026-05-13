@@ -39,18 +39,18 @@ export const deletePatient = (id: string | number) => {
   return request.delete(`/neuroimmune/patients/${id}`)
 }
 
-export const updatePatientPassword = (id: string | number, password: string) => {
-  return request.put(`/neuroimmune/patients/${id}/password`, { password })
+export const updatePatientPassword = (id: string | number, password: string, oldPassword?: string) => {
+  return request.put(`/neuroimmune/patients/${id}/password`, { password, oldPassword })
 }
 
 // 患者绑定医生
 export const bindPatientDoctor = (patientId: number, doctorId: number, bindMethod?: string, remark?: string) => {
-  const params = new URLSearchParams()
-  params.append('patientId', patientId.toString())
-  params.append('doctorId', doctorId.toString())
-  if (bindMethod) params.append('bindMethod', bindMethod)
-  if (remark) params.append('remark', remark)
-  return request.post(`/neuroimmune/relation/bind?${params.toString()}`)
+  return request.post('/neuroimmune/relation/bind', {
+    patientId,
+    doctorId,
+    bindMethod: bindMethod || 'admin',
+    remark
+  })
 }
 
 export const unbindPatientDoctor = (patientId: number, doctorId: number) => {
@@ -58,6 +58,15 @@ export const unbindPatientDoctor = (patientId: number, doctorId: number) => {
   params.append('patientId', patientId.toString())
   params.append('doctorId', doctorId.toString())
   return request.post(`/neuroimmune/relation/unbind-by-ids?${params.toString()}`)
+}
+
+// 绑定关系审核
+export const confirmRelation = (relationId: number) => {
+  return request.put(`/neuroimmune/relation/${relationId}/confirm`)
+}
+
+export const rejectRelation = (relationId: number) => {
+  return request.put(`/neuroimmune/relation/${relationId}/reject`)
 }
 
 // 医生相关
@@ -86,8 +95,8 @@ export const deleteDoctor = (id: string | number) => {
   return request.delete(`/neuroimmune/doctors/${id}`)
 }
 
-export const updateDoctorPassword = (id: string | number, password: string) => {
-  return request.put(`/neuroimmune/doctors/${id}/password`, { password })
+export const updateDoctorPassword = (id: string | number, password: string, oldPassword?: string) => {
+  return request.put(`/neuroimmune/doctors/${id}/password`, { password, oldPassword })
 }
 
 export const updateDoctorProfile = (id: string | number, data: Partial<Doctor>) => {
@@ -118,8 +127,8 @@ export const updateDoctorRoles = (id: string | number, roles: string[], level?: 
   return request.put(`/neuroimmune/doctors/${id}/roles`, { roles, level })
 }
 
-export const updateAdminPassword = (id: string | number, password: string) => {
-  return request.put(`/neuroimmune/admin/${id}/password`, { password })
+export const updateAdminPassword = (id: string | number, password: string, oldPassword?: string) => {
+  return request.put(`/neuroimmune/admin/${id}/password`, { password, oldPassword })
 }
 
 // 随访相关
@@ -256,6 +265,8 @@ export interface Patient {
   isRealAuth: boolean
   doctorId?: number      // 通过 relation 表获取
   doctorName?: string    // 通过 relation 表获取
+  relationId?: number    // 绑定关系ID（用于审核操作）
+  bindStatus?: number    // 绑定状态：0-待审核, 1-已确认, 2-已拒绝
   diseaseType?: string   // 单个疾病类型（兼容旧数据）
   diseaseTypes?: string[] // 疾病类型列表（从 patient_disease 表查询）
   createTime?: string    // 仅显示，不参与保存

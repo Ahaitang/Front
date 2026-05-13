@@ -60,7 +60,7 @@
 					</view>
 					<view class="health-item" @click="navTo('/pages/doctor/episode-list/episode-list')">
 						<view class="health-icon-wrap doctor-episode">
-							<text class="app-icon uniui-pulse"></text>
+							<text class="app-icon uniui-fire-filled"></text>
 						</view>
 						<text class="health-value">{{ doctorStats.episodeCount }}</text>
 						<text class="health-label">发作记录</text>
@@ -122,7 +122,7 @@
 					</view>
 					<view class="quick-item" @click="navTo('/pages/doctor/add-episode/add-episode')">
 						<view class="quick-icon doctor">
-							<text class="app-icon uniui-pulse"></text>
+							<text class="app-icon uniui-fire-filled"></text>
 						</view>
 						<text class="quick-text">新增发作</text>
 					</view>
@@ -209,7 +209,7 @@
 					</view>
 					<view class="health-item stat-only">
 						<view class="health-icon-wrap episode">
-							<text class="app-icon uniui-pulse"></text>
+							<text class="app-icon uniui-fire-filled"></text>
 						</view>
 						<text class="health-value">{{ episodeCount }}</text>
 						<text class="health-label">发作次数</text>
@@ -277,7 +277,7 @@
 					</view>
 					<view class="menu-item" @click="navTo('/pages/patient/disease-episode/disease-episode')">
 						<view class="menu-icon episode">
-							<text class="app-icon uniui-pulse"></text>
+							<text class="app-icon uniui-fire-filled"></text>
 						</view>
 						<view class="menu-content">
 							<text class="menu-title">疾病发作记录</text>
@@ -302,7 +302,7 @@
 					</view>
 					<view class="quick-item" @click="navTo('/pages/patient/add-episode/add-episode')">
 						<view class="quick-icon">
-							<text class="app-icon uniui-pulse"></text>
+							<text class="app-icon uniui-fire-filled"></text>
 						</view>
 						<text class="quick-text">发作记录</text>
 					</view>
@@ -453,13 +453,22 @@ export default {
 				if (this.userInfo.id) {
 					try {
 						const binding = await getPatientDoctor(this.userInfo.id);
-						if (binding) {
+						// bindStatus: 0-待审核, 1-已确认, null-未绑定
+						if (binding && binding.bindStatus === 1) {
+							// 已确认绑定，显示医生姓名
 							this.doctorBound = true;
 							this.doctorName = binding.doctorName;
 							uni.setStorageSync('doctorBound', true);
 							uni.setStorageSync('doctorName', binding.doctorName);
 							uni.setStorageSync('doctorId', binding.doctorId);
+						} else if (binding && binding.bindStatus === 0) {
+							// 待审核状态，不显示医生姓名
+							this.doctorBound = false;
+							this.doctorName = '审核中';
+							uni.setStorageSync('doctorBound', false);
+							uni.setStorageSync('doctorName', '');
 						} else {
+							// 未绑定或其他状态
 							this.doctorBound = false;
 							uni.setStorageSync('doctorBound', false);
 						}
@@ -485,16 +494,18 @@ export default {
 					}
 				}
 
-				// 获取随访列表
-				const followRes = await getFollowUpList({ pageNum: 1, pageSize: 10 });
-				if (followRes && followRes.list) {
-					const pendingList = followRes.list.filter(f => f.status === 0);
-					this.pendingFollowUps = pendingList.slice(0, 3).map(f => ({
-						id: f.id,
-						title: f.project || '随访',
-						date: f.followDate || f.date,
-						doctorName: f.doctorName || '医生'
-					}));
+				// 获取随访列表（只查询当前患者的随访）
+				if (this.userInfo.id) {
+					const followRes = await getFollowUpList({ pageNum: 1, pageSize: 10, patientId: this.userInfo.id });
+					if (followRes && followRes.list) {
+						const pendingList = followRes.list.filter(f => f.status === 0);
+						this.pendingFollowUps = pendingList.slice(0, 3).map(f => ({
+							id: f.id,
+							title: f.project || '随访',
+							date: f.followDate || f.date,
+							doctorName: f.doctorName || '医生'
+						}));
+					}
 				}
 
 				// 获取用药记录数量

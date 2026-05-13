@@ -49,11 +49,6 @@ const loadDicts = async () => {
 }
 
 // 状态相关
-const getStatusType = (status: number) => {
-  const map: Record<number, string> = { 0: 'warning', 1: 'success', 2: 'info' }
-  return map[status] || 'info'
-}
-
 const getStatusText = (status: number) => {
   const map: Record<number, string> = { 0: '进行中', 1: '已完成', 2: '已取消' }
   return map[status] || '进行中'
@@ -187,6 +182,11 @@ const saveRecordSubmit = async () => {
   // 保存图片URL列表
   currentRecord.value.attachments = imageList.value.join(',')
 
+  // 将日期格式补全为 yyyy-MM-dd HH:mm:ss
+  if (currentRecord.value.date && !currentRecord.value.date.includes(':')) {
+    currentRecord.value.date = currentRecord.value.date + ' 00:00:00'
+  }
+
   saveLoading.value = true
   try {
     await saveRecord(currentRecord.value)
@@ -264,7 +264,8 @@ const formatDate = (date: string) => {
 }
 
 // 查看关联发作记录
-const viewEpisode = async (episodeId: number) => {
+const viewEpisode = async (episodeId: number | undefined) => {
+  if (!episodeId) return
   try {
     const episode = await getEpisodeById(episodeId)
     if (episode) {

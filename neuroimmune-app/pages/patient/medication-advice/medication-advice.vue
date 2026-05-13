@@ -37,7 +37,7 @@
 			<text class="empty-tip">{{ showAll ? '暂无用药建议' : '当日暂无用药建议' }}</text>
 		</view>
 		<template v-else>
-			<view class="card item" v-for="(item, i) in filteredList" :key="i">
+			<view class="card item" v-for="(item, i) in filteredList" :key="i" @click="viewMedicationDetail(item)">
 				<view class="item-head">
 					<text class="name">{{ item.medicationName }}</text>
 					<text class="date">开具日期：{{ item.date }}</text>
@@ -68,6 +68,55 @@
 
 		<!-- 日历弹窗 -->
 		<uni-calendar ref="calendar" :insert="false" @confirm="onCalendarConfirm" />
+
+		<!-- 用药详情弹窗 -->
+		<uni-popup ref="detailPopup" type="bottom" :safe-area="true">
+			<view class="detail-popup">
+				<view class="popup-header">
+					<text class="popup-title">用药详情</text>
+					<text class="popup-close" @click="closeDetailPopup">×</text>
+				</view>
+				<view class="popup-body" v-if="selectedMedication">
+					<view class="detail-card">
+						<view class="detail-row medication-name">
+							<text class="name-text">{{ selectedMedication.medicationName }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">开具日期</text>
+							<text class="detail-value">{{ selectedMedication.date || '--' }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">剂量</text>
+							<text class="detail-value">{{ selectedMedication.dosage }}{{ selectedMedication.unit || '' }}</text>
+						</view>
+						<view class="detail-row">
+							<text class="detail-label">频率</text>
+							<text class="detail-value">{{ selectedMedication.frequency || '--' }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedMedication.route">
+							<text class="detail-label">用药途径</text>
+							<text class="detail-value">{{ selectedMedication.route }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedMedication.duration">
+							<text class="detail-label">服用时间段</text>
+							<text class="detail-value highlight">{{ selectedMedication.duration }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedMedication.endDate">
+							<text class="detail-label">有效期至</text>
+							<text class="detail-value highlight">{{ selectedMedication.endDate }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedMedication.doctorName">
+							<text class="detail-label">开具医生</text>
+							<text class="detail-value">{{ selectedMedication.doctorName }}</text>
+						</view>
+						<view class="detail-row" v-if="selectedMedication.notes">
+							<text class="detail-label">备注</text>
+							<text class="detail-value notes">{{ selectedMedication.notes }}</text>
+						</view>
+					</view>
+				</view>
+			</view>
+		</uni-popup>
 	</view>
 </template>
 
@@ -84,7 +133,9 @@ export default {
 			weekLabels: ['一', '二', '三', '四', '五', '六', '日'],
 			baseOffset: 0,
 			list: [],
-			showAll: false
+			showAll: false,
+			selectedMedication: null,
+			highlightId: null
 		};
 	},
 	computed: {
@@ -116,8 +167,12 @@ export default {
 			});
 		}
 	},
-	onLoad() {
+	onLoad(options) {
 		this.initWeekDays();
+		if (options && options.highlight) {
+			this.highlightId = parseInt(options.highlight);
+			this.showAll = true;
+		}
 	},
 	onShow() {
 		this.loadData();
@@ -225,10 +280,28 @@ export default {
 						notes: m.notes,
 						doctorName: m.doctorName
 					}));
+
+					// 如果有 highlightId，自动打开对应详情
+					if (this.highlightId) {
+						const targetItem = this.list.find(m => m.id === this.highlightId);
+						if (targetItem) {
+							this.$nextTick(() => {
+								this.viewMedicationDetail(targetItem);
+							});
+						}
+						this.highlightId = null;
+					}
 				}
 			} catch (e) {
 				console.error('加载用药建议失败:', e);
 			}
+		},
+		viewMedicationDetail(item) {
+			this.selectedMedication = item;
+			this.$refs.detailPopup.open();
+		},
+		closeDetailPopup() {
+			this.$refs.detailPopup.close();
 		}
 	}
 };
@@ -462,5 +535,89 @@ export default {
 .doctor {
 	font-size: 24rpx;
 	color: $app-text-secondary;
+}
+
+/* 详情弹窗 */
+.detail-popup {
+	background: $app-card-bg;
+	border-radius: 24rpx 24rpx 0 0;
+	max-height: 70vh;
+}
+
+.popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 24rpx 32rpx;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.popup-title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: $app-text;
+}
+
+.popup-close {
+	font-size: 48rpx;
+	color: $app-text-muted;
+	line-height: 1;
+}
+
+.popup-body {
+	padding: 24rpx 32rpx;
+}
+
+.detail-card {
+	background: $app-bg;
+	border-radius: $app-radius;
+	padding: 20rpx;
+}
+
+.detail-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	padding: 16rpx 0;
+	border-bottom: 1rpx solid $app-divider;
+}
+
+.detail-row:last-child {
+	border-bottom: none;
+}
+
+.detail-row.medication-name {
+	justify-content: center;
+	border-bottom: none;
+	padding-bottom: 24rpx;
+}
+
+.name-text {
+	font-size: 36rpx;
+	font-weight: 600;
+	color: $app-primary;
+}
+
+.detail-label {
+	font-size: 28rpx;
+	color: $app-text-muted;
+	min-width: 140rpx;
+}
+
+.detail-value {
+	font-size: 28rpx;
+	color: $app-text;
+	flex: 1;
+	text-align: right;
+}
+
+.detail-value.highlight {
+	color: $app-primary;
+	font-weight: 500;
+}
+
+.detail-value.notes {
+	text-align: left;
+	word-break: break-all;
 }
 </style>

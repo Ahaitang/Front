@@ -167,6 +167,7 @@ const handleSizeChange = (size: number) => {
   loadData()
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const viewMedication = (row: Medication) => {
   currentMedication.value = { ...row }
   dialogType.value = 'view'
@@ -257,7 +258,7 @@ const handleExport = () => {
   const exportData = tableData.value.map(item => ({
     '患者姓名': item.patientName,
     '药品名称': item.medicationName,
-    '剂量': `${item.dosageValue || ''}${getUnitLabel(item.dosageUnit)}`,
+    '剂量': `${item.dosageValue || ''}${getUnitLabel(item.dosageUnit || '')}`,
     '用药频率': item.frequency,
     '用药途径': item.route,
     '疗程': item.duration || '-',

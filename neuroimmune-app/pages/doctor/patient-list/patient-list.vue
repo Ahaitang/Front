@@ -95,7 +95,7 @@
 								<text class="info-value">{{ item.recordCount }}份</text>
 							</view>
 							<view class="info-item">
-								<text class="app-icon uniui-pulse"></text>
+								<text class="app-icon uniui-fire-filled"></text>
 								<text class="info-label">发作</text>
 								<text class="info-value">{{ item.episodeCount }}次</text>
 							</view>

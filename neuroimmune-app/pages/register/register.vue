@@ -13,13 +13,8 @@
 				<text class="step-label">基本信息</text>
 			</view>
 			<view class="step-line" :class="{ active: currentStep >= 2 }"></view>
-			<view class="step" :class="{ active: currentStep >= 2, done: currentStep > 2 }">
+			<view class="step" :class="{ active: currentStep >= 2 }">
 				<text class="step-num">2</text>
-				<text class="step-label">选择医生</text>
-			</view>
-			<view class="step-line" :class="{ active: currentStep >= 3 }"></view>
-			<view class="step" :class="{ active: currentStep >= 3 }">
-				<text class="step-num">3</text>
 				<text class="step-label">提交注册</text>
 			</view>
 		</view>
@@ -81,44 +76,8 @@
 			<button class="btn primary" @click="nextStep">下一步</button>
 		</view>
 
-		<!-- Step 2: 选择医生 -->
-		<view class="doctor-select card" v-if="currentStep === 2">
-			<view class="search-bar">
-				<view class="search-wrap">
-					<text class="app-icon sm muted uniui-search"></text>
-					<input class="search-input" placeholder="搜索医生姓名或科室" v-model="doctorKeyword" />
-				</view>
-			</view>
-			<view class="doctor-list" v-if="filteredDoctors.length > 0">
-				<view class="doctor-item"
-					  v-for="doc in filteredDoctors"
-					  :key="doc.id"
-					  :class="{ selected: selectedDoctor && selectedDoctor.id === doc.id }"
-					  @click="selectDoctor(doc)">
-					<view class="doctor-avatar">
-						<text class="avatar-text">{{ doc.name ? doc.name.charAt(0) : '医' }}</text>
-					</view>
-					<view class="doctor-info">
-						<text class="doctor-name">{{ doc.name }}</text>
-						<text class="doctor-dept">{{ doc.department || '神经内科' }}</text>
-						<text class="doctor-hospital">{{ doc.hospital || '医院' }}</text>
-					</view>
-					<view class="select-icon" v-if="selectedDoctor && selectedDoctor.id === doc.id">
-						<text class="app-icon uniui-checkbox-filled"></text>
-					</view>
-				</view>
-			</view>
-			<view class="empty-state" v-else>
-				<text class="empty-text">暂无匹配医生</text>
-			</view>
-			<view class="step-actions">
-				<button class="btn secondary" @click="prevStep">上一步</button>
-				<button class="btn primary" @click="nextStep" :disabled="!selectedDoctor">下一步</button>
-			</view>
-		</view>
-
-		<!-- Step 3: 确认提交 -->
-		<view class="confirm card" v-if="currentStep === 3">
+		<!-- Step 2: 确认提交 -->
+		<view class="confirm card" v-if="currentStep === 2">
 			<view class="confirm-title">请确认注册信息</view>
 			<view class="confirm-list">
 				<view class="confirm-item">
@@ -137,10 +96,9 @@
 					<text class="confirm-label">出生日期</text>
 					<text class="confirm-value">{{ form.birthDate }}</text>
 				</view>
-				<view class="confirm-item">
-					<text class="confirm-label">绑定医生</text>
-					<text class="confirm-value">{{ selectedDoctor?.name }} - {{ selectedDoctor?.department || '神经内科' }}</text>
-				</view>
+			</view>
+			<view class="tips-box">
+				<text class="tips-text">注册成功后，可在小程序内选择医生进行绑定</text>
 			</view>
 			<view class="step-actions">
 				<button class="btn secondary" @click="prevStep">上一步</button>
@@ -148,20 +106,20 @@
 			</view>
 		</view>
 
-		<!-- Step 4: 成功提示 -->
-		<view class="success-wrap card" v-if="currentStep === 4">
+		<!-- Step 3: 成功提示 -->
+		<view class="success-wrap card" v-if="currentStep === 3">
 			<view class="success-icon">
 				<text class="app-icon uniui-checkbox-filled"></text>
 			</view>
 			<text class="success-title">注册成功!</text>
-			<text class="success-msg">您的注册申请已提交，等待医生确认后可登录使用。</text>
+			<text class="success-msg">您的账号已创建成功，可以直接登录使用。</text>
 			<button class="btn primary" @click="backToLogin">返回登录</button>
 		</view>
 	</view>
 </template>
 
 <script>
-import { register, checkPhoneExists, getDoctorListForRegister } from '@/api/auth.js'
+import { register, checkPhoneExists } from '@/api/auth.js'
 
 export default {
 	data() {
@@ -175,21 +133,8 @@ export default {
 				gender: '男',
 				birthDate: ''
 			},
-			doctors: [],
-			doctorKeyword: '',
-			selectedDoctor: null,
 			phoneExists: false,
 			loading: false
-		}
-	},
-	computed: {
-		filteredDoctors() {
-			if (!this.doctorKeyword) return this.doctors
-			const k = this.doctorKeyword.toLowerCase()
-			return this.doctors.filter(d =>
-				d.name.toLowerCase().includes(k) ||
-				(d.department && d.department.toLowerCase().includes(k))
-			)
 		}
 	},
 	methods: {
@@ -234,19 +179,10 @@ export default {
 			if (this.currentStep === 1) {
 				if (!this.validateStep1()) return
 			}
-			if (this.currentStep === 2) {
-				if (!this.selectedDoctor) {
-					uni.showToast({ title: '请选择医生', icon: 'none' })
-					return
-				}
-			}
 			this.currentStep++
 		},
 		prevStep() {
 			this.currentStep--
-		},
-		selectDoctor(doc) {
-			this.selectedDoctor = doc
 		},
 		onDateChange(e) {
 			this.form.birthDate = e.detail.value
@@ -259,10 +195,9 @@ export default {
 					password: this.form.password,
 					name: this.form.name,
 					gender: this.form.gender,
-					birthDate: this.form.birthDate,
-					doctorId: this.selectedDoctor.id
+					birthDate: this.form.birthDate
 				})
-				this.currentStep = 4
+				this.currentStep = 3
 			} catch (e) {
 				uni.showToast({ title: '注册失败，请重试', icon: 'none' })
 			} finally {
@@ -271,19 +206,7 @@ export default {
 		},
 		backToLogin() {
 			uni.redirectTo({ url: '/pages/login/login' })
-		},
-		async loadDoctors() {
-			try {
-				const res = await getDoctorListForRegister()
-				this.doctors = res || []
-			} catch (e) {
-				console.error('加载医生列表失败:', e)
-				this.doctors = []
-			}
 		}
-	},
-	onLoad() {
-		this.loadDoctors()
 	}
 }
 </script>
@@ -548,100 +471,6 @@ export default {
 	margin-top: 0;
 }
 
-// 医生选择
-.search-bar {
-	margin-bottom: 24rpx;
-}
-
-.search-wrap {
-	display: flex;
-	align-items: center;
-	height: 72rpx;
-	background: $app-hover-bg;
-	border-radius: $app-radius-sm;
-	padding: 0 24rpx;
-	gap: 12rpx;
-}
-
-.search-input {
-	flex: 1;
-	font-size: 28rpx;
-	color: $app-text;
-}
-
-.doctor-list {
-	max-height: 500rpx;
-	overflow-y: auto;
-}
-
-.doctor-item {
-	display: flex;
-	align-items: center;
-	padding: 20rpx;
-	background: $app-hover-bg;
-	border-radius: $app-radius-sm;
-	margin-bottom: 16rpx;
-	border: 2rpx solid transparent;
-	transition: $app-transition;
-}
-
-.doctor-item:active {
-	transform: scale(0.98);
-}
-
-.doctor-item.selected {
-	border-color: $app-primary;
-	background: $app-primary-bg;
-}
-
-.doctor-avatar {
-	width: 64rpx;
-	height: 64rpx;
-	border-radius: 50%;
-	background: $app-gradient-primary;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-right: 16rpx;
-}
-
-.avatar-text {
-	font-size: 28rpx;
-	color: #fff;
-}
-
-.doctor-info {
-	flex: 1;
-}
-
-.doctor-name {
-	font-size: 30rpx;
-	font-weight: 500;
-	color: $app-text;
-	display: block;
-}
-
-.doctor-dept, .doctor-hospital {
-	font-size: 24rpx;
-	color: $app-text-muted;
-	display: block;
-}
-
-.select-icon {
-	color: $app-primary;
-	font-size: 40rpx;
-}
-
-.empty-state {
-	text-align: center;
-	padding: 60rpx 0;
-}
-
-.empty-text {
-	font-size: 28rpx;
-	color: $app-text-muted;
-}
-
 // 确认信息
 .confirm-title {
 	font-size: 36rpx;
@@ -676,6 +505,20 @@ export default {
 .confirm-value {
 	font-size: 28rpx;
 	color: $app-text;
+}
+
+// 提示信息
+.tips-box {
+	background: $app-primary-bg;
+	border-radius: $app-radius-sm;
+	padding: 16rpx 24rpx;
+	margin-top: 24rpx;
+}
+
+.tips-text {
+	font-size: 24rpx;
+	color: $app-primary;
+	line-height: 1.5;
 }
 
 // 成功页面

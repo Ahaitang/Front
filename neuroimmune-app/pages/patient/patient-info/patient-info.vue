@@ -4,7 +4,7 @@
 			<image class="avatar" :src="me.avatar || '/static/component.png'" mode="aspectFill"></image>
 			<view class="meta">
 				<text class="name">{{ me.name }}</text>
-				<text class="age-gender">{{ me.age }}岁 {{ me.gender }}</text>
+				<text class="age-gender">{{ calculatedAge }}岁 {{ me.gender }}</text>
 				<button class="btn-link" @click="navToFollow">查看随访</button>
 			</view>
 		</view>
@@ -13,7 +13,7 @@
 			<view class="row"><text class="label">电话</text><text class="value">{{ me.phone }}</text></view>
 			<view class="row"><text class="label">身份证号</text><text class="value">{{ me.idCard }}</text></view>
 			<view class="row"><text class="label">民族</text><text class="value">{{ me.nation }}</text></view>
-			<view class="row"><text class="label">出生日期</text><text class="value">{{ me.birthday }}</text></view>
+			<view class="row"><text class="label">出生日期</text><text class="value">{{ me.birthDate }}</text></view>
 			<view class="row"><text class="label">婚姻状况</text><text class="value">{{ me.marital }}</text></view>
 			<view class="row"><text class="label">居住地</text><text class="value">{{ me.address }}</text></view>
 		</view>
@@ -26,30 +26,70 @@
 </template>
 
 <script>
+	import { getPatientById } from '@/api/patient.js'
+
 	export default {
 		data() {
 			return {
 				me: {
-					name: '张哲瀚',
-					age: 45,
-					gender: '男',
-					phone: '183440293123',
-					idCard: '422875658696486773',
-					nation: '汉族',
-					birthday: '1978-08-15',
-					marital: '已婚',
-					address: '广东省深圳市福田区莲花街道',
-					department: '神经内科',
-					patientType: '门诊患者'
+					name: '',
+					gender: '',
+					phone: '',
+					idCard: '',
+					nation: '',
+					birthDate: '',
+					marital: '',
+					address: '',
+					department: '',
+					patientType: ''
 				}
 			};
 		},
+		computed: {
+			// 根据出生日期计算年龄
+			calculatedAge() {
+				if (!this.me.birthDate) return '--'
+				const birth = new Date(this.me.birthDate)
+				const today = new Date()
+				let age = today.getFullYear() - birth.getFullYear()
+				const monthDiff = today.getMonth() - birth.getMonth()
+				if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+					age--
+				}
+				return age >= 0 ? age : '--'
+			}
+		},
 		onLoad() {
-			const user = uni.getStorageSync('userInfo') || {};
-			if (user.name) this.me.name = user.name;
-			if (user.phone) this.me.phone = user.phone;
+			this.loadPatientInfo();
 		},
 		methods: {
+			async loadPatientInfo() {
+				const userInfo = uni.getStorageSync('userInfo') || {};
+				if (userInfo.id) {
+					try {
+						const patient = await getPatientById(userInfo.id);
+						if (patient) {
+							this.me.name = patient.name || '';
+							this.me.gender = patient.gender || '';
+							this.me.phone = patient.phone || '';
+							this.me.idCard = patient.idCard || '';
+							this.me.nation = patient.nation || '';
+							this.me.birthDate = patient.birthDate ? patient.birthDate.split(' ')[0] : '';
+							this.me.marital = patient.marital || '';
+							this.me.address = patient.address || '';
+							this.me.department = patient.department || '';
+							this.me.patientType = patient.patientType || '';
+						}
+					} catch (e) {
+						console.error('加载患者信息失败:', e);
+						this.me.name = userInfo.name || '';
+						this.me.phone = userInfo.phone || '';
+					}
+				} else {
+					this.me.name = userInfo.name || '';
+					this.me.phone = userInfo.phone || '';
+				}
+			},
 			navToFollow() {
 				uni.navigateTo({ url: '/pages/patient/follow-plan/follow-plan' });
 			}

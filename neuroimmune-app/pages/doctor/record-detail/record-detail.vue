@@ -60,7 +60,7 @@
 		<!-- 关联发作记录 -->
 		<view class="episode-card card" v-if="record.relatedEpisodeId">
 			<view class="card-title">
-				<text class="app-icon uniui-pulse"></text>
+				<text class="app-icon uniui-fire-filled"></text>
 				<text>关联发作记录</text>
 			</view>
 			<view class="episode-link" @click="goEpisodeDetail">

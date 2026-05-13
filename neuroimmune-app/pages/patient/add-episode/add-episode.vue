@@ -108,6 +108,15 @@ export default {
 			const d = String(date.getDate()).padStart(2, '0')
 			return `${y}-${m}-${d}`
 		},
+		formatDateTime(date) {
+			const y = date.getFullYear()
+			const m = String(date.getMonth() + 1).padStart(2, '0')
+			const d = String(date.getDate()).padStart(2, '0')
+			const h = String(date.getHours()).padStart(2, '0')
+			const min = String(date.getMinutes()).padStart(2, '0')
+			const s = String(date.getSeconds()).padStart(2, '0')
+			return `${y}-${m}-${d} ${h}:${min}:${s}`
+		},
 		onDateChange(e) {
 			this.form.episodeDate = e.detail.value
 		},
@@ -143,7 +152,7 @@ export default {
 				// 1. 创建发作记录
 				const episodeData = {
 					...this.form,
-					episodeDate: this.form.episodeDate + ' 00:00:00',  // 转换为 LocalDateTime 格式
+					episodeDate: this.form.episodeDate,
 					patientId: userInfo.id,
 					patientName: userInfo.name
 				}
@@ -164,7 +173,7 @@ export default {
 						patientId: userInfo.id,
 						patientName: userInfo.name,
 						type: '门诊病历',
-						date: this.form.episodeDate + ' 00:00:00',  // 转换为 LocalDateTime 格式
+						date: this.formatDateTime(new Date()),
 						diagnosis: this.form.diagnosis || '',
 						content: this.form.chiefComplaint || '',
 						attachments: urls.join(','),

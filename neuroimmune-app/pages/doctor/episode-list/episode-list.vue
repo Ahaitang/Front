@@ -96,7 +96,7 @@
 
 			<!-- 空状态 -->
 			<view class="empty-state" v-if="!filteredList.length">
-				<text class="app-icon empty-icon uniui-pulse"></text>
+				<text class="app-icon empty-icon uniui-fire-filled"></text>
 				<text class="empty-text">暂无发作记录</text>
 			</view>
 		</view>

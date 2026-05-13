@@ -43,6 +43,11 @@
 					</view>
 					<text class="record-diagnosis" v-if="item.diagnosis">诊断：{{ item.diagnosis }}</text>
 					<text class="record-content">{{ item.content || '无内容' }}</text>
+					<!-- 关联发作记录提示 -->
+					<view class="episode-link" v-if="item.relatedEpisodeNumber" @click.stop="viewEpisode(item.relatedEpisodeId)">
+						<uni-icons type="link" size="16" color="#0891B2"></uni-icons>
+						<text class="episode-link-text">关联第 {{ item.relatedEpisodeNumber }} 次发作</text>
+					</view>
 				</view>
 			</view>
 		</view>
@@ -72,6 +77,11 @@
 					<text class="external-content">{{ item.content || item.notes || '无内容' }}</text>
 					<view class="external-images" v-if="item.attachments">
 						<image v-for="(img, idx) in item.attachments.split(',')" :key="idx" :src="img" mode="aspectFill" class="thumb-img" @click.stop="previewImage(img, item.attachments)" />
+					</view>
+					<!-- 关联发作记录提示 -->
+					<view class="episode-link" v-if="item.relatedEpisodeNumber" @click.stop="viewEpisode(item.relatedEpisodeId)">
+						<uni-icons type="link" size="16" color="#0891B2"></uni-icons>
+						<text class="episode-link-text">关联第 {{ item.relatedEpisodeNumber }} 次发作</text>
 					</view>
 				</view>
 			</view>
@@ -109,6 +119,14 @@
 						<view class="detail-row" v-if="detailData.doctorName">
 							<text class="detail-label">医生</text>
 							<text class="detail-value">{{ detailData.doctorName }}</text>
+						</view>
+						<!-- 关联发作记录 -->
+						<view class="detail-row clickable" v-if="detailData.relatedEpisodeNumber" @click="viewEpisode(detailData.relatedEpisodeId)">
+							<text class="detail-label">关联发作</text>
+							<view class="detail-value-link">
+								<text class="link-text">第 {{ detailData.relatedEpisodeNumber }} 次发作</text>
+								<uni-icons type="arrowright" size="16" color="#0891B2"></uni-icons>
+							</view>
 						</view>
 					</view>
 
@@ -189,7 +207,9 @@ export default {
 				content: '',
 				notes: '',
 				attachments: '',
-				recordType: 'hospital' // hospital 或 external
+				recordType: 'hospital',
+				relatedEpisodeId: null,
+				relatedEpisodeNumber: null
 			}
 		};
 	},
@@ -229,7 +249,9 @@ export default {
 						diagnosis: r.diagnosis || '',
 						content: r.content || '',
 						notes: r.notes || '',
-						attachments: r.attachments || ''
+						attachments: r.attachments || '',
+						relatedEpisodeId: r.relatedEpisodeId || null,
+						relatedEpisodeNumber: r.relatedEpisodeNumber || null
 					}))
 
 					this.externalRecords = allRecords.filter(r => r.type === '外院病历')
@@ -283,6 +305,14 @@ export default {
 				current: current,
 				urls: urls
 			})
+		},
+		viewEpisode(episodeId) {
+			if (episodeId) {
+				this.closeDetailPopup()
+				uni.navigateTo({
+					url: '/pages/patient/episode-detail/episode-detail?id=' + episodeId
+				})
+			}
 		},
 		editExternal(item) {
 			uni.navigateTo({
@@ -497,6 +527,27 @@ export default {
 	overflow: hidden;
 }
 
+/* 关联发作记录链接 */
+.episode-link {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+	margin-top: 12rpx;
+	padding: 10rpx 16rpx;
+	background: $app-primary-bg;
+	border-radius: 8rpx;
+}
+
+.episode-link:active {
+	opacity: 0.8;
+}
+
+.episode-link-text {
+	font-size: 26rpx;
+	color: $app-primary;
+	font-weight: 500;
+}
+
 .section-header {
 	display: flex;
 	justify-content: space-between;
@@ -674,6 +725,10 @@ export default {
 	border-bottom: none;
 }
 
+.detail-row.clickable:active {
+	background: $app-hover-bg;
+}
+
 .detail-label {
 	font-size: 28rpx;
 	color: $app-text-muted;
@@ -687,6 +742,18 @@ export default {
 
 .detail-value.highlight {
 	color: $app-primary;
+}
+
+.detail-value-link {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+}
+
+.link-text {
+	font-size: 28rpx;
+	color: $app-primary;
+	font-weight: 500;
 }
 
 .section-label {

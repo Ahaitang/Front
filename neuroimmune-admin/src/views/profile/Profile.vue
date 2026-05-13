@@ -102,9 +102,9 @@ const changePassword = async () => {
   passwordLoading.value = true
   try {
     if (isDoctor.value) {
-      await updateDoctorPassword(userId.value, passwordForm.value.newPassword)
+      await updateDoctorPassword(userId.value, passwordForm.value.newPassword, passwordForm.value.oldPassword)
     } else {
-      await updateAdminPassword(userId.value, passwordForm.value.newPassword)
+      await updateAdminPassword(userId.value, passwordForm.value.newPassword, passwordForm.value.oldPassword)
     }
     ElMessage.success('密码修改成功')
     passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
