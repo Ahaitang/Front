@@ -37,11 +37,12 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     const result = response.data
-    if (result.code === 1) {
+    // 兼容两种后端返回格式: code=1 (QMG旧格式) 或 code=200 (统一格式)
+    if (result.code === 1 || result.code === 200) {
       return result.data
     } else {
-      ElMessage.error(result.msg || '请求失败')
-      return Promise.reject(new Error(result.msg || '请求失败'))
+      ElMessage.error(result.msg || result.message || '请求失败')
+      return Promise.reject(new Error(result.msg || result.message || '请求失败'))
     }
   },
   (error) => {
@@ -100,11 +101,11 @@ function request<T = any>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
   data?: any
 ): Promise<T> {
-  return axiosInstance.request<T>({
+  return axiosInstance.request({
     url,
     method,
     data
-  })
+  }) as unknown as Promise<T>
 }
 
 /**

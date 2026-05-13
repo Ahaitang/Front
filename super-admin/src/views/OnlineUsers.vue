@@ -89,7 +89,7 @@
 
     <!-- 踢下线对话框 -->
     <el-dialog v-model="kickDialogVisible" title="踢下线确认" width="400px">
-      <p>确定要将用户 <strong>{{ kickTarget?.userId }}</strong> ({{ roleLabel(kickTarget?.role) }}) 踢下线吗？</p>
+      <p>确定要将用户 <strong>{{ kickTarget?.userId }}</strong> ({{ roleLabel(kickTarget?.role ?? '') }}) 踢下线吗？</p>
       <template #footer>
         <el-button @click="kickDialogVisible = false">取消</el-button>
         <el-button type="warning" @click="confirmKick">确认踢下线</el-button>
@@ -98,7 +98,7 @@
 
     <!-- 踢下线+封禁对话框 -->
     <el-dialog v-model="banDialogVisible" title="踢下线并封禁" width="450px">
-      <p>确定要将用户 <strong>{{ kickTarget?.userId }}</strong> ({{ roleLabel(kickTarget?.role) }}) 踢下线并加入黑名单吗？</p>
+      <p>确定要将用户 <strong>{{ kickTarget?.userId }}</strong> ({{ roleLabel(kickTarget?.role ?? '') }}) 踢下线并加入黑名单吗？</p>
       <el-form-item label="封禁时长（小时）">
         <el-input-number v-model="banHours" :min="1" :max="72" />
       </el-form-item>

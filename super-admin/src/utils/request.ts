@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { AxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
 
 const instance = axios.create({
@@ -28,4 +29,11 @@ instance.interceptors.response.use(
   }
 )
 
-export default instance
+const request = {
+  get: (url: string, config?: AxiosRequestConfig): Promise<any> => instance.get(url, config),
+  post: (url: string, data?: any, config?: AxiosRequestConfig): Promise<any> => instance.post(url, data, config),
+  put: (url: string, data?: any, config?: AxiosRequestConfig): Promise<any> => instance.put(url, data, config),
+  delete: (url: string, config?: AxiosRequestConfig): Promise<any> => instance.delete(url, config)
+}
+
+export default request

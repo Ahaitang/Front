@@ -167,13 +167,6 @@ const handleSizeChange = (size: number) => {
   loadData()
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const viewMedication = (row: Medication) => {
-  currentMedication.value = { ...row }
-  dialogType.value = 'view'
-  dialogVisible.value = true
-}
-
 const addMedication = () => {
   currentMedication.value = {
     date: new Date().toISOString().split('T')[0],

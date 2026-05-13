@@ -30,8 +30,6 @@ const recordsLoading = ref(false)
 const recordDetailVisible = ref(false)
 const currentRecord = ref<MedicalRecord | null>(null)
 const recordImages = ref<string[]>([])
-const imagePreviewVisible = ref(false)
-const previewImageUrl = ref('')
 
 // 加载患者列表
 const loadPatients = async () => {

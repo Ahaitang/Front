@@ -99,7 +99,8 @@ export function parseQuestionnaireRecord(record: any) {
     // MyBatis resultMap 映射为驼峰命名：doctorName, doctorEmployeeNumber
     // 兼容两种命名方式
     const doctorName = record.doctorName || record.doctor_name
-    const doctorEmployeeNumber = record.doctorEmployeeNumber || record.doctor_employee_number
+    // doctorEmployeeNumber available for future use
+    void (record.doctorEmployeeNumber || record.doctor_employee_number)
     
     // 如果获取到了医生真实姓名，更新 doctorUsername 字段
     if (doctorName) {

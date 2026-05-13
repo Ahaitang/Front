@@ -364,7 +364,7 @@ const parseCSVFile = (file: File): Promise<Array<{ name: string; gender: string;
           reject(new Error('CSV 文件至少需要包含表头和数据行'))
           return
         }
-        const headerRow = parseCSVLine(lines[0])
+        const headerRow = parseCSVLine(lines[0]!)
         const headers = headerRow.map((h) => h.replace(/^\s*|\s*$/g, ''))
         const nameIdx = headers.findIndex((h) => /姓名|name/i.test(h))
         const genderIdx = headers.findIndex((h) => /性别|gender/i.test(h))
@@ -376,7 +376,7 @@ const parseCSVFile = (file: File): Promise<Array<{ name: string; gender: string;
         }
         const patients: Array<{ name: string; gender: string; admissionNumber: string; phone: string }> = []
         for (let i = 1; i < lines.length; i++) {
-          const cols = parseCSVLine(lines[i])
+          const cols = parseCSVLine(lines[i]!)
           const name = (cols[nameIdx] || '').trim()
           const gender = normalizeGender(cols[genderIdx] || '')
           const admissionNumber = (cols[admissionIdx] || '').trim()
@@ -398,7 +398,7 @@ const parseCSVFile = (file: File): Promise<Array<{ name: string; gender: string;
   })
 }
 
-const handleImportFileChange = (file: UploadFile, files: UploadFiles) => {
+const handleImportFileChange = (_file: UploadFile, files: UploadFiles) => {
   importFileList.value = files
   importResult.value = null
 }
@@ -408,7 +408,7 @@ const doImport = async () => {
     ElMessage.warning('请先选择文件')
     return
   }
-  const file = importFileList.value[0].raw
+  const file = importFileList.value[0]?.raw
   if (!file) {
     ElMessage.warning('文件不存在')
     return

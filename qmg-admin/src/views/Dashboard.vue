@@ -172,21 +172,21 @@ const loadStats = async () => {
     
     // 处理患者列表
     const patientsResult = results[0]
-    if (patientsResult.status === 'fulfilled') {
-      stats.value.patients = patientsResult.value.length
+    if (patientsResult && patientsResult.status === 'fulfilled') {
+      stats.value.patients = (patientsResult as PromiseFulfilledResult<any>).value.length
     }
     
     // 处理问卷记录
     const questionnairesResult = results[1]
-    if (questionnairesResult.status === 'fulfilled') {
-      stats.value.questionnaires = questionnairesResult.value.length
+    if (questionnairesResult && questionnairesResult.status === 'fulfilled') {
+      stats.value.questionnaires = (questionnairesResult as PromiseFulfilledResult<any>).value.length
     }
     
     // 处理所有记录（用于今日记录和最近记录）
     const allRecordsResult = results[2]
     let parsedRecords: any[] = []
-    if (allRecordsResult.status === 'fulfilled') {
-      parsedRecords = parseQuestionnaireRecords(allRecordsResult.value || [])
+    if (allRecordsResult && allRecordsResult.status === 'fulfilled') {
+      parsedRecords = parseQuestionnaireRecords((allRecordsResult as PromiseFulfilledResult<any>).value || [])
       
       // 计算今日记录
       const today = new Date().toISOString().split('T')[0]
@@ -204,15 +204,15 @@ const loadStats = async () => {
     
     // 处理按天统计
     const dailyStatsResult = results[3]
-    if (dailyStatsResult.status === 'fulfilled') {
-      dailyStatistics.value = dailyStatsResult.value || []
+    if (dailyStatsResult && dailyStatsResult.status === 'fulfilled') {
+      dailyStatistics.value = (dailyStatsResult as PromiseFulfilledResult<any>).value || []
     }
     
     // 处理医生列表（如果有权限）
     if (userStore.canManageDoctors && results[4]) {
       const doctorsResult = results[4]
       if (doctorsResult.status === 'fulfilled') {
-        stats.value.doctors = doctorsResult.value.length
+        stats.value.doctors = (doctorsResult as PromiseFulfilledResult<any>).value.length
       } else {
         // 如果获取失败，可能是权限问题，设置为0
         stats.value.doctors = 0

@@ -180,8 +180,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { doctorApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type UploadFile, type UploadFiles } from 'element-plus'
-import { Plus, Edit, Delete, Upload, Download } from '@element-plus/icons-vue'
+import { ElMessage, type FormInstance, type FormRules, type UploadFile, type UploadFiles } from 'element-plus'
+import { Plus, Upload, Download } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 
 const router = useRouter()
@@ -194,6 +194,7 @@ const importDialogVisible = ref(false)
 const importing = ref(false)
 const fileList = ref<UploadFile[]>([])
 const importResult = ref<{ successCount: number; totalCount: number } | null>(null)
+// @ts-expect-error template ref used in template
 const uploadRef = ref()
 const formRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
@@ -352,7 +353,7 @@ const downloadTemplate = () => {
 }
 
 // 处理文件选择
-const handleFileChange = (file: UploadFile, files: UploadFiles) => {
+const handleFileChange = (_file: UploadFile, files: UploadFiles) => {
   fileList.value = files
   importResult.value = null
 }
@@ -369,7 +370,11 @@ const parseExcelFile = (file: File): Promise<Array<{ employeeNumber: string; use
         
         // 读取第一个工作表
         const firstSheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[firstSheetName]
+        if (!firstSheetName) {
+          reject(new Error('Excel 文件为空'))
+          return
+        }
+        const worksheet = workbook.Sheets[firstSheetName]!
         
         // 转换为 JSON
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]
@@ -380,7 +385,7 @@ const parseExcelFile = (file: File): Promise<Array<{ employeeNumber: string; use
         }
         
         // 第一行是表头，查找列索引
-        const headers = jsonData[0].map((h: any) => String(h).trim().toLowerCase())
+        const headers = (jsonData[0] || []).map((h: any) => String(h).trim().toLowerCase())
         const employeeNumberIndex = headers.findIndex((h: string) => 
           h.includes('工号') || h.includes('employee') || h.includes('工号')
         )
@@ -455,7 +460,7 @@ const handleImport = async () => {
     return
   }
   
-  const file = fileList.value[0].raw
+  const file = fileList.value[0]?.raw
   if (!file) {
     ElMessage.warning('文件不存在')
     return

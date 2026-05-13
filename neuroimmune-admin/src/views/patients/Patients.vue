@@ -151,14 +151,6 @@ const handleSizeChange = (size: number) => {
   loadData()
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const viewPatient = (row: Patient) => {
-  currentPatient.value = { ...row }
-  selectedDoctorId.value = row.doctorId ?? undefined
-  dialogType.value = 'view'
-  dialogVisible.value = true
-}
-
 const editPatient = (row: Patient) => {
   currentPatient.value = { ...row }
   selectedDoctorId.value = row.doctorId ?? undefined

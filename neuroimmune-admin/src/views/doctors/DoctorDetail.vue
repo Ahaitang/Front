@@ -258,7 +258,7 @@ const openAddFollowUpDialog = () => {
   }
   // 解析默认检查项目
   if (examTypeOptions.value.length > 0) {
-    handleExamTypeChange(examTypeOptions.value[0].id)
+    handleExamTypeChange(examTypeOptions.value[0]!.id)
   }
   selectedExamItems.value = []
   followUpDialogType.value = 'add'
@@ -451,9 +451,9 @@ const formatCycleText = (row: FollowUp): string => {
     'evening': '晚间'
   }
 
-  const typeText = typeMap[row.outpatientCycleType] || ''
+  const typeText = (row.outpatientCycleType && typeMap[row.outpatientCycleType]) || ''
   const value = row.outpatientCycleValue || ''
-  const slotText = slotMap[row.outpatientTimeSlot] || ''
+  const slotText = (row.outpatientTimeSlot && slotMap[row.outpatientTimeSlot]) || ''
 
   if (row.outpatientCycleType === 'weekly') {
     const weekDays = ['一', '二', '三', '四', '五', '六', '日']
