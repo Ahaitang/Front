@@ -1,0 +1,125 @@
+/* 全局样式 - 超级管理平台 (neuroimmune 风格) */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+:root {
+  /* 主色调 - Cyan */
+  --primary-color: #0891B2;
+  --primary-light: #22D3EE;
+  --primary-dark: #0E7490;
+  --primary-lighter: #ECFEFF;
+
+  /* 功能色 */
+  --success-color: #10B981;
+  --warning-color: #F59E0B;
+  --error-color: #EF4444;
+  --info-color: #3B82F6;
+
+  /* 背景色 */
+  --bg-color: #F8FAFC;
+  --card-bg: #FFFFFF;
+
+  /* 文字颜色 */
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+
+  /* 边框和阴影 */
+  --border-color: #E2E8F0;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* 过渡 */
+  --transition: all 0.2s ease;
+
+  /* Element Plus 主题覆盖 */
+  --el-color-primary: #0891B2;
+  --el-color-primary-light-3: #14B8A6;
+  --el-color-primary-light-5: #5EEAD4;
+  --el-color-primary-light-7: #99F6E4;
+  --el-color-primary-light-9: #CCFBF1;
+  --el-color-primary-dark-2: #0E7490;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+}
+
+/* 通用类 */
+.text-primary { color: var(--primary-color) !important; }
+.text-success { color: var(--success-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-error { color: var(--error-color) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+/* 页面容器 */
+.page-container {
+  padding: 24px;
+  min-height: calc(100vh - 60px);
+  background: var(--bg-color);
+}
+
+/* 搜索栏样式 */
+.search-bar {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 内容卡片样式 */
+.content-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 分页样式 */
+.pagination-wrap {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 表格样式优化 */
+.el-table {
+  --el-table-header-bg-color: #F8FAFC;
+  --el-table-header-text-color: var(--text-secondary);
+  --el-table-border-color: var(--border-color);
+  --el-table-row-hover-bg-color: #F1F5F9;
+}
+
+/* 对话框样式 */
+.el-dialog {
+  border-radius: var(--radius-lg);
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}

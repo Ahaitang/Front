@@ -1,15 +1,16 @@
 <template>
-  <el-container class="main-layout">
-    <el-aside width="200px" class="sidebar">
+  <div class="layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed: isCollapse }">
       <div class="logo">
-        <h2>QMG Admin</h2>
+        <el-icon :size="28" color="#FFFFFF"><Odometer /></el-icon>
+        <span v-show="!isCollapse" class="logo-text">QMG 管理系统</span>
       </div>
+
       <el-menu
         :default-active="activeMenu"
-        class="sidebar-menu"
-        background-color="transparent"
-        text-color="rgba(255, 255, 255, 0.85)"
-        active-text-color="#ffffff"
+        :collapse="isCollapse"
+        router
         @select="handleMenuSelect"
       >
         <el-menu-item
@@ -20,49 +21,65 @@
           <el-icon v-if="route.iconComponent">
             <component :is="route.iconComponent" />
           </el-icon>
-          <span>{{ route.meta?.title }}</span>
+          <template #title>{{ route.meta?.title }}</template>
         </el-menu-item>
       </el-menu>
-    </el-aside>
-    
-    <el-container>
-      <el-header class="header">
+
+      <div class="sidebar-footer">
+        <el-button text @click="isCollapse = !isCollapse">
+          <el-icon :size="20">
+            <Fold v-if="!isCollapse" />
+            <Expand v-else />
+          </el-icon>
+        </el-button>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div class="main-container">
+      <!-- 顶部导航 -->
+      <header class="header">
         <div class="header-left">
-          <span class="title">重症肌无力定量评分系统</span>
+          <span class="page-title">{{ route.meta?.title || '重症肌无力定量评分系统' }}</span>
         </div>
         <div class="header-right">
           <el-dropdown @command="handleCommand">
             <span class="user-info">
-              <el-icon><User /></el-icon>
-              {{ userStore.username }}
-              <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              <el-avatar :size="32" icon="UserFilled" />
+              <span class="user-name">{{ userStore.username }}</span>
+              <el-icon style="margin-left: 4px"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                <el-dropdown-item command="logout">
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
         </div>
-      </el-header>
-      
-      <el-main class="main-content">
+      </header>
+
+      <!-- 内容区 -->
+      <main class="content">
         <router-view />
-      </el-main>
-    </el-container>
-  </el-container>
+      </main>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
-import { User, ArrowDown, Odometer, Document, Avatar, Setting } from '@element-plus/icons-vue'
+import { User, ArrowDown, Odometer, Document, Avatar, Setting, Fold, Expand, SwitchButton } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const isCollapse = ref(false)
 
 // 图标映射
 const iconMap: Record<string, any> = {
@@ -172,109 +189,107 @@ const handleCommand = async (command: string) => {
 </script>
 
 <style scoped>
-.main-layout {
+.layout {
+  display: flex;
   height: 100vh;
+  background: #F8FAFC;
 }
 
 .sidebar {
-  background: linear-gradient(180deg, #1976d2 0%, #1565c0 100%);
-  overflow: hidden;
-  box-shadow: 2px 0 12px rgba(30, 136, 229, 0.15);
+  width: 220px;
+  background: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s;
+  border-right: 1px solid #E2E8F0;
+}
+
+.sidebar.collapsed {
+  width: 64px;
 }
 
 .logo {
   height: 60px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  padding: 0 20px;
+  gap: 12px;
+  background: #0891B2;
+}
+
+.logo .logo-text {
+  font-size: 16px;
+  font-weight: 600;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
 }
 
-.logo h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-.sidebar-menu {
+.sidebar :deep(.el-menu) {
   border-right: none;
-  height: calc(100vh - 60px);
-  overflow-y: auto;
-  padding: 10px 0;
+  flex: 1;
+  background: #F8FAFC;
 }
 
-.sidebar-menu :deep(.el-menu-item) {
-  margin: 4px 8px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+.sidebar :deep(.el-menu .el-menu-item) {
+  color: #64748B;
 }
 
-.sidebar-menu :deep(.el-menu-item:hover) {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
+.sidebar :deep(.el-menu .el-menu-item:hover) {
+  background-color: #ECFEFF;
+  color: #0891B2;
 }
 
-.sidebar-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%) !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.sidebar :deep(.el-menu .el-menu-item.is-active) {
+  background-color: #ECFEFF;
+  color: #0891B2;
+  border-right: 3px solid #0891B2;
 }
 
-.sidebar-menu :deep(.el-menu-item .el-icon) {
-  color: inherit;
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #F8FAFC;
 }
 
 .header {
+  height: 60px;
+  background: #fff;
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(to right, #ffffff 0%, #f0f7ff 100%);
-  border-bottom: 1px solid #e3f2fd;
-  padding: 0 20px;
-  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.08);
+  padding: 0 24px;
 }
 
-.header-left {
-  flex: 1;
-}
-
-.title {
+.page-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1976d2;
-  letter-spacing: 0.5px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
+  color: #1E293B;
 }
 
 .user-info {
   display: flex;
   align-items: center;
+  gap: 8px;
   cursor: pointer;
-  color: #1976d2;
-  font-weight: 500;
-  transition: color 0.3s ease;
 }
 
-.user-info:hover {
-  color: #2196f3;
+.user-name {
+  font-size: 14px;
+  color: #1E293B;
 }
 
-.user-info .el-icon {
-  margin: 0 4px;
-}
-
-.main-content {
-  background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
-  padding: 20px;
-  min-height: calc(100vh - 60px);
+.content {
+  flex: 1;
+  overflow: auto;
+  background: #F8FAFC;
 }
 </style>

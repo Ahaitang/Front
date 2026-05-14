@@ -1,46 +1,77 @@
 <template>
   <div class="layout">
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <el-icon><Monitor /></el-icon>
-        <span>超级管理平台</span>
+    <!-- 侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed: isCollapse }">
+      <div class="logo">
+        <el-icon :size="28" color="#FFFFFF"><Monitor /></el-icon>
+        <span v-show="!isCollapse" class="logo-text">超级管理平台</span>
       </div>
-      <el-menu :default-active="activeMenu" router background-color="#304156" text-color="#bfcbd9" active-text-color="#409EFF">
+
+      <el-menu :default-active="activeMenu" :collapse="isCollapse" router>
         <el-menu-item index="/online">
           <el-icon><User /></el-icon>
-          <span>在线用户管理</span>
+          <template #title>在线用户管理</template>
         </el-menu-item>
         <el-menu-item index="/audit">
           <el-icon><Document /></el-icon>
-          <span>审计日志</span>
+          <template #title>审计日志</template>
         </el-menu-item>
         <el-menu-item index="/blacklist">
           <el-icon><CircleClose /></el-icon>
-          <span>黑名单管理</span>
+          <template #title>黑名单管理</template>
         </el-menu-item>
         <el-menu-item index="/config">
           <el-icon><Setting /></el-icon>
-          <span>系统配置</span>
+          <template #title>系统配置</template>
         </el-menu-item>
       </el-menu>
-    </div>
-    <div class="main">
-      <div class="header">
-        <span class="title">{{ currentTitle }}</span>
-        <div class="header-right">
-          <span class="username">{{ userStore.name || userStore.username }}</span>
-          <el-button type="danger" size="small" @click="handleLogout">退出登录</el-button>
+
+      <div class="sidebar-footer">
+        <el-button text @click="isCollapse = !isCollapse">
+          <el-icon :size="20">
+            <Fold v-if="!isCollapse" />
+            <Expand v-else />
+          </el-icon>
+        </el-button>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div class="main-container">
+      <!-- 顶部导航 -->
+      <header class="header">
+        <div class="header-left">
+          <span class="page-title">{{ currentTitle }}</span>
         </div>
-      </div>
-      <div class="content">
+        <div class="header-right">
+          <el-dropdown>
+            <span class="user-info">
+              <el-avatar :size="32" icon="UserFilled" />
+              <span class="user-name">{{ userStore.name || userStore.username }}</span>
+              <el-icon style="margin-left: 4px"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleLogout">
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </header>
+
+      <!-- 内容区 -->
+      <main class="content">
         <router-view />
-      </div>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { authApi } from '@/utils/api'
@@ -49,6 +80,7 @@ import { ElMessageBox } from 'element-plus'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const isCollapse = ref(false)
 
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title as string || '')
@@ -73,66 +105,104 @@ const handleLogout = async () => {
 .layout {
   display: flex;
   height: 100vh;
+  background: #F8FAFC;
 }
 
 .sidebar {
-  width: 200px;
-  background: #304156;
+  width: 220px;
+  background: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s;
+  border-right: 1px solid #E2E8F0;
 }
 
-.sidebar-header {
-  padding: 20px;
-  color: #fff;
-  font-weight: bold;
+.sidebar.collapsed {
+  width: 64px;
+}
+
+.logo {
+  height: 60px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  padding: 0 20px;
+  gap: 12px;
+  background: #0891B2;
 }
 
-.sidebar-header .el-icon {
-  font-size: 20px;
+.logo .logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
 }
 
-.main {
+.sidebar :deep(.el-menu) {
+  border-right: none;
+  flex: 1;
+  background: #F8FAFC;
+}
+
+.sidebar :deep(.el-menu .el-menu-item) {
+  color: #64748B;
+}
+
+.sidebar :deep(.el-menu .el-menu-item:hover) {
+  background-color: #ECFEFF;
+  color: #0891B2;
+}
+
+.sidebar :deep(.el-menu .el-menu-item.is-active) {
+  background-color: #ECFEFF;
+  color: #0891B2;
+  border-right: 3px solid #0891B2;
+}
+
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.main-container {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  background: #F8FAFC;
 }
 
 .header {
-  height: 50px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
+  height: 60px;
   background: #fff;
-  border-bottom: 1px solid #eee;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header .title {
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.header-right {
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  padding: 0 24px;
 }
 
-.header-right .username {
-  color: #666;
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #1E293B;
 }
 
 .content {
   flex: 1;
-  padding: 20px;
-  background: #f5f5f5;
   overflow: auto;
-}
-
-.el-menu {
-  border-right: none;
+  background: #F8FAFC;
 }
 </style>
