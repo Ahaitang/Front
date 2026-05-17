@@ -179,7 +179,7 @@ const handleCommand = async (command: string) => {
         cancelButtonText: '取消',
         type: 'warning'
       })
-      userStore.logout()
+      await userStore.logout()
       router.push('/login')
     } catch {
       // 用户取消

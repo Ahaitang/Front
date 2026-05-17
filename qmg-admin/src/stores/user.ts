@@ -60,7 +60,15 @@ export const useUserStore = defineStore('user', {
     /**
      * 登出
      */
-    logout() {
+    async logout() {
+      try {
+        await doctorApi.logout({
+          id: this.userInfo?.id,
+          level: this.userInfo?.level
+        })
+      } catch (e) {
+        // 即使后端调用失败也继续清理本地状态
+      }
       this.token = ''
       this.userInfo = null
       this.isLoggedIn = false

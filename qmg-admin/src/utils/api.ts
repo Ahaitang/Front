@@ -168,6 +168,13 @@ export const doctorApi = {
     level?: number
   }, currentUserLevel: number): Promise<any> {
     return request('/qmg/doctor/update', 'POST', { ...doctor, currentUserLevel })
+  },
+
+  /**
+   * 医生登出
+   */
+  logout(data: { id?: number; level?: number }): Promise<any> {
+    return request('/qmg/doctor/logout', 'POST', data)
   }
 }
 
