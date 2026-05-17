@@ -12,13 +12,13 @@ export const onlineApi = {
 }
 
 export const auditApi = {
-  list: (params: { page?: number; pageSize?: number; module?: string; role?: string; operationType?: string; startTime?: string; endTime?: string }) => request.post('/audit/list', params),
+  list: (params: { page?: number; pageSize?: number; module?: string; role?: string; operationType?: string; startTime?: string; endTime?: string }) => request.get('/audit/list', { params }),
   stats: () => request.get('/audit/stats')
 }
 
 export const blacklistApi = {
   list: (params?: { status?: string }) => request.post('/blacklist/list', params || {}),
-  count: () => request.get('/blacklist/count'),
+  count: () => request.post('/blacklist/count', {}),
   add: (params: { userId: number; role: string; module: string; reason: string; hours?: number }) => request.post('/blacklist/add', params),
   release: (id: number) => request.put(`/blacklist/release/${id}`)
 }

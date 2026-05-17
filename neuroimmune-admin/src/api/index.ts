@@ -228,21 +228,12 @@ export const deleteEpisode = (id: string | number) => {
 }
 
 // 文件上传
-export const uploadFile = async (file: File) => {
+export const uploadFile = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  const response = await fetch('/api/v1/neuroimmune/file/upload', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
-    }
+  return request.post<string>('/neuroimmune/file/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
   })
-  const result = await response.json()
-  if (result.code === 200 && result.data) {
-    return result.data
-  }
-  throw new Error(result.message || '上传失败')
 }
 
 // OCR识别 - 解析病历图片

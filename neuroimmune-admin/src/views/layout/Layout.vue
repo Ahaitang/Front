@@ -50,7 +50,13 @@ const handleLogout = () => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
+  }).then(async () => {
+    try {
+      const { request } = await import('@/utils/request')
+      await request.post('/neuroimmune/logout')
+    } catch (e) {
+      // 即使后端调用失败也继续清理本地状态
+    }
     localStorage.removeItem('admin_token')
     localStorage.removeItem('admin_user')
     localStorage.removeItem('admin_role')
