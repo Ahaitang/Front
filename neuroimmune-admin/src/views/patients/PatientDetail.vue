@@ -382,7 +382,7 @@ const handleOcrParse = async () => {
 const cancelRecordConfirm = (row: MedicalRecord) => {
   ElMessageBox.confirm('确定要删除该病历记录吗？', '提示', {
     confirmButtonText: '确定',
-    cancelButtonText: '删除',
+    cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
@@ -483,7 +483,7 @@ const saveFollowUpSubmit = async () => {
 const cancelFollowUpConfirm = (row: FollowUp) => {
   ElMessageBox.confirm('确定要删除该随访记录吗？', '提示', {
     confirmButtonText: '确定',
-    cancelButtonText: '删除',
+    cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
@@ -548,7 +548,7 @@ const saveMedicationSubmit = async () => {
 const cancelMedicationConfirm = (row: Medication) => {
   ElMessageBox.confirm('确定要删除该用药记录吗？', '提示', {
     confirmButtonText: '确定',
-    cancelButtonText: '删除',
+    cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
