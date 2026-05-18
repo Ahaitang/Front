@@ -20,6 +20,10 @@
           <el-icon><CircleClose /></el-icon>
           <template #title>黑名单管理</template>
         </el-menu-item>
+        <el-menu-item index="/logs">
+          <el-icon><Tickets /></el-icon>
+          <template #title>服务器日志</template>
+        </el-menu-item>
         <el-menu-item index="/config">
           <el-icon><Setting /></el-icon>
           <template #title>系统配置</template>

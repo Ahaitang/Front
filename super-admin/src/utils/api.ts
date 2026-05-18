@@ -27,3 +27,9 @@ export const configApi = {
   list: () => request.get('/config/list'),
   update: (params: { key: string; value: string }) => request.post('/config/update', params)
 }
+
+export const logApi = {
+  getFiles: () => request.get('/logs/files'),
+  readLog: (params: { filename: string; page?: number; pageSize?: number; keyword?: string; level?: string }) => request.get('/logs/read', { params }),
+  getDownloadUrl: (filename: string) => `/api/v1/super-admin/logs/download/${filename}`
+}

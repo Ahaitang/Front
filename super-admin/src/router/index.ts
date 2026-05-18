@@ -11,6 +11,7 @@ const routes = [
       { path: 'online', name: 'OnlineUsers', component: () => import('@/views/OnlineUsers.vue'), meta: { title: '在线用户管理' } },
       { path: 'audit', name: 'AuditLog', component: () => import('@/views/AuditLog.vue'), meta: { title: '审计日志' } },
       { path: 'blacklist', name: 'Blacklist', component: () => import('@/views/Blacklist.vue'), meta: { title: '黑名单管理' } },
+      { path: 'logs', name: 'ServerLogs', component: () => import('@/views/ServerLogs.vue'), meta: { title: '服务器日志' } },
       { path: 'config', name: 'SystemConfig', component: () => import('@/views/SystemConfig.vue'), meta: { title: '系统配置' } }
     ]
   }
