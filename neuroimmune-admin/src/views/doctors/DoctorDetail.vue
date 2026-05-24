@@ -515,7 +515,9 @@ const calculateAge = (birthDate: string | undefined) => {
       <template v-if="doctor">
         <div class="doctor-header">
           <div class="doctor-avatar">
-            <el-avatar :size="72" :style="{ background: '#3B82F6' }">{{ doctor.name?.charAt(0) }}</el-avatar>
+            <el-avatar :size="72" :src="doctor.avatar" :style="doctor.avatar ? {} : { background: '#3B82F6' }">
+              <template v-if="!doctor.avatar">{{ doctor.name?.charAt(0) }}</template>
+            </el-avatar>
           </div>
           <div class="doctor-info">
             <h3>{{ doctor.name }}</h3>

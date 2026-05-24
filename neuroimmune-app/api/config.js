@@ -1,6 +1,10 @@
 // API 配置
-const envBaseUrl = process.env.VUE_APP_API_BASE_URL
-const BASE_URL = envBaseUrl || 'http://localhost:8080/api/v1'
+// #ifdef H5
+const BASE_URL = '/api/v1'
+// #endif
+// #ifndef H5
+const BASE_URL = 'https://api.ahaitang.top/api/v1'
+// #endif
 export default {
   BASE_URL
 }

@@ -17,7 +17,7 @@ const routes = [
   }
 ]
 
-const router = createRouter({ history: createWebHistory(), routes })
+const router = createRouter({ history: createWebHistory('/admin/'), routes })
 
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('super_admin_token')

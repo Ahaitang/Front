@@ -70,6 +70,11 @@
       <main class="content">
         <router-view />
       </main>
+
+      <!-- 页脚备案信息 -->
+      <footer class="icp-footer">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>皖ICP备2026013909号</a>
+      </footer>
     </div>
   </div>
 </template>
@@ -208,5 +213,27 @@ const handleLogout = async () => {
   flex: 1;
   overflow: auto;
   background: #F8FAFC;
+}
+
+.icp-footer {
+  padding: 8px 0;
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+}
+
+.icp-footer a {
+  color: #94A3B8;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.icp-footer a:hover {
+  color: #0891B2;
 }
 </style>

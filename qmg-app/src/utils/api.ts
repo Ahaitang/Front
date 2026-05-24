@@ -4,7 +4,7 @@
  */
 
 // API基础地址（线上环境）
-const BASE_URL = 'https://api.ahaitang.top:8443/api/v1'
+const BASE_URL = 'https://api.ahaitang.top/api/v1'
 
 /**
  * 统一请求方法

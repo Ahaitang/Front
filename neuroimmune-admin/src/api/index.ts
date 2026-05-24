@@ -231,7 +231,7 @@ export const deleteEpisode = (id: string | number) => {
 export const uploadFile = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  return request.post<string>('/neuroimmune/file/upload', formData, {
+  return request.post<{ url: string }>('/neuroimmune/file/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }

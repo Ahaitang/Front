@@ -230,7 +230,9 @@ export default {
 		this.doctorName = uni.getStorageSync('doctorName') || ''
 		this.loadData()
 		// 从后端刷新实名状态
-		this.refreshRealAuthStatus()
+		if (!this.isDoctor) {
+			this.refreshRealAuthStatus()
+		}
 	},
 	methods: {
 		async loadData() {
@@ -253,6 +255,7 @@ export default {
 			}
 		},
 			async refreshRealAuthStatus() {
+				if (this.isDoctor) return
 				const userInfo = uni.getStorageSync('userInfo') || {}
 				if (!userInfo.id) return
 				try {

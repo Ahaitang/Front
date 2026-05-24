@@ -114,7 +114,7 @@ onMounted(() => {
         <div class="header-right">
           <el-dropdown>
             <span class="user-info">
-              <el-avatar :size="32" icon="UserFilled" />
+              <el-avatar :size="32" :src="userInfo.avatar" icon="UserFilled" />
               <span class="user-name">{{ userInfo.name || '管理员' }}</span>
               <el-tag size="small" :type="userRole === 'admin' ? 'danger' : 'primary'" style="margin-left: 8px">
                 {{ userRole === 'admin' ? '管理员' : '医生' }}
@@ -141,6 +141,11 @@ onMounted(() => {
       <main class="content">
         <RouterView />
       </main>
+
+      <!-- 页脚备案信息 -->
+      <footer class="icp-footer">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>皖ICP备2026013909号</a>
+      </footer>
     </div>
   </div>
 </template>
@@ -248,5 +253,27 @@ onMounted(() => {
   flex: 1;
   overflow: auto;
   background: #F8FAFC;
+}
+
+.icp-footer {
+  padding: 8px 0;
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #F8FAFC;
+  border-top: 1px solid #E5E7EB;
+
+  a {
+    color: #94A3B8;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #0891B2;
+    }
+  }
 }
 </style>
