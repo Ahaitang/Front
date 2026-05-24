@@ -11,8 +11,8 @@
 						<text class="username">{{ userInfo.name || '医生' }}</text>
 					</view>
 					<view class="header-actions">
-						<view class="action-btn" @click="handleLogout">
-							<text class="app-icon uniui-arrowleft"></text>
+						<view class="action-btn" @click="navTo('/pages/doctor/my-info/my-info')">
+							<text class="app-icon uniui-gear-filled"></text>
 						</view>
 					</view>
 				</view>
