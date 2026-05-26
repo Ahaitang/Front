@@ -165,12 +165,13 @@ export default {
 
 .modal-content {
 	width: 90%;
-	max-width: 640rpx;
+	max-width: 680rpx;
 	background: $app-card-bg;
 	border-radius: $app-radius-lg;
 	overflow: hidden;
 	position: relative;
 	z-index: 1;
+	box-sizing: border-box;
 }
 
 .modal-header {
@@ -228,6 +229,8 @@ export default {
 	margin-bottom: 16rpx;
 	border: 2rpx solid transparent;
 	transition: $app-transition;
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .doctor-item:active {
@@ -242,6 +245,7 @@ export default {
 .doctor-avatar {
 	width: 64rpx;
 	height: 64rpx;
+	min-width: 64rpx;
 	border-radius: 50%;
 	background: $app-gradient-primary;
 	display: flex;
@@ -257,6 +261,8 @@ export default {
 
 .doctor-info {
 	flex: 1;
+	min-width: 0;
+	overflow: hidden;
 }
 
 .doctor-name {
@@ -264,17 +270,25 @@ export default {
 	font-weight: 500;
 	color: $app-text;
 	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .doctor-dept, .doctor-hospital {
 	font-size: 24rpx;
 	color: $app-text-muted;
 	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .select-icon {
 	color: $app-primary;
 	font-size: 40rpx;
+	min-width: 40rpx;
+	margin-left: 12rpx;
 }
 
 .empty-state {
