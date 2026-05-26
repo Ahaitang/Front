@@ -578,6 +578,7 @@ export default {
 	height: 280rpx;
 	background: rgba(255, 255, 255, 0.1);
 	border-radius: 50%;
+	pointer-events: none;
 }
 
 .header-card.doctor {
