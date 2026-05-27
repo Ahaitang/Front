@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QMG App — 重症肌无力定量评分小程序</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root{--bg-deep:#050a18;--bg:#0a1128;--bg-elevated:#0f1a36;--surface:#141e3a;--surface2:#1a2744;--border:#2a3a5c;--border-subtle:#1e2f52;--text:#e4e8f1;--text-secondary:#9aa5c0;--text-dim:#667899;--accent:#60a5fa;--accent-bright:#93c5fd;--accent-dim:#3b82f6;--accent-glow:rgba(96,165,250,.15);--accent2:#a78bfa;--green:#34d399;--yellow:#fbbf24;--radius:12px;--radius-sm:8px;--shadow:0 4px 24px rgba(0,0,0,.3)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg-deep);color:var(--text);line-height:1.7;min-height:100vh;padding:2rem}
+  .container{max-width:960px;margin:0 auto}
+  h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent-bright),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+  .subtitle{color:var(--text-dim);font-size:.9rem;margin-bottom:2.5rem;font-family:'JetBrains Mono',monospace}
+  h2{font-size:1.4rem;font-weight:700;color:var(--accent-bright);margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border-subtle)}
+  h3{font-size:1.1rem;font-weight:600;color:var(--text);margin:1.5rem 0 .8rem}
+  p{margin-bottom:.8rem;color:var(--text-secondary)}
+  code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:var(--surface2);padding:.15rem .45rem;border-radius:4px;color:var(--accent-bright)}
+  pre{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:1.2rem;overflow-x:auto;margin:1rem 0;font-size:.82rem;line-height:1.6;box-shadow:var(--shadow)}
+  pre code{background:none;padding:0;color:var(--text)}
+  table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem;background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  th{background:var(--surface2);color:var(--accent-bright);font-weight:600;text-align:left;padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  td{padding:.65rem 1rem;border-bottom:1px solid var(--border-subtle);color:var(--text-secondary)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  ul{margin:.5rem 0 .8rem 1.5rem;color:var(--text-secondary)}
+  li{margin:.3rem 0}
+  .note{background:rgba(96,165,250,.08);border-left:3px solid var(--accent-dim);padding:.8rem 1.2rem;border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin:1rem 0;font-size:.88rem;color:var(--text-secondary)}
+  .score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1rem 0}
+  .score-card{background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:1.2rem;text-align:center;box-shadow:var(--shadow)}
+  .score-card .score{font-size:1.8rem;font-weight:800;font-family:'JetBrains Mono',monospace}
+  .score-card .label{font-size:.8rem;color:var(--text-dim);margin-top:.3rem}
+  .light{color:var(--green)}.moderate{color:var(--yellow)}.severe{color:var(--red)}
+  @media(max-width:768px){body{padding:1rem}h1{font-size:1.6rem}.score-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>QMG App</h1>
+<p class="subtitle">重症肌无力定量评分小程序 &nbsp;|&nbsp; Uni-app + Vue 3 + TypeScript + Pinia &nbsp;|&nbsp; 微信小程序 / H5</p>
+
+<h2>项目简介</h2>
+<p>重症肌无力定量评分系统（Quantitative Myasthenia Gravis Score System）的患者/医生端小程序，实现 13 项临床指标的量化评分、病情追踪与报告展示。</p>
+
+<h2>评分标准</h2>
+<div class="score-grid">
+  <div class="score-card">
+    <div class="score light">≤ 9</div>
+    <div class="label">轻度</div>
+  </div>
+  <div class="score-card">
+    <div class="score moderate">10 – 18</div>
+    <div class="label">中度</div>
+  </div>
+  <div class="score-card">
+    <div class="score severe">> 18</div>
+    <div class="label">重度</div>
+  </div>
+</div>
+<p>总分范围 <strong>0 – 39 分</strong>，基于 13 项临床指标评估。</p>
+
+<h2>技术栈</h2>
+<table>
+  <tr><th>技术</th><th>说明</th></tr>
+  <tr><td>Uni-app</td><td>跨平台框架（Vue 3 + Composition API）</td></tr>
+  <tr><td>TypeScript</td><td>类型约束</td></tr>
+  <tr><td>Pinia</td><td>状态管理</td></tr>
+  <tr><td>Vite</td><td>构建工具</td></tr>
+</table>
+
+<h2>QMG 算法实现</h2>
+<h3>计时项</h3>
+<table>
+  <tr><th>指标</th><th>阈值（0/1/2/3分）</th></tr>
+  <tr><td>复视/眼睑下垂</td><td>61 / 11 / 1 秒</td></tr>
+  <tr><td>上肢抬起</td><td>240 / 90 / 10 秒</td></tr>
+  <tr><td>下肢抬起/抬头</td><td>100 / 31 / 1 秒</td></tr>
+</table>
+
+<h3>测力项（握力）</h3>
+<table>
+  <tr><th>性别</th><th>0分</th><th>1分</th><th>2分</th><th>3分</th></tr>
+  <tr><td>男性</td><td>≥ 45 kg</td><td>≥ 15 kg</td><td>≥ 5 kg</td><td>&lt; 5 kg</td></tr>
+  <tr><td>女性</td><td>≥ 30 kg</td><td>≥ 10 kg</td><td>≥ 5 kg</td><td>&lt; 5 kg</td></tr>
+</table>
+
+<h3>其他指标</h3>
+<ul>
+  <li>肺活量预计值%（阈值: 80 / 65 / 50）</li>
+  <li>构音障碍计数（1–50 范围映射）</li>
+</ul>
+
+<h2>功能特性</h2>
+<ul>
+  <li>身份选择：患者入口 / 医生入口</li>
+  <li>分步测评表单（基础信息 → 计时项 → 测力项 → 激素用量）</li>
+  <li>实时得分计算与显示</li>
+  <li>QMG 总分趋势图表（需至少 2 条历史记录）</li>
+  <li>激素用量曲线（标注达标区）</li>
+  <li>历史记录查看</li>
+</ul>
+
+<h2>开发</h2>
+<pre><code># 安装依赖
+npm install
+
+# H5 开发预览
+npm run dev:h5
+
+# 微信小程序开发
+npm run dev:mp-weixin
+
+# 构建
+npm run build</code></pre>
+
+<div class="note">推荐使用 <strong>HBuilderX</strong>（App 开发版）进行开发，可直接运行到微信小程序模拟器。</div>
+
+<h2>项目结构</h2>
+<pre><code>qmg-app/
+├── src/
+│   ├── types/
+│   │   └── qmg.d.ts          # TypeScript 类型定义
+│   ├── utils/
+│   │   └── qmgCalculator.ts  # QMG 算法计算器
+│   └── stores/
+│       └── assessment.ts     # 测评数据 Store
+├── pages/
+│   ├── home/                 # 首页（身份选择）
+│   ├── assessment/           # 测评页面（分步表单）
+│   └── report/               # 报告页面（图表展示）
+├── App.vue
+├── main.js
+├── pages.json
+└── manifest.json</code></pre>
+
+</div>
+</body>
+</html>

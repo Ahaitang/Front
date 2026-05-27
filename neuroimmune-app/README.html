@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neuroimmune App — 神经免疫疾病随访小程序</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root{--bg-deep:#050a18;--bg:#0a1128;--bg-elevated:#0f1a36;--surface:#141e3a;--surface2:#1a2744;--border:#2a3a5c;--border-subtle:#1e2f52;--text:#e4e8f1;--text-secondary:#9aa5c0;--text-dim:#667899;--accent:#60a5fa;--accent-bright:#93c5fd;--accent-dim:#3b82f6;--accent-glow:rgba(96,165,250,.15);--accent2:#a78bfa;--green:#34d399;--yellow:#fbbf24;--radius:12px;--radius-sm:8px;--shadow:0 4px 24px rgba(0,0,0,.3)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg-deep);color:var(--text);line-height:1.7;min-height:100vh;padding:2rem}
+  .container{max-width:960px;margin:0 auto}
+  h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent-bright),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+  .subtitle{color:var(--text-dim);font-size:.9rem;margin-bottom:2.5rem;font-family:'JetBrains Mono',monospace}
+  h2{font-size:1.4rem;font-weight:700;color:var(--accent-bright);margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border-subtle)}
+  h3{font-size:1.1rem;font-weight:600;color:var(--text);margin:1.5rem 0 .8rem}
+  p{margin-bottom:.8rem;color:var(--text-secondary)}
+  code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:var(--surface2);padding:.15rem .45rem;border-radius:4px;color:var(--accent-bright)}
+  pre{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:1.2rem;overflow-x:auto;margin:1rem 0;font-size:.82rem;line-height:1.6;box-shadow:var(--shadow)}
+  pre code{background:none;padding:0;color:var(--text)}
+  table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem;background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  th{background:var(--surface2);color:var(--accent-bright);font-weight:600;text-align:left;padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  td{padding:.65rem 1rem;border-bottom:1px solid var(--border-subtle);color:var(--text-secondary)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  ul{margin:.5rem 0 .8rem 1.5rem;color:var(--text-secondary)}
+  li{margin:.3rem 0}
+  .note{background:rgba(96,165,250,.08);border-left:3px solid var(--accent-dim);padding:.8rem 1.2rem;border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin:1rem 0;font-size:.88rem;color:var(--text-secondary)}
+  @media(max-width:768px){body{padding:1rem}h1{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Neuroimmune App</h1>
+<p class="subtitle">神经免疫疾病随访小程序 &nbsp;|&nbsp; Uni-app + Vue 3 + Vuex &nbsp;|&nbsp; 目标平台：微信小程序 / H5</p>
+
+<h2>项目简介</h2>
+<p>神经免疫疾病随访系统的患者端小程序，供患者填写随访信息、查看病历、绑定医生等。支持微信小程序和 H5 两端发布。</p>
+
+<h2>技术栈</h2>
+<table>
+  <tr><th>技术</th><th>说明</th></tr>
+  <tr><td>Uni-app（Vue 3）</td><td>跨平台框架</td></tr>
+  <tr><td>Vuex</td><td>状态管理（项目现用）</td></tr>
+  <tr><td>JavaScript</td><td>主要语言</td></tr>
+  <tr><td>uni.request</td><td>网络请求</td></tr>
+</table>
+
+<h2>开发环境</h2>
+<div class="note">推荐使用 <strong>HBuilderX</strong>（App 开发版）进行开发，内置 uni-app 运行环境，无需额外配置。</div>
+
+<pre><code># CLI 方式安装依赖
+npm install
+
+# H5 开发预览
+npm run dev:h5
+
+# 微信小程序开发
+npm run dev:mp-weixin</code></pre>
+
+<h2>项目结构</h2>
+<pre><code>neuroimmune-app/
+├── api/              # 接口请求封装
+├── pages/            # 页面目录
+│   ├── index/        # 首页
+│   ├── login/        # 登录/注册
+│   ├── patient/      # 患者信息
+│   ├── followup/     # 随访记录
+│   └── ...
+├── store/            # Vuex 状态管理
+├── common/           # 公共工具
+├── components/       # 公共组件
+├── static/           # 静态资源
+├── App.vue
+├── main.js
+├── pages.json        # 页面配置
+└── manifest.json     # 应用配置</code></pre>
+
+<h2>支持疾病类型</h2>
+<ul>
+  <li>MS（多发性硬化）</li>
+  <li>NMOSD（视神经脊髓炎谱系疾病）</li>
+  <li>MG（重症肌无力）</li>
+  <li>MOGAD（MOG 抗体相关疾病）</li>
+  <li>自身免疫性脑炎</li>
+  <li>GBS（吉兰-巴雷综合征）</li>
+  <li>CIDP（慢性炎症性脱髓鞘性多发性神经病）</li>
+</ul>
+
+<h2>API 配置</h2>
+<p>接口基础地址配置在 <code>api/</code> 目录中，开发环境指向 <code>http://localhost:8080</code>，生产环境使用 <code>https://api.ahaitang.top/api</code>。</p>
+
+</div>
+</body>
+</html>

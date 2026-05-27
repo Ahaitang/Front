@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QMG Admin — 重症肌无力定量评分管理系统</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root{--bg-deep:#050a18;--bg:#0a1128;--bg-elevated:#0f1a36;--surface:#141e3a;--surface2:#1a2744;--border:#2a3a5c;--border-subtle:#1e2f52;--text:#e4e8f1;--text-secondary:#9aa5c0;--text-dim:#667899;--accent:#60a5fa;--accent-bright:#93c5fd;--accent-dim:#3b82f6;--accent-glow:rgba(96,165,250,.15);--accent2:#a78bfa;--green:#34d399;--yellow:#fbbf24;--radius:12px;--radius-sm:8px;--shadow:0 4px 24px rgba(0,0,0,.3)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg-deep);color:var(--text);line-height:1.7;min-height:100vh;padding:2rem}
+  .container{max-width:960px;margin:0 auto}
+  h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent-bright),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+  .subtitle{color:var(--text-dim);font-size:.9rem;margin-bottom:2.5rem;font-family:'JetBrains Mono',monospace}
+  h2{font-size:1.4rem;font-weight:700;color:var(--accent-bright);margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border-subtle)}
+  h3{font-size:1.1rem;font-weight:600;color:var(--text);margin:1.5rem 0 .8rem}
+  p{margin-bottom:.8rem;color:var(--text-secondary)}
+  code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:var(--surface2);padding:.15rem .45rem;border-radius:4px;color:var(--accent-bright)}
+  pre{background:var(--surface);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:1.2rem;overflow-x:auto;margin:1rem 0;font-size:.82rem;line-height:1.6;box-shadow:var(--shadow)}
+  pre code{background:none;padding:0;color:var(--text)}
+  table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem;background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  th{background:var(--surface2);color:var(--accent-bright);font-weight:600;text-align:left;padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  td{padding:.65rem 1rem;border-bottom:1px solid var(--border-subtle);color:var(--text-secondary)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  ul{margin:.5rem 0 .8rem 1.5rem;color:var(--text-secondary)}
+  li{margin:.3rem 0}
+  .note{background:rgba(96,165,250,.08);border-left:3px solid var(--accent-dim);padding:.8rem 1.2rem;border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin:1rem 0;font-size:.88rem;color:var(--text-secondary)}
+  .check{color:var(--green)}
+  @media(max-width:768px){body{padding:1rem}h1{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>QMG Admin</h1>
+<p class="subtitle">重症肌无力定量评分管理后台 &nbsp;|&nbsp; Vue 3 + TypeScript + Vite + Element Plus</p>
+
+<h2>功能特性</h2>
+<ul>
+  <li><span class="check">✓</span> 用户登录/登出（会话级别存储）</li>
+  <li><span class="check">✓</span> 患者管理（增删改查、批量导入）</li>
+  <li><span class="check">✓</span> 问卷记录管理（查询、删除、详情查看）</li>
+  <li><span class="check">✓</span> 医生管理</li>
+  <li><span class="check">✓</span> 数据统计仪表盘</li>
+  <li><span class="check">✓</span> 响应式布局</li>
+</ul>
+
+<h2>技术栈</h2>
+<table>
+  <tr><th>技术</th><th>说明</th></tr>
+  <tr><td>Vite</td><td>下一代前端构建工具</td></tr>
+  <tr><td>Vue 3</td><td>渐进式 JavaScript 框架</td></tr>
+  <tr><td>TypeScript</td><td>JavaScript 的超集</td></tr>
+  <tr><td>Element Plus</td><td>基于 Vue 3 的 UI 组件库</td></tr>
+  <tr><td>Pinia + Persistedstate</td><td>状态管理（sessionStorage 级别）</td></tr>
+  <tr><td>Axios</td><td>HTTP 客户端</td></tr>
+</table>
+
+<h2>快速开始</h2>
+<pre><code># 安装依赖（推荐 pnpm）
+pnpm install
+
+# 启动开发服务器（http://localhost:3000）
+pnpm dev
+
+# 生产构建（base: '/qmg/'）
+pnpm build
+
+# 预览构建结果
+pnpm preview</code></pre>
+
+<h2>项目结构</h2>
+<pre><code>qmg-admin/
+├── src/
+│   ├── assets/          # 静态资源
+│   ├── components/      # 公共组件
+│   ├── layouts/         # 布局组件
+│   │   └── MainLayout.vue
+│   ├── router/          # 路由配置
+│   │   └── index.ts
+│   ├── stores/          # Pinia 状态管理
+│   │   ├── index.ts     # Pinia 实例配置
+│   │   └── user.ts      # 用户状态（sessionStorage）
+│   ├── utils/
+│   │   └── api.ts       # API 请求封装
+│   └── views/
+│       ├── Login.vue
+│       ├── Dashboard.vue
+│       ├── Patients.vue
+│       ├── Questionnaires.vue
+│       └── Doctors.vue
+├── index.html
+├── package.json
+└── vite.config.ts</code></pre>
+
+<h2>路由说明</h2>
+<table>
+  <tr><th>路径</th><th>页面</th><th>需要登录</th></tr>
+  <tr><td><code>/login</code></td><td>登录页面</td><td>否</td></tr>
+  <tr><td><code>/dashboard</code></td><td>仪表盘</td><td>是</td></tr>
+  <tr><td><code>/patients</code></td><td>患者管理</td><td>是</td></tr>
+  <tr><td><code>/questionnaires</code></td><td>问卷记录管理</td><td>是</td></tr>
+  <tr><td><code>/doctors</code></td><td>医生管理</td><td>是</td></tr>
+</table>
+
+<h2>API 规范</h2>
+<ul>
+  <li>所有 API 请求使用 <strong>POST</strong> 方法</li>
+  <li>基础路径：<code>/api</code>（开发环境代理到 <code>http://localhost:8080</code>）</li>
+  <li>后端返回格式：<code>{ code: 1, msg: '...', data: ... }</code>（code=1 表示成功）</li>
+</ul>
+
+<h2>数据持久化</h2>
+<p>使用 <code>pinia-plugin-persistedstate</code> 配置为 <strong>sessionStorage</strong> 级别：关闭标签页后登录状态自动清除，刷新页面时自动恢复。</p>
+
+<h2>线上地址</h2>
+<p><a href="https://api.ahaitang.top/qmg/">https://api.ahaitang.top/qmg/</a></p>
+
+</div>
+</body>
+</html>
