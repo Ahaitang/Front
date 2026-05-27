@@ -48,8 +48,6 @@ const saveLoading = ref(false)
 
 // 字典选项
 const followUpExamTypeOptions = ref<CommonDict[]>([])
-const outpatientCycleTypeOptions = ref<CommonDict[]>([])
-const timeSlotOptions = ref<CommonDict[]>([])
 
 // 检查项目多选
 const selectedExamItems = ref<string[]>([])
@@ -58,27 +56,21 @@ const availableExamItems = ref<string[]>([])
 // 加载字典
 const loadDicts = async () => {
   try {
-    const [examTypes, cycleTypes, timeSlots] = await Promise.all([
-      getCommonDictByType(DICT_TYPES.FOLLOW_UP_EXAM_TYPE),
-      getCommonDictByType(DICT_TYPES.OUTPATIENT_CYCLE_TYPE),
-      getCommonDictByType(DICT_TYPES.TIME_SLOT)
-    ])
+    const examTypes = await getCommonDictByType(DICT_TYPES.FOLLOW_UP_EXAM_TYPE)
     followUpExamTypeOptions.value = examTypes || []
-    outpatientCycleTypeOptions.value = cycleTypes || []
-    timeSlotOptions.value = timeSlots || []
   } catch (e) {
     console.error('加载字典失败:', e)
   }
 }
 
-// 门诊周期类型选项（备用，如果字典未配置）
+// 门诊周期类型选项（硬编码）
 const cycleTypeOptions = [
   { value: 'weekly', label: '每周' },
   { value: 'monthly', label: '每月' },
   { value: 'quarterly', label: '每季度' }
 ]
 
-// 时间段选项（备用，如果字典未配置）
+// 时间段选项（硬编码）
 const timeSlotOptionsList = [
   { value: 'morning', label: '上午' },
   { value: 'afternoon', label: '下午' },
