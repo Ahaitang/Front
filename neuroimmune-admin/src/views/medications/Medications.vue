@@ -27,6 +27,7 @@ const doctors = ref<Doctor[]>([])
 const unitOptions = ref<CommonDict[]>([])
 const frequencyOptions = ref<CommonDict[]>([])
 const routeOptions = ref<CommonDict[]>([])
+const medicationOptions = ref<CommonDict[]>([])
 const loading = ref(false)
 const total = ref(0)
 const pagination = ref({
@@ -134,6 +135,7 @@ const loadDicts = async () => {
     unitOptions.value = await getCommonDictByType(DICT_TYPES.MEDICATION_UNIT)
     frequencyOptions.value = await getCommonDictByType(DICT_TYPES.FREQUENCY)
     routeOptions.value = await getCommonDictByType(DICT_TYPES.ROUTE)
+    medicationOptions.value = await getCommonDictByType(DICT_TYPES.MEDICATION)
   } catch (e) {
     console.error('加载字典失败:', e)
   }
@@ -356,7 +358,11 @@ const handleExport = () => {
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="药品名称" required><el-input v-model="currentMedication.medicationName" placeholder="请输入药品名称" /></el-form-item>
+              <el-form-item label="药品名称" required>
+                <el-select v-model="currentMedication.medicationName" placeholder="请选择药品" style="width: 100%" filterable allow-create default-first-option>
+                  <el-option v-for="m in medicationOptions" :key="m.id" :label="m.name" :value="m.name" />
+                </el-select>
+              </el-form-item>
             </el-col>
             <el-col :span="12" v-if="dialogType === 'view'"><el-form-item label="开药日期">{{ currentMedication.date }}</el-form-item></el-col>
           </el-row>
