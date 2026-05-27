@@ -48,6 +48,8 @@ const saveLoading = ref(false)
 
 // 字典选项
 const followUpExamTypeOptions = ref<CommonDict[]>([])
+const cycleTypeOptions = ref<CommonDict[]>([])
+const timeSlotOptionsList = ref<CommonDict[]>([])
 
 // 检查项目多选
 const selectedExamItems = ref<string[]>([])
@@ -56,26 +58,18 @@ const availableExamItems = ref<string[]>([])
 // 加载字典
 const loadDicts = async () => {
   try {
-    const examTypes = await getCommonDictByType(DICT_TYPES.FOLLOW_UP_EXAM_TYPE)
+    const [examTypes, cycleTypes, timeSlots] = await Promise.all([
+      getCommonDictByType(DICT_TYPES.FOLLOW_UP_EXAM_TYPE),
+      getCommonDictByType(DICT_TYPES.OUTPATIENT_CYCLE_TYPE),
+      getCommonDictByType(DICT_TYPES.TIME_SLOT)
+    ])
     followUpExamTypeOptions.value = examTypes || []
+    cycleTypeOptions.value = cycleTypes || []
+    timeSlotOptionsList.value = timeSlots || []
   } catch (e) {
     console.error('加载字典失败:', e)
   }
 }
-
-// 门诊周期类型选项（硬编码）
-const cycleTypeOptions = [
-  { value: 'weekly', label: '每周' },
-  { value: 'monthly', label: '每月' },
-  { value: 'quarterly', label: '每季度' }
-]
-
-// 时间段选项（硬编码）
-const timeSlotOptionsList = [
-  { value: 'morning', label: '上午' },
-  { value: 'afternoon', label: '下午' },
-  { value: 'evening', label: '晚上' }
-]
 
 // 格式化门诊随访周期显示
 const formatOutpatientCycle = (row: FollowUp): string => {
@@ -83,15 +77,15 @@ const formatOutpatientCycle = (row: FollowUp): string => {
 
   let typeLabel = ''
   if (row.outpatientCycleType) {
-    const found = cycleTypeOptions.find(o => o.value === row.outpatientCycleType)
-    typeLabel = found ? found.label : row.outpatientCycleType
+    const found = cycleTypeOptions.value.find(o => o.code === row.outpatientCycleType)
+    typeLabel = found ? found.name : row.outpatientCycleType
   }
 
   const value = row.outpatientCycleValue || ''
   let timeLabel = ''
   if (row.outpatientTimeSlot) {
-    const found = timeSlotOptionsList.find(o => o.value === row.outpatientTimeSlot)
-    timeLabel = found ? found.label : row.outpatientTimeSlot
+    const found = timeSlotOptionsList.value.find(o => o.code === row.outpatientTimeSlot)
+    timeLabel = found ? found.name : row.outpatientTimeSlot
   }
 
   let result = ''
@@ -642,9 +636,9 @@ const handleExport = () => {
                 >
                   <el-option
                     v-for="item in cycleTypeOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                    :key="item.code"
+                    :label="item.name"
+                    :value="item.code"
                   />
                 </el-select>
               </el-form-item>
@@ -667,9 +661,9 @@ const handleExport = () => {
                 >
                   <el-option
                     v-for="item in timeSlotOptionsList"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                    :key="item.code"
+                    :label="item.name"
+                    :value="item.code"
                   />
                 </el-select>
               </el-form-item>
