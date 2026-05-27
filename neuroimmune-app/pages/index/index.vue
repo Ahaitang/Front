@@ -438,7 +438,7 @@ export default {
 						id: f.id,
 						patientId: f.patientId,
 						patientName: f.patientName || '患者',
-						date: f.followDate || f.date,
+						date: f.date || '',
 						project: f.project || '随访'
 					}))
 				}
@@ -448,73 +448,81 @@ export default {
 		},
 		// 患者端加载数据
 		async loadPatientData() {
-			try {
-				// 获取绑定信息
-				if (this.userInfo.id) {
-					try {
-						const binding = await getPatientDoctor(this.userInfo.id);
-						// bindStatus: 0-待审核, 1-已确认, null-未绑定
-						if (binding && binding.bindStatus === 1) {
-							// 已确认绑定，显示医生姓名
-							this.doctorBound = true;
-							this.doctorName = binding.doctorName;
-							uni.setStorageSync('doctorBound', true);
-							uni.setStorageSync('doctorName', binding.doctorName);
-							uni.setStorageSync('doctorId', binding.doctorId);
-						} else if (binding && binding.bindStatus === 0) {
-							// 待审核状态，不显示医生姓名
-							this.doctorBound = false;
-							this.doctorName = '审核中';
-							uni.setStorageSync('doctorBound', false);
-							uni.setStorageSync('doctorName', '');
-						} else {
-							// 未绑定或其他状态
-							this.doctorBound = false;
-							uni.setStorageSync('doctorBound', false);
-						}
-					} catch (e) {
-						// 使用本地存储的绑定信息
-						this.doctorBound = !!uni.getStorageSync('doctorBound');
-						this.doctorName = uni.getStorageSync('doctorName') || '';
+			// 获取绑定信息
+			if (this.userInfo.id) {
+				try {
+					const binding = await getPatientDoctor(this.userInfo.id);
+					// bindStatus: 0-待审核, 1-已确认, null-未绑定
+					if (binding && binding.bindStatus === 1) {
+						// 已确认绑定，显示医生姓名
+						this.doctorBound = true;
+						this.doctorName = binding.doctorName;
+						uni.setStorageSync('doctorBound', true);
+						uni.setStorageSync('doctorName', binding.doctorName);
+						uni.setStorageSync('doctorId', binding.doctorId);
+					} else if (binding && binding.bindStatus === 0) {
+						// 待审核状态，不显示医生姓名
+						this.doctorBound = false;
+						this.doctorName = '审核中';
+						uni.setStorageSync('doctorBound', false);
+						uni.setStorageSync('doctorName', '');
+					} else {
+						// 未绑定或其他状态
+						this.doctorBound = false;
+						uni.setStorageSync('doctorBound', false);
 					}
+				} catch (e) {
+					// 使用本地存储的绑定信息
+					this.doctorBound = !!uni.getStorageSync('doctorBound');
+					this.doctorName = uni.getStorageSync('doctorName') || '';
 				}
+			}
 
-				// 获取统计数据
+			// 获取统计数据
+			try {
 				const stats = await getStats();
 				if (stats) {
 					this.visitCount = stats.visitCount || 0;
 				}
+			} catch (e) {
+				console.error('获取统计数据失败:', e);
+			}
 
-				// 获取发作次数
-				if (this.userInfo.id) {
-					try {
-						this.episodeCount = await getEpisodeCount(this.userInfo.id) || 0;
-					} catch (e) {
-						this.episodeCount = 0;
-					}
+			// 获取发作次数
+			if (this.userInfo.id) {
+				try {
+					this.episodeCount = await getEpisodeCount(this.userInfo.id) || 0;
+				} catch (e) {
+					this.episodeCount = 0;
 				}
+			}
 
-				// 获取随访列表（只查询当前患者的随访）
-				if (this.userInfo.id) {
+			// 获取随访列表（只查询当前患者的随访）
+			if (this.userInfo.id) {
+				try {
 					const followRes = await getFollowUpList({ pageNum: 1, pageSize: 10, patientId: this.userInfo.id });
 					if (followRes && followRes.list) {
 						const pendingList = followRes.list.filter(f => f.status === 0);
 						this.pendingFollowUps = pendingList.slice(0, 3).map(f => ({
 							id: f.id,
 							title: f.project || '随访',
-							date: f.followDate || f.date,
+							date: f.date || '',
 							doctorName: f.doctorName || '医生'
 						}));
 					}
+				} catch (e) {
+					console.error('获取随访列表失败:', e);
 				}
+			}
 
-				// 获取用药记录数量
+			// 获取用药记录数量
+			try {
 				const medRes = await getMedicationList({ pageNum: 1, pageSize: 100 });
 				if (medRes) {
 					this.medicationCount = medRes.total || 0;
 				}
 			} catch (e) {
-				console.error('加载数据失败:', e);
+				console.error('获取用药记录失败:', e);
 			}
 		},
 		goPatientCenter() {
